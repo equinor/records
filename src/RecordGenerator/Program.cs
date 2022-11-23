@@ -20,7 +20,6 @@ public class Program
     public static RDFFormat parseRDFFormat(string formatString) =>
         formatString switch {
             "n4" => RDFFormat.NQuads,
-            //"ttl" => RDFFormat.Turtle,
             "jsonld" => RDFFormat.JsonLd,
             "trig" => RDFFormat.Trig,
             "csv" => RDFFormat.CSV,
@@ -31,28 +30,22 @@ public class Program
 {
         if (args.Length != 2)
             throw new InvalidDataException("Usage: dotnet run RecordGenerator n4|trig|jsonld|csv <outfile>");
-        var outFormat = parseRDFFormat(args[0]);
+        RDFFormat outFormat = parseRDFFormat(args[0]);
 
         var recordPrefix = "https://rdf.equinor.com/ontology/record/";
-        var revisionPrefix = "https://rdf.equinor.com/ontology/revision/";
+        // var revisionPrefix = "https://rdf.equinor.com/ontology/revision/";
         var melPrefix = "https://rdf.equinor.com/ontology/mel/";
-        var xsdPrefix = "http://www.w3.org/2001/XMLSchema#";
+        // var xsdPrefix = "http://www.w3.org/2001/XMLSchema#";
         var rdfPrefix = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
         var pcaPrefix = "http://rds.posccaesar.org/ontology/plm/rdl/";
-        var rdfsPrefix = "http://www.w3.org/2000/01/rdf-schema#";
-        var provPrefix = "http://www.w3.org/ns/prov#";
-        var isoPrefix = "http://standards.iso.org/8000#";
-        var dcPrefix = "http://purl.org/dc/terms/";
-        var tagPrefix = "https://stid.equinor.com/";
-        var eqnPrefix = "https://rdf.equinor.com/fam/";
-        var commonlibPrefix = "https://rdf.equinor.com/fam/tmp";
+        // var rdfsPrefix = "http://www.w3.org/2000/01/rdf-schema#";
+        // var provPrefix = "http://www.w3.org/ns/prov#";
+        // var isoPrefix = "http://standards.iso.org/8000#";
+        // var dcPrefix = "http://purl.org/dc/terms/";
         var dataPrefix = "http://example.com/data/";
         
         var store = new TripleStore();
 
-        
-
-        
        var objects = Enumerable.Range(1,100).Select(i => $"{dataPrefix}Object{i}");
 
         foreach(var obj in objects){
@@ -69,7 +62,6 @@ public class Program
                 var melSystemType = graph.CreateUriNode(UriFactory.Create($"{melPrefix}System"));
                 var lengthType = graph.CreateUriNode(UriFactory.Create($"{pcaPrefix}Length"));
                 var weightType = graph.CreateUriNode(UriFactory.Create($"{pcaPrefix}Weight"));
-
 
                 var triples = new List<Triple>();
 
@@ -95,7 +87,6 @@ public class Program
         IStoreWriter writer = outFormat switch {
             RDFFormat.JsonLd => new JsonLdWriter(),
             RDFFormat.NQuads => new NQuadsWriter(),
-            //RDFFormat.Turtle => new CompressingTurtleWriter(),
             RDFFormat.Trig => new TriGWriter(),
             RDFFormat.CSV => new CsvStoreWriter()
         };
