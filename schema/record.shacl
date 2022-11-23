@@ -1,0 +1,69 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
+@prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+rec:RecordShape
+    a sh:NodeShape ;
+    sh:targetClass rec:Record ;
+    sh:property [ 
+        sh:path [ sh:alternativePath (rec:isSubrecordOf  rec:isInScope) ];
+        sh:minCount 1;
+        sh:name "Scope";
+        sh:message "A record must either be a subrecord or have at least one scope";
+        sh:severity sh:Violation;
+    ] , 
+    [
+        sh:path rec:isInScope;
+        sh:minCount 0;
+        sh:name "Scope";
+        sh:message "A record can have any number of scopes set directly";
+    ] ,
+    [
+        sh:path rec:isSubrecordOf;
+        sh:class rec:Record;
+        sh:minCount 0;
+        sh:maxCount 1;
+        sh:name "SubRecord";
+        sh:message "A record can be the subrecord of at most one record";
+        sh:severity sh:Violation;
+    ] ,
+    [
+        sh:path rec:describes;
+        sh:minCount 0;
+        sh:name "Describes";
+        sh:message "A record can describe any number of objects/entities";
+    ]  ,
+    [
+        sh:path rdfs:comment;
+        sh:name "Comment";
+        sh:datatype xsd:string ;
+        sh:maxCount 1;
+        sh:minCount 0 ;
+        sh:message "A record can have at most one comment";
+        sh:severity sh:Warning;
+    ] ,
+    [ 
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:minCount 0 ;
+        sh:path skos:prefLabel ;
+        sh:message "A record can have at most one skos:prefLabel";
+        sh:severity sh:Warning 
+    ],
+    [
+        sh:path rdfs:label;
+        sh:name "Label";
+        sh:maxCount 1;
+        sh:message "A record can have at most one label";
+        sh:severity sh:Warning;
+    ] .
+    # [ 
+    #     sh:path ([ sh:zeroOrMorePath rec:subRecordOf ]  rec:scope ) ;
+    #     sh:minCount 1;
+    #     sh:deactivated true;
+    #     sh:name "SuperRecordScope";
+    #     sh:message "If records are checked together, all records must have at least one scope reachable via subRecordOf relations";
+    # ] .
+    
