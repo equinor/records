@@ -28,9 +28,12 @@ public class Program
 
     public static void Main(string[] args)
 {
-        if (args.Length != 2)
-            throw new InvalidDataException("Usage: dotnet run RecordGenerator n4|trig|jsonld|csv <outfile>");
-        RDFFormat outFormat = parseRDFFormat(args[0]);
+        if (args.Length != 4)
+            throw new InvalidDataException("Usage: dotnet run <nobject> <nrecords> n4|trig|jsonld|csv <outfile>");
+        RDFFormat outFormat = parseRDFFormat(args[2]);
+        var outfile = args[3];
+        var nObjects = int.Parse(args[0]);
+        var nRecords = int.Parse(args[1]);
 
         var recordPrefix = "https://rdf.equinor.com/ontology/record/";
         // var revisionPrefix = "https://rdf.equinor.com/ontology/revision/";
@@ -45,13 +48,17 @@ public class Program
         var dataPrefix = "http://example.com/data/";
         
         var store = new TripleStore();
+        
+        var objects = Enumerable.Range(1,nObjects).Select(i => $"{dataPrefix}Object{i}");
 
-       var objects = Enumerable.Range(1,100).Select(i => $"{dataPrefix}Object{i}");
-
+        
         foreach(var obj in objects){
-            for(int i = 0; i < 100; i++){
+            for(int i = 0; i < nRecords; i++){
                 var graph = new Graph();
-       
+                graph.NamespaceMap.AddNamespace("data:", new Uri(dataPrefix));
+                graph.NamespaceMap.AddNamespace("rdl:", new Uri(pcaPrefix));
+
+
                 var recordType = graph.CreateUriNode(UriFactory.Create($"{recordPrefix}Record"));
                 var replacesRel = graph.CreateUriNode(UriFactory.Create($"{recordPrefix}replaces"));
                 var describesRel = graph.CreateUriNode(UriFactory.Create($"{recordPrefix}describes"));
@@ -66,7 +73,7 @@ public class Program
                 var triples = new List<Triple>();
 
                 var objectNode = graph.CreateUriNode(UriFactory.Create(obj));
-                graph.BaseUri = UriFactory.Create($"{obj}/Record{i}");
+                graph.BaseUri = UriFactory.Create($"{obj}-Record{i}");
                 var recordNode = graph.CreateUriNode(graph.BaseUri);
 
                 triples.Add(new Triple(recordNode, rdfType, recordType));
@@ -85,13 +92,14 @@ public class Program
             }
 
         IStoreWriter writer = outFormat switch {
-            RDFFormat.JsonLd => new JsonLdWriter(),
-            RDFFormat.NQuads => new NQuadsWriter(),
-            RDFFormat.Trig => new TriGWriter(),
-            RDFFormat.CSV => new CsvStoreWriter()
+            RDFFormat.JsonLd =>     new JsonLdWriter(),
+            RDFFormat.NQuads =>     new NQuadsWriter(),
+            RDFFormat.Trig =>       new TriGWriter(),
+            RDFFormat.CSV =>        new CsvStoreWriter(),
+            _ => throw new Exception("Invalid RDF Format")
         };
 
-        writer.Save(store, args[1]);
+        writer.Save(store, outfile);
 
         }
     }
