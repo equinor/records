@@ -7,7 +7,11 @@ Two existing, safe, approaches to exchanging RDF is to either exchange lists of 
 Records encapsulate an immutable list of triples (an RDF graph). We call this graph the 'content' of the record.
 Records are implemented as a named graph, and the identity of the record is the IRI of the named graph.
 The contents of a record are immutable by agreement and specification. The triples in the named graph in a record are of two types, content and the 'provenance'. 
+The schema is formalized in [../schema/record.ttl](record.ttl) and [../schema/record.shacl](record.shacl).
 
+## Namespaces
+* rec: https://rdf.equinor.com/ontology/record/
+* prov: http://www.w3.org/ns/prov#
 ## Provenance
 The provenance graph is the subgraph of the record named graph which is reachable from the IRI of the named graph which stops whenever a resource which is not of type Record is encountered. The rest of the graph is the content.
 We require these triples in the provenance graph to have a special meaning and only be used in the provenance
@@ -22,7 +26,7 @@ The intention of the 'scopes' is to make explicit the scope in which the content
 ### Describes
 The intention of 'describes' is an inventory of what the content of the record is describing. This may be the same as the subjects in many of the triples in the content, but the exact mapping between describes and content is not specified by this format (and does not need to be specified, more detail below)
 
-## Example in trig
+### Example in trig
 For example, assuming :Object/Record0 already exists, the trig below represents a valid record:
 ```
 @prefix : <http://example.com/data/> .
@@ -37,7 +41,7 @@ For example, assuming :Object/Record0 already exists, the trig below represents 
         rec:replaces :Object1/Record0.
 }
  ```
-# Splitting up records
+### Splitting up records
 An important functionality of records is the ability to change the size, or granularity of the records. For example, assume that the Object1 has been split up into two objects, that we wish to keep in separate records, then the following trig file is a valid as a transaction into the triplestore with the record above: 
 
 ```
@@ -61,9 +65,16 @@ An important functionality of records is the ability to change the size, or gran
         rec:replaces :Object1/Record0.
 }
  ```
- # Transactions
+ ### Transactions
  The fact that both these records are related with rec:replaces to the same record is fine if they are sent together. The format does not specify further how to specify that objects are sent together, as all cases will need a solid transaction concept anyway to ensure correct transfer.
 
-* Merge conflicts
  If the records above arrived separately, this would represents an error in the record history that cannot be fixed. We will call this type of error a merge conflict.
 
+### Subrecords
+Records can be related via the relation rec:isSubRecordOf. Scopes are inherited by subrecords. That is, if record 1 is a subrecord of record 2, then any member of rec:isInScope of record 2 is also the scope of record 1.
+
+### Head and describe
+For any set of records, we define the 'head' to be those records that are not the object of any rec:replaces triple. The intention is that the 'head' is the set of triples that have not been replaces by other (usually newer)  records.
+In any store of records, there can in the head never be any two records that have identical set of scopes and overlapping describes. It is allowed, and even useful in most use cases, to have overlapping describes in different sets of scopes. But for a given set of scopes, if two records in the head overlap in the describes, this indicates a type of merge conflict that is not allowed.
+
+This is the only rule that the record format puts on the describe elements. It is, for example, allowed that two records related with rec:replaces have completely different set of describes.
