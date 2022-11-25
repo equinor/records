@@ -12,57 +12,78 @@ The schema is formalized in [../schema/record.ttl](record.ttl) and [../schema/re
 ## Namespaces
 * rec: https://rdf.equinor.com/ontology/record/
 * prov: http://www.w3.org/ns/prov#
+* ex: http://example.com/data/ 
+
 ## Provenance
 The provenance graph is the subgraph of the record named graph which is reachable from the IRI of the named graph which stops whenever a resource which is not of type Record is encountered. The rest of the graph is the content.
 We require these triples in the provenance graph to have a special meaning and only be used in the provenance
     * The record is of type rec:Record
-    * The record is related to at most one other record with the relation rec:isSubRecordOf. (But any number of records in the other direction) 
-    * * The record is related to at least one resource with rec:isInScope (possibly indirectly through rec:isSubRecordOf). These resources are called scopes.
+    * The record is related to at most one other record with the relation rec:isSubRecordOf. That is, rec:isSubRecordOf is functional, but not inverse functional. The subrecord relation is used to avoid duplication.
+    * The record is related to at least one resource with rec:isInScope (possibly indirectly through rec:isSubRecordOf). These resources are called scopes.
     * The record is related to any number of resources with rec:describes. 
 
 ### Scopes
 The intention of the 'scopes' is to make explicit the scope in which the content of the record is valid. If there are several scopes, the content is valid in all of them. This implies an intersection-type semantics for scope. 
 
 ### Describes
-The intention of 'describes' is an inventory of what the content of the record is describing. This may be the same as the subjects in many of the triples in the content, but the exact mapping between describes and content is not specified by this format (and does not need to be specified, more detail below)
+The intention of 'describes' is an inventory of what the content of the record is describing. This may be the same as the subjects in many of the triples in the content, but the exact mapping between describes and content is not specified by this format (and does not need to be specified, more detail below). The resources in describes must also occur in the content.
 
 ### Example in trig
-For example, assuming :Object/Record0 already exists, the trig below represents a valid record:
+For example, this is a valid record
 ```
-@prefix : <http://example.com/data/> .
-@prefix vocab: <http://example.com/vocab/> .
-@prefix rec: <https://rdf.equinor.com/ontology/record/> .
-
-:Object1/Record1 {
-    :Object1 a vocab:System.
-    :Object1/Record1 a rec:Record;
-        rec:describes :Object1;
-        rec:isInScope :Project;
-        rec:replaces :Object1/Record0.
+ex:Object1/Record0 {
+    ex:Object1 a ex:System.
+    ex:Object1/Record0 a rec:Record;
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project.
+}
+ ```
+and after the record above is sent, this is a new valid record
+ ```
+ex:Object1/Record1 {
+    ex:Object1 a ex:System;
+                rdfs:label "System 1";
+                ex:hasSubSystem ex:Object2, ex:Object3.
+    ex:Object2 a ex:SubSystem.
+    ex:Object3 a ex:SubSystem.
+    ex:Object1/Record1 a rec:Record;
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project.
+        rec:replaces ex:Object1/Record0.
 }
  ```
 ### Splitting up records
-An important functionality of records is the ability to change the size, or granularity of the records. For example, assume that the Object1 has been split up into two objects, that we wish to keep in separate records, then the following trig file is a valid as a transaction into the triplestore with the record above: 
+An important functionality of records is the ability to change the size, or granularity of the records. For example, assume that the Object1 has been split up into two objects, that we wish to keep in separate records, then the following records are valid into the triplestore with the records above: 
 
 ```
-@prefix : <http://example.com/data/> .
-@prefix vocab: <http://example.com/vocab/> .
-@prefix rec: <https://rdf.equinor.com/ontology/record/> .
-
 :Object1/Record2 {
-    :Object1 a vocab:System.
+    ex:Object1 a ex:System;
+                rdfs:label "System 1";
     :Object1/Record2 a rec:Record;
-        rec:describes :Object1;
-        rec:isInScope :Project;
-        rec:replaces :Object1/Record1.
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project;
+        rec:replaces ex:Object1/Record1.
 }
-
-:Object2/Record0 {
-    :Object2 a vocab:System.
+```
+```
+ex:Object2/Record0 {
+    ex:Object2 a ex:SubSystem;
+                rdfs:label "Subsystem 2".
+    ex:Object1 ex:hasSubSystem ex:Object2.
     :Object2/Record0 a rec:Record;
-        rec:describes :Object2;
-        rec:isInScope :Project;
-        rec:replaces :Object1/Record0.
+        rec:describes ex:Object2;
+        rec:isSubRecordOf ex:Object1/Record2.
+}
+ ```
+ 
+```
+ex:Object3/Record0 {
+    ex:Object3 a ex:SubSystem;
+                rdfs:label "Subsystem 3".
+    ex:Object1 ex:hasSubSystem ex:Object3.
+    :Object3/Record0 a rec:Record;
+        rec:describes ex:Object3;
+        rec:isSubRecordOf ex:Object1/Record2.
 }
  ```
  ### Transactions
