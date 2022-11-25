@@ -1,6 +1,8 @@
 # records
 Description, schema and libraries for the "record" format for exchanging RDF
 
-[doc/record.md](Format description)
-[schema/](Ontologies, schema, etc)
-[src/RecordGenerator](A generator of very simple records)
+* [Format description](doc/record.md)
+* [Ontologies, schema, etc](schema/)
+* [A generator of very simple records](src/RecordGenerator)
+* [Queries and code for working with records in fuseki](src/fuseki)
+* [Setup, datalog and queries for working with records in RDFOx](src/rdfox)

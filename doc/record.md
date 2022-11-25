@@ -7,7 +7,7 @@ Two existing, safe, approaches to exchanging RDF is to either exchange lists of 
 Records encapsulate an immutable list of triples (an RDF graph). We call this graph the 'content' of the record.
 Records are implemented as a named graph, and the identity of the record is the IRI of the named graph.
 The contents of a record are immutable by agreement and specification. The triples in the named graph in a record are of two types, content and the 'provenance'. 
-The schema is formalized in [../schema/record.ttl](record.ttl) and [../schema/record.shacl](record.shacl).
+The schema is formalized in [record.ttl](../schema/record.ttl) and [record.shacl](../schema/record.shacl).
 
 ## Namespaces
 * rec: https://rdf.equinor.com/ontology/record/
@@ -86,16 +86,14 @@ ex:Object3/Record0 {
         rec:isSubRecordOf ex:Object1/Record2.
 }
  ```
- ### Transactions
- The fact that both these records are related with rec:replaces to the same record is fine if they are sent together. The format does not specify further how to specify that objects are sent together, as all cases will need a solid transaction concept anyway to ensure correct transfer.
-
- If the records above arrived separately, this would represents an error in the record history that cannot be fixed. We will call this type of error a merge conflict.
-
-### Subrecords
+ Note that ex:Object1/Record2 does not need to be updated when subrecords are added. 
+## Subrecords
 Records can be related via the relation rec:isSubRecordOf. Scopes are inherited by subrecords. That is, if record 1 is a subrecord of record 2, then any member of rec:isInScope of record 2 is also the scope of record 1.
-
 ### Head and describe
 For any set of records, we define the 'head' to be those records that are not the object of any rec:replaces triple. The intention is that the 'head' is the set of triples that have not been replaces by other (usually newer)  records.
 In any store of records, there can in the head never be any two records that have identical set of scopes and overlapping describes. It is allowed, and even useful in most use cases, to have overlapping describes in different sets of scopes. But for a given set of scopes, if two records in the head overlap in the describes, this indicates a type of merge conflict that is not allowed.
 
 This is the only rule that the record format puts on the describe elements. It is, for example, allowed that two records related with rec:replaces have completely different set of describes.
+
+### Querying on scopes
+When querying over a set of records, it will usually be with a filter over scopes. There are two different ways to filter over scopes. We expect the domain-oriented queries to be using an inclusive filtering, that is, include any record that has at least the given scopes. For exploring the history or provenance it will also be beneficial with queries that use precise scope queries, that is, give me all the records that have eactly these scopes.
