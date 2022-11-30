@@ -52,7 +52,9 @@ ex:Object1/Record1 {
         rec:replaces ex:Object1/Record0.
 }
  ```
-### Splitting up records
+## Subrecords
+Records can be related via the relation rec:isSubRecordOf. Scopes are inherited by subrecords. That is, if record 1 is a subrecord of record 2, then any member of rec:isInScope of record 2 is also the scope of record 1.
+### Example: Using subrecord to split up records
 An important functionality of records is the ability to change the size, or granularity of the records. For example, assume that the Object1 has been split up into two objects, that we wish to keep in separate records, then the following records are valid into the triplestore with the records above: 
 
 ```
@@ -87,8 +89,7 @@ ex:Object3/Record0 {
 }
  ```
  Note that ex:Object1/Record2 does not need to be updated when subrecords are added. 
-## Subrecords
-Records can be related via the relation rec:isSubRecordOf. Scopes are inherited by subrecords. That is, if record 1 is a subrecord of record 2, then any member of rec:isInScope of record 2 is also the scope of record 1.
+
 ### Head and describe
 For any set of records, we define the 'head' to be those records that are not the object of any rec:replaces triple. The intention is that the 'head' is the set of triples that have not been replaces by other (usually newer)  records.
 In any store of records, there can in the head never be any two records that have identical set of scopes and overlapping describes. It is allowed, and even useful in most use cases, to have overlapping describes in different sets of scopes. But for a given set of scopes, if two records in the head overlap in the describes, this indicates a type of merge conflict that is not allowed.
