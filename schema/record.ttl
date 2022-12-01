@@ -42,14 +42,14 @@ prov:wasRevisionOf rdf:type owl:ObjectProperty ;
 ###  https://rdf.equinor.com/ontology/record/describes
 rec:describes rdf:type owl:ObjectProperty ;
               rdfs:domain rec:Record ;
-              rdfs:comment "This relates a record to all the objects described in it. This might correspond to the IRI of the top-level objects in the JSON-LD representation. When there are several triples, the meaning is that the union of the objects are described. When there are no such triples, the record has no content." ;
+              rdfs:comment "This relates a record to all the objects described in it. All IRIs desribed must occur in the content, and for any IRI occurring in the content/dataset, there must be a path between that IRI and one of the describes IRIs using only triples occurring in the content/dataset." ;
               rdfs:label "describes" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000219> .
 
 ###  https://rdf.equinor.com/ontology/record/isInScope
 rec:isInScope rdf:type owl:ObjectProperty ;
               rdfs:domain rec:Record ;
-              rdfs:comment "Declares the scope in which the content of the record is valid. When there are several triples with the same subject the meaning is that the content is valid in the intersection of all the scopes. The scopes can be used to route the record to the correct storage and to regulate access." ;
+              rdfs:comment "Declares the scope in which the content of the record is valid. When there are several triples with the same subject the meaning is that the content is valid in the intersection of all the scopes. The scopes can be used to route the record to the correct storage and to regulate access. This relation propagates along the inverse of rec:isSubRecordOf" ;
               rdfs:label "is in scope" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000142> .
 
@@ -59,7 +59,7 @@ rec:isSubRecordOf rdf:type owl:ObjectProperty ;
                 rdfs:subPropertyOf  [
                     owl:inverseOf prov:hadMember
                 ] ;
-                rdfs:comment "A record can be a sub-record of another record. The implication is that the data set for the super-record includes the dataset of the subrecord." .
+                rdfs:comment "A record can be a sub-record of another record. This does _not_ mean that the contents are related. Scopes are inherited from superrecord to subrecord, and subrecords are inherited via the replaces relation." .
 
 
 ###  https://rdf.equinor.com/ontology/record/replaces
@@ -67,7 +67,7 @@ rec:replaces rdf:type owl:ObjectProperty ;
              rdfs:subPropertyOf prov:wasRevisionOf ;
              rdfs:domain rec:Record ;
              rdfs:range rec:Record ;
-             rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record." .
+             rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record. Note that subrecords are inherited from the replaced record" .
 
 
 #################################################################
