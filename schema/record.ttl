@@ -54,13 +54,30 @@ rec:isInScope rdf:type owl:ObjectProperty ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000142> .
 
 
+###  https://rdf.equinor.com/ontology/record/isInSubRecordTreeOf
+rec:isInSubRecordTreeOf rdf:type owl:ObjectProperty ,
+                                 owl:TransitiveProperty ;
+                rdfs:domain rec:Record ;
+                rdfs:range rec:Record ;
+                rdfs:comment "This is the transitive closure of the relation rec:isSubRecordOf." .
+
 ###  https://rdf.equinor.com/ontology/record/isSubRecordOf
 rec:isSubRecordOf rdf:type owl:ObjectProperty ;
-                rdfs:subPropertyOf  [
+                rdfs:subPropertyOf rec:isInSubRecordTreeOf ,
+                [
                     owl:inverseOf prov:hadMember
                 ] ;
+                rdfs:domain rec:Record ;
+                rdfs:range rec:Record ;
                 rdfs:comment "A record can be a sub-record of another record. This does _not_ mean that the contents are related. Scopes are inherited from superrecord to subrecord, and subrecords are inherited via the replaces relation." .
 
+###  https://rdf.equinor.com/ontology/record/isInScopeInf
+rec:isInScopeInf rdf:type owl:ObjectProperty ;
+                 owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
+                                          rec:isInScope
+                                        ) ;
+                rdfs:domain rec:Record ;
+                rdfs:comment "These are the scopes that a record inherits from its super-records, union with the explicit given scopes" .
 
 ###  https://rdf.equinor.com/ontology/record/replaces
 rec:replaces rdf:type owl:ObjectProperty ;
@@ -69,6 +86,17 @@ rec:replaces rdf:type owl:ObjectProperty ;
              rdfs:range rec:Record ;
              rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record. Note that subrecords are inherited from the replaced record" .
 
+
+###  https://rdf.equinor.com/ontology/record/replacesInf
+rec:replacesInf rdf:type owl:ObjectProperty ,
+                                owl:TransitiveProperty ;
+                rdfs:subPropertyOf prov:wasRevisionOf ;
+                rdfs:domain rec:Record ;
+                rdfs:range rec:Record ;
+                owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
+                                         rec:replaces
+                                       ) ;
+                rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation" .
 
 #################################################################
 #    Classes
