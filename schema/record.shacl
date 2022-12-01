@@ -30,10 +30,19 @@ rec:RecordShape
         sh:severity sh:Violation;
     ] ,
     [
+        sh:path rec:replaces;
+        sh:class rec:Record;
+        sh:minCount 0;
+        sh:maxCount 1;
+        sh:name "Replaces";
+        sh:message "A record replaces at most one other record. If there are none, that means the history is unknown or new";
+        sh:severity sh:Violation;
+    ] ,
+    [
         sh:path rec:describes;
         sh:minCount 0;
         sh:name "Describes";
-        sh:message "A record can describe any number of objects/entities";
+        sh:message "A record can describe any number of objects/entities. A record describing 0 objects has no content.";
     ]  ,
     [
         sh:path rdfs:comment;
@@ -64,6 +73,6 @@ rec:RecordShape
     #     sh:minCount 1;
     #     sh:deactivated true;
     #     sh:name "SuperRecordScope";
-    #     sh:message "If records are checked together, all records must have at least one scope reachable via subRecordOf relations";
+    #     sh:message "All records must have at least one scope reachable via subRecordOf relations";
     # ] .
     

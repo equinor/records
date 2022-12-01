@@ -42,7 +42,7 @@ prov:wasRevisionOf rdf:type owl:ObjectProperty ;
 ###  https://rdf.equinor.com/ontology/record/describes
 rec:describes rdf:type owl:ObjectProperty ;
               rdfs:domain rec:Record ;
-              rdfs:comment "This relates a record to all the objects described in it. This might correspond to the IRI of the top-level objects in the JSON-LD representation. When there are several triples, the meaning is that the union of the objects are described" ;
+              rdfs:comment "This relates a record to all the objects described in it. This might correspond to the IRI of the top-level objects in the JSON-LD representation. When there are several triples, the meaning is that the union of the objects are described. When there are no such triples, the record has no content." ;
               rdfs:label "describes" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000219> .
 
