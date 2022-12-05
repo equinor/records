@@ -92,12 +92,12 @@ rec:RecordShape
         sh:maxCount 1;
         sh:message "A record can have at most one label";
         sh:severity sh:Warning;
+    ] ,
+    [ 
+        sh:path ([ sh:zeroOrMorePath rec:isSubRecordOf ]  rec:isInScope ) ;
+        sh:minCount 1;
+        sh:deactivated true;
+        sh:name "SuperRecordScope";
+        sh:message "All records must have at least one scope reachable via subRecordOf relations";
     ] .
-    # [ 
-    #     sh:path ([ sh:zeroOrMorePath rec:subRecordOf ]  rec:scope ) ;
-    #     sh:minCount 1;
-    #     sh:deactivated true;
-    #     sh:name "SuperRecordScope";
-    #     sh:message "All records must have at least one scope reachable via subRecordOf relations";
-    # ] .
     
