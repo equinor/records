@@ -73,7 +73,7 @@ public class Program
                 triples.Add(new Triple(recordNode, describesRel, objectNode));
                 triples.Add(new Triple(recordNode, scopesRel, scopeNode));
                 if(i > 0)
-                    triples.Add(new Triple(recordNode, replacesRel, graph.CreateUriNode(UriFactory.Create($"{obj}/Record{i-1}"))));
+                    triples.Add(new Triple(recordNode, replacesRel, graph.CreateUriNode(UriFactory.Create($"{obj}-Record{i-1}"))));
                 
                 triples.Add(new Triple(objectNode, rdfType, melSystemType));
                 var iNode = graph.CreateLiteralNode($"{i}");
