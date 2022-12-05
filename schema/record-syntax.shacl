@@ -6,6 +6,7 @@
 
 rec:RecordShape
     a sh:NodeShape ;
+    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
     sh:targetClass rec:Record ;
     sh:property [ 
         sh:path [ sh:alternativePath (rec:isSubrecordOf  rec:isInScope) ];
