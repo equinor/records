@@ -24,7 +24,7 @@ We require these triples in the provenance graph to have a special meaning and o
 The intention of the 'scopes' is to make explicit the scope in which the content of the record is valid. If there are several scopes, the content is valid in all of them. This implies an intersection-type semantics for scope. 
 
 ### Describes
-The intention of 'describes' is an inventory of what the content of the record is describing. This may be the same as the subjects in many of the triples in the content, but the exact mapping between describes and content is not specified by this format (and does not need to be specified, more detail below). The resources in describes must also occur in the content.
+The intention of 'describes' is an inventory of what the content of the record is describing. The minimum requirement is that any IRI in describes is also mentioned in the content of the record, and that the any resource in the content graph is reachable from at least one element in describes using only edges in the content. Most stores will probably have stronger rules on describes, f.ex. that the elements in describes are the roots of certain trees in the content.
 
 ### Example in trig
 For example, this is a valid record
