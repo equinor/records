@@ -1,0 +1,43 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rec: <https://rdf.equinor.com/ontology/record/> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@base <https://rdf.equinor.com/ontology/record/> .
+
+<https://rdf.equinor.com/ontology/record-rules/> rdf:type owl:Ontology ;
+                                            owl:imports <https://rdf.equinor.com/ontology/record-syntax/>;
+                                            owl:versionIRI <https://rdf.equinor.com/ontology/record/2022-12-05> .
+
+###  https://rdf.equinor.com/ontology/record/isInSubRecordTreeOf
+rec:isInSubRecordTreeOf rdf:type owl:ObjectProperty ,
+                                 owl:TransitiveProperty ;
+                rdfs:domain rec:Record ;
+                rdfs:range rec:Record ;
+                rdfs:comment "This is the transitive closure of the relation rec:isSubRecordOf." .
+
+###  https://rdf.equinor.com/ontology/record/isSubRecordOf
+rec:isSubRecordOf rdfs:subPropertyOf rec:isInSubRecordTreeOf .
+
+###  https://rdf.equinor.com/ontology/record/isInScopeInf
+rec:isInScopeInf rdf:type owl:ObjectProperty ;
+                 owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
+                                          rec:isInScope
+                                        ) ;
+                rdfs:domain rec:Record ;
+                rdfs:comment "These are the scopes that a record inherits from its super-records, union with the explicit given scopes" .
+
+###  https://rdf.equinor.com/ontology/record/replacesInf
+rec:replacesInf rdf:type owl:ObjectProperty ,
+                                owl:TransitiveProperty ;
+                rdfs:subPropertyOf prov:wasRevisionOf ;
+                rdfs:domain rec:Record ;
+                rdfs:range rec:Record ;
+                owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
+                                         rec:replaces
+                                       ) ;
+                rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation" .
