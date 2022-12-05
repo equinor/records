@@ -1,7 +1,5 @@
 # Record format
-Records are intended to make exchange of RDF safer and easier. The design has arised when working with facility design data, but we expect it to be useful for many cases. Specifically, use cases with high-velocity append-only data is probably not a good match. 
-
-Two existing, safe, approaches to exchanging RDF is to either exchange lists of individual triples to deleted and inserted, or to always exchange the full graph. Both these approaches have valid use cases, but have major disadvantages in those we work with. We claim that records are useful for any situation that is not handled well by these two extremes.
+Records are intended to make exchange of RDF safer and easier. More details on motivation and background in [motivation.md](motivation.md)
 
 ## Record Format Summary  
 Records encapsulate an immutable list of triples (an RDF graph). We call this graph the 'content' of the record.
