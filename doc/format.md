@@ -5,7 +5,7 @@ Records are intended to make exchange of RDF safer and easier. More details on m
 Records encapsulate an immutable list of triples (an RDF graph). We call this graph the 'content' of the record.
 Records are implemented as a named graph, and the identity of the record is the IRI of the named graph.
 The contents of a record are immutable by agreement and specification. The triples in the named graph in a record are of two types, content and the 'provenance'. 
-The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and [record-sytax.shacl](../schema/record-syntax.shacl). Further, experimental, axioms are in [record-rules.ttl](../schema/record-rules.ttl)
+The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and [record-syntax.shacl](../schema/record-syntax.shacl). Further, experimental, axioms are in [record-rules.ttl](../schema/record-rules.ttl)
 
 ## Namespaces
 * rec: https://rdf.equinor.com/ontology/record/
