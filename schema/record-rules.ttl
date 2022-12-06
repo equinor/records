@@ -13,18 +13,19 @@
                                             owl:imports <https://rdf.equinor.com/ontology/record-syntax/>;
                                             owl:versionIRI <https://rdf.equinor.com/ontology/record/2022-12-05> .
 
-###  https://rdf.equinor.com/ontology/record/isInSubRecordTreeOf
-rec:isInSubRecordTreeOf rdf:type owl:ObjectProperty ,
-                                 owl:TransitiveProperty ;
+###  https://rdf.equinor.com/ontology/record/isInSubRecordOfTrans
+rec:isInSubRecordOfTrans rdf:type owl:ObjectProperty ,
+                                 owl:TransitiveProperty,
+                                 owl:IrreflexiveProperty ;
                 rdfs:domain rec:Record ;
                 rdfs:range rec:Record ;
                 rdfs:comment "This is the transitive closure of the relation rec:isSubRecordOf." .
 
 ###  https://rdf.equinor.com/ontology/record/isSubRecordOf
-rec:isSubRecordOf rdfs:subPropertyOf rec:isInSubRecordTreeOf .
+rec:isSubRecordOf rdfs:subPropertyOf rec:isInSubRecordOfTrans .
 
-###  https://rdf.equinor.com/ontology/record/isInScopeInf
-rec:isInScopeInf rdf:type owl:ObjectProperty ;
+###  https://rdf.equinor.com/ontology/record/hasInheritedScopes
+rec:hasInheritedScopes rdf:type owl:ObjectProperty ;
                  owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
                                           rec:isInScope
                                         ) ;
@@ -37,7 +38,10 @@ rec:replacesInf rdf:type owl:ObjectProperty ,
                 rdfs:subPropertyOf prov:wasRevisionOf ;
                 rdfs:domain rec:Record ;
                 rdfs:range rec:Record ;
-                owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
+                owl:propertyChainAxiom ( rec:isInSubRecordOfTrans
                                          rec:replaces
                                        ) ;
-                rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation" .
+                rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation. A subrecord of a record" .
+              
+###  https://rdf.equinor.com/ontology/record/replaces
+rec:replaces rdfs:subPropertyOf rec:replacesInf .

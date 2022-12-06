@@ -55,8 +55,7 @@ rec:isInScope rdf:type owl:ObjectProperty ;
 
 ###  https://rdf.equinor.com/ontology/record/isSubRecordOf
 rec:isSubRecordOf rdf:type owl:ObjectProperty ;
-                rdfs:subPropertyOf rec:isInSubRecordTreeOf ,
-                [
+                rdfs:subPropertyOf [
                     owl:inverseOf prov:hadMember
                 ] ;
                 rdfs:domain rec:Record ;
