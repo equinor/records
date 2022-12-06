@@ -6,6 +6,7 @@
 
 rec:RecordShape
     a sh:NodeShape ;
+    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
     sh:targetClass rec:Record ;
     sh:property [ 
         sh:path [ sh:alternativePath (rec:isSubrecordOf  rec:isInScope) ];
@@ -21,6 +22,24 @@ rec:RecordShape
         sh:message "A record can have any number of scopes set directly";
     ] ,
     [
+        sh:path rec:isInScopeInf;
+        sh:maxCount 0;
+        sh:name "InfScope";
+        sh:message "The inferred scope relation cannot be set explicitly. Please use rec:isInScope";
+    ] ,
+    [
+        sh:path rec:isInSubRecordTreeOf;
+        sh:maxCount 0;
+        sh:name "SubRecordTree";
+        sh:message "The inferred subrecord relation cannot be set explicitly. Please use rec:isSubRecordOf";
+    ] ,
+    [
+        sh:path rec:replacesInf;
+        sh:maxCount 0;
+        sh:name "ReplacesInferred";
+        sh:message "The inferred replaces relation cannot be set explicitly. Please use rec:replaces";
+    ] ,
+    [
         sh:path rec:isSubrecordOf;
         sh:class rec:Record;
         sh:minCount 0;
@@ -30,10 +49,25 @@ rec:RecordShape
         sh:severity sh:Violation;
     ] ,
     [
+        sh:path rec:replaces;
+        sh:class rec:Record;
+        sh:minCount 0;
+        sh:name "Replaces";
+        sh:message "A record replaces any number of other records. If there are none, that means the history is unknown or new. If there are more than one, this represents a merge.";
+        sh:severity sh:Violation;
+    ] ,
+    [ 
+        sh:path [ sh:inversePath rec:replaces ];
+        sh:maxCount 1;
+        sh:name "Replaced by";
+        sh:message "A record can be replaced by at most one other record";
+        sh:severity sh:Violation;
+    ] , 
+    [
         sh:path rec:describes;
         sh:minCount 0;
         sh:name "Describes";
-        sh:message "A record can describe any number of objects/entities";
+        sh:message "A record can describe any number of objects/entities. A record describing 0 objects has no content.";
     ]  ,
     [
         sh:path rdfs:comment;
@@ -58,12 +92,12 @@ rec:RecordShape
         sh:maxCount 1;
         sh:message "A record can have at most one label";
         sh:severity sh:Warning;
+    ] ,
+    [ 
+        sh:path ([ sh:zeroOrMorePath rec:isSubRecordOf ]  rec:isInScope ) ;
+        sh:minCount 1;
+        sh:deactivated true;
+        sh:name "SuperRecordScope";
+        sh:message "All records must have at least one scope reachable via subRecordOf relations";
     ] .
-    # [ 
-    #     sh:path ([ sh:zeroOrMorePath rec:subRecordOf ]  rec:scope ) ;
-    #     sh:minCount 1;
-    #     sh:deactivated true;
-    #     sh:name "SuperRecordScope";
-    #     sh:message "If records are checked together, all records must have at least one scope reachable via subRecordOf relations";
-    # ] .
     
