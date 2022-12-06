@@ -26,7 +26,7 @@ rec:isSubRecordOf rdfs:subPropertyOf rec:isInSubRecordOfTrans .
 
 ###  https://rdf.equinor.com/ontology/record/hasInheritedScopes
 rec:hasInheritedScopes rdf:type owl:ObjectProperty ;
-                 owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
+                 owl:propertyChainAxiom ( rec:isInSubRecordOfTrans
                                           rec:isInScope
                                         ) ;
                 rdfs:domain rec:Record ;
@@ -42,6 +42,12 @@ rec:replacesInf rdf:type owl:ObjectProperty ,
                                          rec:replaces
                                        ) ;
                 rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation. A subrecord of a record" .
-              
+
 ###  https://rdf.equinor.com/ontology/record/replaces
 rec:replaces rdfs:subPropertyOf rec:replacesInf .
+
+### https://rdf.equinor.com/ontology/record/HeadRecord
+rec:HeadRecord rdfs:subClassOf rec:Record,
+                [
+                  
+                ] .
