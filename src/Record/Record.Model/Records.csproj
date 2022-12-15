@@ -12,18 +12,7 @@
 	  <VersionPrefix>4.0.0$(ReleaseType)</VersionPrefix>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="record.shacl" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="record.shacl">
-	    <IncludeInPackage>true</IncludeInPackage>
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
+	<ItemGroup>
     <PackageReference Include="dotNetRDF" Version="2.7.5" />
   </ItemGroup>
 
