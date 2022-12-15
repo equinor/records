@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <EnvironmentSuffix></EnvironmentSuffix>
+	  <ReleaseType></ReleaseType>
+	  <PackageId>Record</PackageId>
+	  <VersionPrefix>4.0.0$(ReleaseType)</VersionPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="record.shacl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="record.shacl">
+	    <IncludeInPackage>true</IncludeInPackage>
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dotNetRDF" Version="2.7.5" />
+  </ItemGroup>
+
+</Project>

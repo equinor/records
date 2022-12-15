@@ -1,0 +1,109 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://akersolutions.com/data/RecordID123> {
+    <https://akersolutions.com/data/RecordID123> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                 rdfs:comment "Container record, defines scope for subrecords"^^xsd:string;
+                                                 <https://rdf.equinor.com/ontology/record/isInScope> <https://rdf.equinor.com/fam/Contract/4504044842>,
+                                                                                                     <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001>,
+                                                                                                     <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001.F01>,
+                                                                                                     <https://rdf.equinor.com/fam/Facility/WIST>,
+                                                                                                     <https://rdf.equinor.com/fam/Project/L.O537C.001>.
+}
+
+<https://akersolutions.com/data/RecordID123.0> {
+    <https://akersolutions.com/data/RecordID123.0> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                   rdfs:comment "First MEL delivered on Wisting"^^xsd:string;
+                                                   <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://akersolutions.com/data/RecordID123>.
+    <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001> a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
+                                                                   rdfs:label "C277-AS-W-LA-00001"^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Contract> <https://rdf.equinor.com/fam/Contract/4504044842>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Contractor> <https://rdf.equinor.com/fam/Contractor/WIST/AS>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Discipline> <https://rdf.equinor.com/fam/Discipline/W>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/DocumentType> "LA"^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Facility> <https://rdf.equinor.com/fam/Facility/WIST>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/FunctionalSystem> <https://rdf.equinor.com/ontology/fam/v1/FunctionalSystem/ENG>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Location> ""^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Project> <https://rdf.equinor.com/fam/Project/L.O537C.001>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Purpose> "R"^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Revision> <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001.F01>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Title> "MASTER EQUIPMENT LIST - MEL"^^xsd:string.
+}
+
+<https://akersolutions.com/data/RecordID123.1> {
+    <https://akersolutions.com/data/RecordID123.1> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                   <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001.F01>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://akersolutions.com/data/RecordID123>.
+    <https://rdf.equinor.com/fam/Document/WIST/C277-AS-W-LA-00001.F01> a <https://rdf.equinor.com/ontology/revision/Revision>;
+                                                                       rdfs:label "First delivered revision of MEL"^^xsd:string;
+                                                                       <http://www.w3.org/ns/prov#endedAtTime> "2022-09-02T00:00:00"^^xsd:dateTime;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/Author> "Kari Nordkvinne"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/CheckedBy> "NN"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/DisciplineApprovedBy> "NM"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/ReasonForIssue> "Revision text"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/Revision> "F01"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/RevisionSequence> "01"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/revision/revises> <https://akersolutions.com/data/RecordID123>.
+}
+
+<https://akersolutions.com/data/RecordID123.2> {
+    <https://akersolutions.com/data/RecordID123.2> <https://rdf.equinor.com/ontology/record/describes> <https://akersolutions.com/data/WIST/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> "akso:RecordID123"^^xsd:string.
+    <https://akersolutions.com/data/WIST/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP> a <https://rdf.equinor.com/ontology/mel/System>;
+                                                                              rdfs:comment "Electrical Field Equipment without Taghierarchy"^^xsd:string;
+                                                                              rdfs:label "20-Electrical-Field-Equip"^^xsd:string;
+                                                                              <https://rdf.equinor.com/ontology/fam/v1/TOP_TAG> "0"^^xsd:boolean;
+                                                                              <https://rdf.equinor.com/ontology/fam/v1/TagNumber> <https://stid.equinor.com/WIST/20-ELECTRICAL-FIELD-EQUIP>.
+}
+
+<https://akersolutions.com/data/RecordID123.3> {
+    <https://akersolutions.com/data/RecordID123.3> <https://rdf.equinor.com/ontology/record/describes> <https://akersolutions.com/data/WIST/tag?tagNo=20>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://akersolutions.com/data/RecordID123>.
+    <https://akersolutions.com/data/WIST/tag?tagNo=20> a <https://rdf.equinor.com/ontology/mel/System>;
+                                                       rdfs:comment "Separation and Stabilisation FunctionalSystems"^^xsd:string;
+                                                       rdfs:label "2"^^xsd:string;
+                                                       <https://rdf.equinor.com/ontology/fam/v1/TOP_TAG> "1"^^xsd:boolean;
+                                                       <https://rdf.equinor.com/ontology/fam/v1/TagNumber> <https://stid.equinor.com/WIST/20>.
+}
+
+<https://akersolutions.com/data/RecordID123.4> {
+    <https://akersolutions.com/data/RecordID123.4> <https://rdf.equinor.com/ontology/record/describes> <https://akersolutions.com/data/tag/20AB001>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://akersolutions.com/data/RecordID123>.
+    <https://akersolutions.com/data/qualityID1> <http://rds.posccaesar.org/ontology/plm/rdl/qualityQuantifiedAs> <https://akersolutions.com/data/quantityID1>;
+                                                a <http://rds.posccaesar.org/ontology/plm/rdl/PCA_100003585>;
+                                                rdfs:label "Length"^^xsd:string.
+    <https://akersolutions.com/data/qualityID2> <http://rds.posccaesar.org/ontology/plm/rdl/qualityQuantifiedAs> <https://akersolutions.com/data/quantityID2>;
+                                                a <commonlib:Width>,
+                                                  <http://rds.posccaesar.org/ontology/plm/rdl/PCA_100003585>;
+                                                rdfs:label "Width"^^xsd:string.
+    <https://akersolutions.com/data/quantityID1> <http://rds.posccaesar.org/ontology/lis14/rdl/datumUOM> <http://rds.posccaesar.org/ontology/plm/rdl/PCA_100003699>;
+                                                 <http://rds.posccaesar.org/ontology/lis14/rdl/datumValue> 1.2345E2;
+                                                 rdfs:label "123.45 m"^^xsd:string.
+    <https://akersolutions.com/data/quantityID2> <http://rds.posccaesar.org/ontology/lis14/rdl/datumUOM> <http://rds.posccaesar.org/ontology/plm/rdl/PCA_100003699>;
+                                                 <http://rds.posccaesar.org/ontology/lis14/rdl/datumValue> 1.47E1;
+                                                 rdfs:label "14.7 m"^^xsd:string.
+    <https://akersolutions.com/data/tag/20AB001> <http://rds.posccaesar.org/ontology/plm/rdl/hasPhysicalQuantity> <https://akersolutions.com/data/qualityID1>,
+                                                                                                                  <https://akersolutions.com/data/qualityID2>;
+                                                 a <https://rdf.equinor.com/ontology/mel/MainEquipment>;
+                                                 rdfs:label "20AB001"^^xsd:string;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/Contractor> <https://rdf.equinor.com/fam/Contractor/WIST/AS>;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/Discipline> <https://rdf.equinor.com/fam/Discipline/W>;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/FunctionalSystem> <https://rdf.equinor.com/fam/FunctionalSystem/WIST/ENG>;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/HEIGHT> "124"^^xsd:string;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/LENGTH> 1.2345E2;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/TOP_TAG> "0"^^xsd:boolean;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/TagNumber> <https://stid.equinor.com/WIST/20AB001>;
+                                                 <https://rdf.equinor.com/ontology/fam/v1/WIDTH> 1.47E1.
+}
+
+<https://akersolutions.com/data/RecordID123.5> {
+    <https://akersolutions.com/data/RecordID123.5> <https://rdf.equinor.com/ontology/record/describes> <https://akersolutions.com/data/tag/00>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://akersolutions.com/data/RecordID123>.
+    <https://akersolutions.com/data/tag/00> a <https://rdf.equinor.com/ontology/mel/System>;
+                                            rdfs:comment "incomplete at this time..."^^xsd:string;
+                                            <https://rdf.equinor.com/ontology/fam/v1/TOP_TAG> "0"^^xsd:boolean;
+                                            <https://rdf.equinor.com/ontology/fam/v1/TagNumber> <https://stid.equinor.com/WIST/00>.
+}
+

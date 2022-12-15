@@ -1,0 +1,35 @@
+{
+    "@context": {
+        "@version": 1.1,
+        "@vocab": "https://rdf.equinor.com/ontology/fam/v1/",
+        "@base": "https://rdf.equinor.com/ontology/fam/v1/",
+        "record": "https://rdf.equinor.com/ontology/record/",
+        "eqn": "https://rdf.equinor.com/fam/",
+        "akso": "https://akersolutions.com/data/",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "ssi": "https://ssi.example.com/ontology#"  
+    },
+    "@id": "ssi:NamedGraphExternalId",
+    "@graph": [
+        {
+            "@id": "ssi:NamedGraphInternalId",
+            "@type": "record:Record",
+            "record:isInScope": [
+                "eqn:TestScope",
+                "eqn:TestScope2"
+            ],
+            "record:describes": [
+                "eqn:NestedContext",
+                "eqn:NestedContext2"
+            ] 
+        },
+        {
+            "@context": {
+              "ssi": "https://ssi.example.com/ontology#"  
+            },
+            "@id": "eqn:NestedContext",
+            "@type": "ssi:TestObject",
+            "rdfs:comment": "This is Markus' cool test object."
+        }
+    ]
+}
