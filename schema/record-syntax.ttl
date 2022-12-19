@@ -55,12 +55,11 @@ rec:isInScope rdf:type owl:ObjectProperty ;
 
 ###  https://rdf.equinor.com/ontology/record/isSubRecordOf
 rec:isSubRecordOf rdf:type owl:ObjectProperty ;
-                rdfs:subPropertyOf rec:isInSubRecordTreeOf ,
-                [
+                rdfs:subPropertyOf [
                     owl:inverseOf prov:hadMember
                 ] ;
-                rdfs:domain rec:Record ;
-                rdfs:range rec:Record ;
+               rdfs:domain rec:Record ;
+               rdfs:range rec:Record ;
                 rdfs:comment "A record can be a sub-record of another record. This does _not_ mean that the contents are related. Scopes are inherited from superrecord to subrecord, and subrecords are inherited via the replaces relation." .
 
 ###  https://rdf.equinor.com/ontology/record/replaces
