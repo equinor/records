@@ -1,0 +1,134 @@
+{
+    "@context": {
+        "@version": 1.1,
+        "@vocab": "https://rdf.equinor.com/ontology/fam/v1/",
+        "@base": "https://rdf.equinor.com/ontology/fam/v1/",
+        "mel": "https://rdf.equinor.com/ontology/mel/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "record": "https://rdf.equinor.com/ontology/record/",
+        "revision": "https://rdf.equinor.com/ontology/revision/",
+        "pca": "http://rds.posccaesar.org/ontology/plm/rdl/",
+        "lis14": "http://rds.posccaesar.org/ontology/lis14/rdl/",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "prov": "http://www.w3.org/ns/prov#",
+        "iso": "http://standards.iso.org/8000#",
+        "tr1244": "https://rdf.equinor.com/ontology/fam/v1/",
+        "dc": "http://purl.org/dc/terms/",
+        "tag": "https://stid.equinor.com/",
+        "eqn": "https://rdf.equinor.com/fam/",
+        "commonlib": "https://rdf.equinor.com/fam/tmp",
+        "akso": "https://akersolutions.com/data/",
+        "record:isInScope": {"@type": "@id"},
+        "record:describes": {"@type": "@id"},
+        "TOP_TAG": {"@type": "xsd:boolean"},
+        "prov:endedAtTime": {"@type": "xsd:dateTime"}
+    },
+    "@id": "akso:RecordID123",
+    "@graph": [
+        {
+            "rdfs:comment": "First MEL delivered on Wisting",
+            "@type": "record:Record",
+            "record:describes": [
+                "eqn:Document/WIST/C277-AS-W-LA-00001",
+                "eqn:Document/WIST/C277-AS-W-LA-00001.F01",
+                "akso:WIST/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP",
+                "akso:WIST/tag?tagNo=20",
+                "akso:tag/20AB001",
+                "akso:tag/00"
+            ]
+        },
+        {
+            "@id": "eqn:Document/WIST/C277-AS-W-LA-00001",
+            "@type": [
+                "mel:EquipmentList"
+            ],
+            "rdfs:label": "C277-AS-W-LA-00001",
+            "Facility": {"@id": "eqn:Facility/WIST"},
+            "Project": {"@id": "eqn:Project/L.O537C.001"},
+            "Contractor": {"@id": "eqn:Contractor/WIST/AS"},
+            "DocumentType": "LA",
+            "Title": "MASTER EQUIPMENT LIST - MEL",
+            "FunctionalSystem": {"@id": "tr1244:FunctionalSystem/ENG"},
+            "Location": "",
+            "Discipline": {"@id": "eqn:Discipline/W"},
+            "Contract": {"@id": "eqn:Contract/4504044842"},
+            "Purpose": "R",
+            "mel:Revision": {"@id": "eqn:Document/WIST/C277-AS-W-LA-00001.F01"}
+        },
+        {
+            "@id": "eqn:Document/WIST/C277-AS-W-LA-00001.F01",
+            "rdfs:label": "First delivered revision of MEL",
+            "@type": "revision:Revision",
+            "RevisionSequence": "01",
+            "Revision": "F01",
+            "ReasonForIssue": "Revision text",
+            "Author": "Kari Nordkvinne",
+            "CheckedBy": "NN",
+            "DisciplineApprovedBy": "NM",
+            "prov:endedAtTime": "2022-09-02T00:00:00",
+            "revision:revises": { "@id": "akso:RecordID123" }
+        },
+        {
+            "@id": "akso:WIST/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP",
+            "TagNumber": {"@id": "tag:WIST/20-ELECTRICAL-FIELD-EQUIP"},
+            "@type": "mel:System",
+            "rdfs:label": "20-Electrical-Field-Equip",
+            "rdfs:comment": "Electrical Field Equipment without Taghierarchy",
+            "TOP_TAG": "0"
+        },
+        {
+            "@id": "akso:WIST/tag?tagNo=20",
+            "TagNumber": {"@id": "tag:WIST/20"},
+            "@type": "mel:System",
+            "rdfs:label": "2",
+            "rdfs:comment": "Separation and Stabilisation FunctionalSystems",
+            "TOP_TAG": "1"
+        },
+        {
+            "@id": "akso:tag/20AB001",
+            "TagNumber": {"@id": "tag:WIST/20AB001"},
+            "@type": "mel:MainEquipment",
+            "rdfs:label": "20AB001",
+            "Discipline": {"@id": "eqn:Discipline/W"},
+            "TOP_TAG": "0",
+            "Contractor": {"@id": "eqn:Contractor/WIST/AS"},
+            "FunctionalSystem": {"@id": "eqn:FunctionalSystem/WIST/ENG"},
+            "LENGTH": 123.45,
+            "WIDTH": 14.7,
+            "pca:hasPhysicalQuantity": [
+                {
+                    "@id": "akso:qualityID1",
+                    "rdfs:label": "Length",
+                    "@type": "pca:PCA_100003585",
+                    "pca:qualityQuantifiedAs": {
+                        "@id": "akso:quantityID1",
+                        "rdfs:label": "123.45 m",
+                        "lis14:datumUOM": {"@id": "pca:PCA_100003699"},
+                        "lis14:datumValue": 123.45
+                    }
+                },
+                {
+                    "@id": "akso:qualityID2",
+                    "rdfs:label": "Width",
+                    "@type": [
+                        "pca:PCA_100003585",
+                        "commonlib:Width"
+                    ],
+                    "pca:qualityQuantifiedAs": {
+                        "@id": "akso:quantityID2",
+                        "rdfs:label": "14.7 m",
+                        "lis14:datumUOM": {"@id": "pca:PCA_100003699"},
+                        "lis14:datumValue": 14.7
+                    }
+                }
+            ],
+            "HEIGHT": "124"
+        },
+        {
+            "@id": "akso:tag/00",
+            "TagNumber": {"@id": "tag:WIST/00"},
+            "@type": "mel:System",
+            "TOP_TAG": "0"
+        }
+    ]
+}
