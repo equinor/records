@@ -9,7 +9,7 @@ using VDS.RDF.Writing;
 
 namespace Records.Tests;
 
-public class RecordTests
+public class ImmutableRecordTests
 {
     [Fact]
     public void Record_Has_Provenance()
