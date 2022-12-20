@@ -19,6 +19,7 @@ public class Record : IEquatable<Record>
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public IEnumerable<string>? Replaces { get; private set; }
+    public string? IsSubRecordOf { get; set; }
 
     public Record(string rdfString) => LoadFromString(rdfString);
 
@@ -44,6 +45,12 @@ public class Record : IEquatable<Record>
 
         var replaces = QuadsWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object).ToArray();
         Replaces = replaces;
+
+        var subRecordOf = QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).ToArray();
+        if (subRecordOf.Length > 1)
+            throw new RecordException("A record can at most be the subrecord of one other record.");
+
+        IsSubRecordOf = subRecordOf.FirstOrDefault();
 
         _nQuadsString = ToString<NQuadsRecordWriter>();
     }
