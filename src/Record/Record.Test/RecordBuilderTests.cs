@@ -10,24 +10,22 @@ public class RecordBuilderTests
     public void Can_Add_Scopes()
     {
         var id = TestData.CreateRecordId("0");
-        var scope0 = TestData.CreateRecordIri("scope", "0");
-        var scope1 = TestData.CreateRecordIri("scope", "1");
-        var desc0 = TestData.CreateRecordIri("described", "0");
-        var desc1 = TestData.CreateRecordIri("described", "1");
+        var scopes = TestData.CreateObjectList(2, "scope");
+        var describes = TestData.CreateObjectList(2, "describes");
 
         var record = new RecordBuilder()
-            .WithScopes(scope0, scope1)
-            .WithDescribes(desc0, desc1)
+            .WithScopes(scopes)
+            .WithDescribes(describes)
             .WithId(id)
             .Build();
 
         record.Should().NotBeNull();
 
-        record.Scopes.Should().Contain(scope0);
-        record.Scopes.Should().Contain(scope1);
+        record.Scopes.Should().Contain(scopes.First());
+        record.Scopes.Should().Contain(scopes.Last());
 
-        record.Describes.Should().Contain(desc0);
-        record.Describes.Should().Contain(desc1);
+        record.Describes.Should().Contain(describes.First());
+        record.Describes.Should().Contain(describes.Last());
 
         record.Id.Should().Be(id);
     }

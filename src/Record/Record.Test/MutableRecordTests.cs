@@ -6,7 +6,7 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Initialise_From_ImmutableRecord()
     {
-        var original = "https://ssi.example.com/record/original";
+        var original = TestData.CreateRecordId("original");
 
         var immutable = TestData.ValidRecord();
         var record = new Mutable.Record(immutable)
@@ -23,8 +23,8 @@ public class MutableRecordTests
     public void MutableRecord_Can_Be_Set_Immutable()
     {
         var id = TestData.CreateRecordId("1");
-        var scope = TestData.CreateRecordIri("scope", "0");
-        var describes = TestData.CreateRecordIri("describes", "0");
+        var scope = TestData.CreateObjectList(5, "scope").ToArray();
+        var describes = TestData.CreateObjectList(5, "describes").ToArray();
 
         var mutable = new Mutable.Record(id)
             .WithAdditionalScopes(scope)

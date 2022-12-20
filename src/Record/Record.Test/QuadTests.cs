@@ -10,10 +10,7 @@ public class QuadTests
     [Fact]
     public void QuadBuilder()
     {
-        var subject = TestData.CreateRecordSubject("1");
-        var predicate = TestData.CreateRecordPredicate("1");
-        var @object = TestData.CreateRecordObject("1");
-        var graphLabel = TestData.CreateRecordId("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
 
         var quad = Quad.CreateBuilder()
             .WithSubject(subject)
@@ -24,19 +21,16 @@ public class QuadTests
 
         var (s, p, o, g) = quad;
 
-        s.Should().Be("https://ssi.example.com/subject/1");
-        p.Should().Be("https://ssi.example.com/predicate/1");
-        o.Should().Be("https://ssi.example.com/object/1");
-        g.Should().Be("https://ssi.example.com/record/1");
+        s.Should().Be(subject);
+        p.Should().Be(predicate);
+        o.Should().Be(@object);
+        g.Should().Be(graphLabel);
     }
 
     [Fact]
     public void Quad_Deconstruction()
     {
-        var subject = TestData.CreateRecordSubject("1");
-        var predicate = TestData.CreateRecordPredicate("1");
-        var @object = TestData.CreateRecordObject("1");
-        var graphLabel = TestData.CreateRecordId("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
 
         var quad = Quad.CreateSafe(subject, predicate, @object, graphLabel);
 
@@ -51,10 +45,7 @@ public class QuadTests
     [Fact]
     public void Quad_Stringified()
     {
-        var subject = TestData.CreateRecordSubject("1");
-        var predicate = TestData.CreateRecordPredicate("1");
-        var @object = TestData.CreateRecordObject("1");
-        var graphLabel = TestData.CreateRecordId("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
 
         var quad = Quad.CreateSafe(subject, predicate, @object, graphLabel);
         var result = quad.ToString();
@@ -65,10 +56,7 @@ public class QuadTests
     [Fact]
     public void Quad_From_Triple()
     {
-        var subject = TestData.CreateRecordSubject("1");
-        var predicate = TestData.CreateRecordPredicate("1");
-        var @object = TestData.CreateRecordObject("1");
-        var graphLabel = TestData.CreateRecordId("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
 
         var graph = new Graph();
         graph.BaseUri = new Uri(graphLabel);
@@ -91,10 +79,7 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Can_Build_From_Triple()
     {
-        var subject = TestData.CreateRecordSubject("0");
-        var predicate = TestData.CreateRecordPredicate("0");
-        var @object = TestData.CreateRecordObject("0");
-        var graphLabel = TestData.CreateRecordId("0");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
 
         var quad = Quad.CreateBuilder()
             .WithStatement($"<{subject}> <{predicate}> <{@object}> .")
@@ -120,18 +105,17 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Fluent()
     {
-        var graph = TestData.CreateRecordId("0");
-        var (subject, predicate, @object) = TestData.CreateRecordTriple("0");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
 
         var quad = new QuadBuilder()
-            .WithGraphLabel(graph)
+            .WithGraphLabel(graphLabel)
             .WithSubject(subject)
             .WithPredicate(predicate)
             .WithObject(@object)
             .Build();
 
         quad.Should().BeOfType<SafeQuad>();
-        quad.GraphLabel.Should().Be(graph);
+        quad.GraphLabel.Should().Be(graphLabel);
         quad.Subject.Should().Be(subject);
         quad.Predicate.Should().Be(predicate);
         quad.Object.Should().Be(@object);
@@ -140,12 +124,12 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Fluent_Multiple()
     {
-        var graph = TestData.CreateRecordId("0");
-        var (subject, predicate, @object) = TestData.CreateRecordTriple("0");
-        var (_, _, @object1) = TestData.CreateRecordTriple("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+
+        var @object1 = TestData.CreateRecordObject("1");
 
         var builder = new QuadBuilder()
-            .WithGraphLabel(graph)
+            .WithGraphLabel(graphLabel)
             .WithSubject(subject)
             .WithPredicate(predicate)
             .WithObject(@object);
@@ -156,13 +140,13 @@ public class QuadTests
         var quad1 = builder1.Build();
 
         quad.Should().BeOfType<SafeQuad>();
-        quad.GraphLabel.Should().Be(graph);
+        quad.GraphLabel.Should().Be(graphLabel);
         quad.Subject.Should().Be(subject);
         quad.Predicate.Should().Be(predicate);
         quad.Object.Should().Be(@object);
 
         quad1.Should().BeOfType<SafeQuad>();
-        quad1.GraphLabel.Should().Be(graph);
+        quad1.GraphLabel.Should().Be(graphLabel);
         quad1.Subject.Should().Be(subject);
         quad1.Predicate.Should().Be(predicate);
         quad1.Object.Should().Be(@object1);
@@ -200,20 +184,19 @@ public class QuadTests
     [Fact]
     public void SafeQuad_Can_Be_Cloned_With_New_Value()
     {
-        var id = TestData.CreateRecordId("0");
-        var (subject, predicate, @object) = TestData.CreateRecordTriple("0");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("0");
 
         var quad = Quad.CreateBuilder()
             .WithSubject(subject)
             .WithPredicate(predicate)
             .WithObject(@object)
-            .WithGraphLabel(id)
+            .WithGraphLabel(graphLabel)
             .Build();
 
         quad.Subject.Should().Be(subject);
         quad.Predicate.Should().Be(predicate);
         quad.Object.Should().Be(@object);
-        quad.GraphLabel.Should().Be(id);
+        quad.GraphLabel.Should().Be(graphLabel);
 
         var newId = TestData.CreateRecordId("1");
         var newQuad = quad.WithGraphLabel(newId);
@@ -224,7 +207,7 @@ public class QuadTests
         newQuad.GraphLabel.Should().Be(newId);
 
         quad.Should().NotBe(newQuad);
-        quad.GraphLabel.Should().Be(id);
+        quad.GraphLabel.Should().Be(graphLabel);
     }
 
     [Fact]
