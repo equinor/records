@@ -299,7 +299,9 @@ rec:RecordShape
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
         recordQuads.Add(typeQuad);
 
-        recordQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+        if(_storage.IsSubRecordOf != null)
+            recordQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+
         recordQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
         recordQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
         recordQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
