@@ -131,7 +131,7 @@ public record Record(string Id)
         this with
         {
             QuadStrings = QuadStrings
-                .Concat(new []{ SubRecordQuad(isSubRecordof) })
+                .Concat(new[] { SubRecordQuad(isSubRecordof) })
                 .ToList()
         };
 

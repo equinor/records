@@ -232,7 +232,7 @@ public class RecordBuilderTests
     {
         var id = QuadTests.CreateRecordId("1");
         var scope = QuadTests.CreateRecordIri("scope", "1");
-        var describes  = QuadTests.CreateRecordIri("describes", "1");
+        var describes = QuadTests.CreateRecordIri("describes", "1");
 
         var superRecordId = QuadTests.CreateRecordId("super");
 

@@ -128,6 +128,8 @@ public class MutableRecordTests
         immutableBuild.Should()
             .Throw<RecordException>()
             .WithMessage("Failure in record. A record can at most be the subrecord of one other record.");
+
+
     }
 }
 
