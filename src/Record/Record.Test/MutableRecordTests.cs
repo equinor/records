@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Records.Exceptions;
 
 namespace Records.Tests;
 public class MutableRecordTests
@@ -8,7 +9,7 @@ public class MutableRecordTests
     {
         var original = "https://ssi.example.com/record/original";
 
-        var immutable = new Immutable.Record(RecordTests.rdf);
+        var immutable = new Immutable.Record(ImmutableRecordTests.rdf);
         var record = new Mutable.Record(immutable)
             .WithAdditionalReplaces(original);
 
@@ -89,6 +90,44 @@ public class MutableRecordTests
         var record = mutable.ToImmutable();
         record.Should().NotBeNull();
         record.Id.Should().Be(id);
+    }
+
+    [Fact]
+    public void MutableRecord_Can_Add_IsSubRecordOf()
+    {
+        var superRecord = QuadTests.CreateRecordId("super");
+        var immutable = new Immutable.Record(ImmutableRecordTests.rdf3);
+
+        var record = default(Immutable.Record);
+
+        var process = () => record = new Mutable.Record(immutable)
+            .WithIsSubRecordof(superRecord)
+            .ToImmutable();
+
+        process.Should().NotThrow();
+        record.Should().NotBeNull();
+
+        record.IsSubRecordOf.Should().Be(superRecord);
+    }
+
+    [Fact]
+    public void MutableRecord_Does_Not_Check_Multiple_SubRecordOf()
+    {
+        var superRecord = QuadTests.CreateRecordId("super");
+        var immutable = new Immutable.Record(ImmutableRecordTests.rdf4);
+
+        var record = default(Mutable.Record);
+
+        var mutableBuild = () => record = new Mutable.Record(immutable)
+            .WithIsSubRecordof(superRecord);
+
+        mutableBuild.Should().NotThrow();
+        record.Should().NotBeNull();
+
+        var immutableBuild = () => record.ToImmutable();
+        immutableBuild.Should()
+            .Throw<RecordException>()
+            .WithMessage("Failure in record. A record can at most be the subrecord of one other record.");
     }
 }
 

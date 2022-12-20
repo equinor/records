@@ -151,8 +151,8 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Can_Validate()
     {
-        var record1 = new Record(RecordTests.RandomRecord(id: "0", numberDescribes: 3, numberScopes: 1));
-        var record2 = new Record(RecordTests.RandomRecord(id: "1", numberDescribes: 2, numberScopes: 1));
+        var record1 = new Record(ImmutableRecordTests.RandomRecord(id: "0", numberDescribes: 3, numberScopes: 1));
+        var record2 = new Record(ImmutableRecordTests.RandomRecord(id: "1", numberDescribes: 2, numberScopes: 1));
 
         var repo = new RecordRepository(new[] { record1, record2 });
         var result = repo.Validate();
@@ -163,8 +163,8 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Fails_Validation()
     {
-        var record1 = new Record(RecordTests.RandomRecord(id: "1", numberDescribes: 2, numberScopes: 1));
-        var record2 = new Record(RecordTests.RandomRecord(id: "2", numberDescribes: 2, numberScopes: 1));
+        var record1 = new Record(ImmutableRecordTests.RandomRecord(id: "1", numberDescribes: 2, numberScopes: 1));
+        var record2 = new Record(ImmutableRecordTests.RandomRecord(id: "2", numberDescribes: 2, numberScopes: 1));
 
         var repo = new RecordRepository(new[] { record1, record2 });
         var result = repo.Validate();
@@ -175,7 +175,7 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Can_Retrieve_Record()
     {
-        var record = new Record(RecordTests.RandomRecord("0", 2, 1));
+        var record = new Record(ImmutableRecordTests.RandomRecord("0", 2, 1));
         var repo = new RecordRepository(record);
 
         var success = repo.TryGetRecord(record.Id, out var result);
@@ -186,7 +186,7 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Cannot_Find_Unknown_Record()
     {
-        var record = new Record(RecordTests.RandomRecord("0", 2, 1));
+        var record = new Record(ImmutableRecordTests.RandomRecord("0", 2, 1));
         var repo = new RecordRepository(record);
 
         var success = repo.TryGetRecord("https://ssi.example.com/invalid/id", out var result);
@@ -202,7 +202,7 @@ public class RecordRepositoryTests
 
         for (var i = 0; i < numberOfRecord; i++)
         {
-            var record = new Record(RecordTests.RandomRecord(i.ToString(), 5, 5));
+            var record = new Record(ImmutableRecordTests.RandomRecord(i.ToString(), 5, 5));
             repo.Add(record);
         }
 
@@ -231,7 +231,7 @@ public class RecordRepositoryTests
         for (var i = 0; i < totalRecords; i++)
         {
             var numberOfAttributes = (i < (totalRecords / 2)) ? halfRecords : fullRecords;
-            var record = new Record(RecordTests.RandomRecord(i.ToString(), numberOfAttributes, numberOfAttributes));
+            var record = new Record(ImmutableRecordTests.RandomRecord(i.ToString(), numberOfAttributes, numberOfAttributes));
             repo.Add(record);
         }
 
@@ -250,7 +250,7 @@ public class RecordRepositoryTests
 
         for (var i = 0; i < numberOfRecord; i++)
         {
-            var record = new Record(RecordTests.RandomRecord(i.ToString(), 5, 5));
+            var record = new Record(ImmutableRecordTests.RandomRecord(i.ToString(), 5, 5));
             repo.Add(record);
         }
 
