@@ -9,11 +9,11 @@ public class RecordBuilderTests
     [Fact]
     public void Can_Add_Scopes()
     {
-        var id = QuadTests.CreateRecordId("0");
-        var scope0 = QuadTests.CreateRecordIri("scope", "0");
-        var scope1 = QuadTests.CreateRecordIri("scope", "1");
-        var desc0 = QuadTests.CreateRecordIri("described", "0");
-        var desc1 = QuadTests.CreateRecordIri("described", "1");
+        var id = TestData.CreateRecordId("0");
+        var scope0 = TestData.CreateRecordIri("scope", "0");
+        var scope1 = TestData.CreateRecordIri("scope", "1");
+        var desc0 = TestData.CreateRecordIri("described", "0");
+        var desc1 = TestData.CreateRecordIri("described", "1");
 
         var record = new RecordBuilder()
             .WithScopes(scope0, scope1)
@@ -35,10 +35,10 @@ public class RecordBuilderTests
     [Fact]
     public void RecordBuilder_With()
     {
-        var id0 = QuadTests.CreateRecordId("0");
+        var id0 = TestData.CreateRecordId("0");
 
-        var scope0 = QuadTests.CreateRecordIri("scope", "0");
-        var scope1 = QuadTests.CreateRecordIri("scope", "1");
+        var scope0 = TestData.CreateRecordIri("scope", "0");
+        var scope1 = TestData.CreateRecordIri("scope", "1");
 
         var builder1 = new RecordBuilder()
             .WithId(id0)
@@ -57,17 +57,17 @@ public class RecordBuilderTests
     [Fact]
     public void RecordBuilder_Fluent()
     {
-        var id0 = QuadTests.CreateRecordId("0");
-        var id1 = QuadTests.CreateRecordId("1");
+        var id0 = TestData.CreateRecordId("0");
+        var id1 = TestData.CreateRecordId("1");
 
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var desc = QuadTests.CreateRecordIri("describes", "0");
+        var scope = TestData.CreateRecordIri("scope", "0");
+        var desc = TestData.CreateRecordIri("describes", "0");
 
         var quads = new List<SafeQuad>();
         var numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = QuadTests.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id1);
             quads.Add(quad);
         }
@@ -90,17 +90,17 @@ public class RecordBuilderTests
     [Fact]
     public void RecordBuilder_Fails_With_No_Scopes()
     {
-        var id0 = QuadTests.CreateRecordId("0");
-        var id1 = QuadTests.CreateRecordId("1");
+        var id0 = TestData.CreateRecordId("0");
+        var id1 = TestData.CreateRecordId("1");
 
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var desc = QuadTests.CreateRecordIri("describes", "0");
+        var scope = TestData.CreateRecordIri("scope", "0");
+        var desc = TestData.CreateRecordIri("describes", "0");
 
         var quads = new List<SafeQuad>();
         var numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = QuadTests.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id1);
             quads.Add(quad);
         }
@@ -121,16 +121,16 @@ public class RecordBuilderTests
     {
         var graph = new Graph();
 
-        var id0 = QuadTests.CreateRecordId("0");
+        var id0 = TestData.CreateRecordId("0");
         graph.BaseUri = new Uri(id0);
 
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var desc = QuadTests.CreateRecordIri("describes", "0");
+        var scope = TestData.CreateRecordIri("scope", "0");
+        var desc = TestData.CreateRecordIri("describes", "0");
 
         var numberOfTriples = 10;
         for (var i = 0; i < numberOfTriples; i++)
         {
-            var (subject, predicate, @object) = QuadTests.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
             var sub = graph.CreateUriNode(new Uri(subject));
             var pre = graph.CreateUriNode(new Uri(predicate));
             var obj = graph.CreateUriNode(new Uri(@object));
@@ -150,7 +150,7 @@ public class RecordBuilderTests
         record.Should().NotBeNull();
         for (var i = 0; i < numberOfTriples; i++)
         {
-            var (subject, predicate, @object) = QuadTests.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id0);
             record.ContainsQuad(quad).Should().BeTrue();
         }
@@ -164,9 +164,9 @@ public class RecordBuilderTests
 <http://example.com/object/version/1234/5678/738499902> <https://rdf.equinor.com/ontology/bravo-api#attachmentName> ""/scopeId=7f7bcbf0-b166-483e-8fd0-065991978824/year=2022/month=08/day=09/hour=13/minute=18/revisjon.png"" .
 <http://example.com/object/version/1234/5678/738499902> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Location> .
 ";
-        var (s, p, o, g) = QuadTests.CreateRecordQuad("0");
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var desc = QuadTests.CreateRecordIri("describes", "0");
+        var (s, p, o, g) = TestData.CreateRecordQuad("0");
+        var scope = TestData.CreateRecordIri("scope", "0");
+        var desc = TestData.CreateRecordIri("describes", "0");
 
         var record = new RecordBuilder()
             .WithContent(rdfString)
@@ -186,16 +186,16 @@ public class RecordBuilderTests
     [Fact]
     public void RecordBuilder_Can_Replace_Content()
     {
-        var id1 = QuadTests.CreateRecordId("1");
+        var id1 = TestData.CreateRecordId("1");
 
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var desc = QuadTests.CreateRecordIri("describes", "0");
+        var scope = TestData.CreateRecordIri("scope", "0");
+        var desc = TestData.CreateRecordIri("describes", "0");
 
         var quads = new List<SafeQuad>();
         const int numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = QuadTests.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id1);
             quads.Add(quad);
         }

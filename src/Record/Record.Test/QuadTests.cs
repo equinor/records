@@ -10,10 +10,10 @@ public class QuadTests
     [Fact]
     public void QuadBuilder()
     {
-        var subject = CreateRecordSubject("1");
-        var predicate = CreateRecordPredicate("1");
-        var @object = CreateRecordObject("1");
-        var graphLabel = CreateRecordId("1");
+        var subject = TestData.CreateRecordSubject("1");
+        var predicate = TestData.CreateRecordPredicate("1");
+        var @object = TestData.CreateRecordObject("1");
+        var graphLabel = TestData.CreateRecordId("1");
 
         var quad = Quad.CreateBuilder()
             .WithSubject(subject)
@@ -33,10 +33,10 @@ public class QuadTests
     [Fact]
     public void Quad_Deconstruction()
     {
-        var subject = CreateRecordSubject("1");
-        var predicate = CreateRecordPredicate("1");
-        var @object = CreateRecordObject("1");
-        var graphLabel = CreateRecordId("1");
+        var subject = TestData.CreateRecordSubject("1");
+        var predicate = TestData.CreateRecordPredicate("1");
+        var @object = TestData.CreateRecordObject("1");
+        var graphLabel = TestData.CreateRecordId("1");
 
         var quad = Quad.CreateSafe(subject, predicate, @object, graphLabel);
 
@@ -51,10 +51,10 @@ public class QuadTests
     [Fact]
     public void Quad_Stringified()
     {
-        var subject = CreateRecordSubject("1");
-        var predicate = CreateRecordPredicate("1");
-        var @object = CreateRecordObject("1");
-        var graphLabel = CreateRecordId("1");
+        var subject = TestData.CreateRecordSubject("1");
+        var predicate = TestData.CreateRecordPredicate("1");
+        var @object = TestData.CreateRecordObject("1");
+        var graphLabel = TestData.CreateRecordId("1");
 
         var quad = Quad.CreateSafe(subject, predicate, @object, graphLabel);
         var result = quad.ToString();
@@ -65,10 +65,10 @@ public class QuadTests
     [Fact]
     public void Quad_From_Triple()
     {
-        var subject = CreateRecordSubject("1");
-        var predicate = CreateRecordPredicate("1");
-        var @object = CreateRecordObject("1");
-        var graphLabel = CreateRecordId("1");
+        var subject = TestData.CreateRecordSubject("1");
+        var predicate = TestData.CreateRecordPredicate("1");
+        var @object = TestData.CreateRecordObject("1");
+        var graphLabel = TestData.CreateRecordId("1");
 
         var graph = new Graph();
         graph.BaseUri = new Uri(graphLabel);
@@ -91,10 +91,10 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Can_Build_From_Triple()
     {
-        var subject = CreateRecordSubject("0");
-        var predicate = CreateRecordPredicate("0");
-        var @object = CreateRecordObject("0");
-        var graphLabel = CreateRecordId("0");
+        var subject = TestData.CreateRecordSubject("0");
+        var predicate = TestData.CreateRecordPredicate("0");
+        var @object = TestData.CreateRecordObject("0");
+        var graphLabel = TestData.CreateRecordId("0");
 
         var quad = Quad.CreateBuilder()
             .WithStatement($"<{subject}> <{predicate}> <{@object}> .")
@@ -120,8 +120,8 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Fluent()
     {
-        var graph = CreateRecordId("0");
-        var (subject, predicate, @object) = CreateRecordTriple("0");
+        var graph = TestData.CreateRecordId("0");
+        var (subject, predicate, @object) = TestData.CreateRecordTriple("0");
 
         var quad = new QuadBuilder()
             .WithGraphLabel(graph)
@@ -140,9 +140,9 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Fluent_Multiple()
     {
-        var graph = CreateRecordId("0");
-        var (subject, predicate, @object) = CreateRecordTriple("0");
-        var (_, _, @object1) = CreateRecordTriple("1");
+        var graph = TestData.CreateRecordId("0");
+        var (subject, predicate, @object) = TestData.CreateRecordTriple("0");
+        var (_, _, @object1) = TestData.CreateRecordTriple("1");
 
         var builder = new QuadBuilder()
             .WithGraphLabel(graph)
@@ -190,7 +190,7 @@ public class QuadTests
         var result = () =>
         {
             var quad = new QuadBuilder()
-                .WithGraphLabel(CreateRecordId("0"))
+                .WithGraphLabel(TestData.CreateRecordId("0"))
                 .Build();
         };
 
@@ -200,8 +200,8 @@ public class QuadTests
     [Fact]
     public void SafeQuad_Can_Be_Cloned_With_New_Value()
     {
-        var id = CreateRecordId("0");
-        var (subject, predicate, @object) = CreateRecordTriple("0");
+        var id = TestData.CreateRecordId("0");
+        var (subject, predicate, @object) = TestData.CreateRecordTriple("0");
 
         var quad = Quad.CreateBuilder()
             .WithSubject(subject)
@@ -215,7 +215,7 @@ public class QuadTests
         quad.Object.Should().Be(@object);
         quad.GraphLabel.Should().Be(id);
 
-        var newId = CreateRecordId("1");
+        var newId = TestData.CreateRecordId("1");
         var newQuad = quad.WithGraphLabel(newId);
 
         newQuad.Subject.Should().Be(subject);
@@ -230,7 +230,7 @@ public class QuadTests
     [Fact]
     public void UnsafeQuad_Can_Be_Cloned_With_New_Value()
     {
-        var (subject, predicate, @object, id) = CreateRecordQuad("0");
+        var (subject, predicate, @object, id) = TestData.CreateRecordQuad("0");
 
         var unsafeQuad = Quad.CreateUnsafe(subject, predicate, @object, id);
 
@@ -239,7 +239,7 @@ public class QuadTests
         unsafeQuad.Object.Should().Be(@object);
         unsafeQuad.GraphLabel.Should().Be(id);
 
-        var newId = CreateRecordId("1");
+        var newId = TestData.CreateRecordId("1");
         var newUnsafeQuad = unsafeQuad.WithGraphLabel(newId);
 
         unsafeQuad.Should().NotBe(newUnsafeQuad);
@@ -250,22 +250,4 @@ public class QuadTests
         newUnsafeQuad.Predicate.Should().Be(predicate);
         newUnsafeQuad.Object.Should().Be(@object);
     }
-
-    public static string CreateRecordId(string id) => $"https://ssi.example.com/record/{id}";
-    public static string CreateRecordSubject(string subject) => CreateRecordIri("subject", subject);
-    public static string CreateRecordPredicate(string predicate) => CreateRecordIri("predicate", predicate);
-    public static string CreateRecordObject(string @object) => CreateRecordIri("object", @object);
-    public static string CreateRecordBlankNode(string blankNode) => $"_:{blankNode}";
-
-    public static (string subject, string predicate, string @object) CreateRecordTriple(string id)
-    {
-        return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id));
-    }
-
-    public static (string subject, string predicate, string @object, string graphLabel) CreateRecordQuad(string id)
-    {
-        return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id), CreateRecordId(id));
-    }
-
-    public static string CreateRecordIri(string subset, string id) => $"https://ssi.example.com/{subset}/{id}";
 }

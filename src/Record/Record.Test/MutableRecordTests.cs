@@ -8,7 +8,7 @@ public class MutableRecordTests
     {
         var original = "https://ssi.example.com/record/original";
 
-        var immutable = new Immutable.Record(RecordTests.rdf);
+        var immutable = TestData.ValidRecord();
         var record = new Mutable.Record(immutable)
             .WithAdditionalReplaces(original);
 
@@ -22,9 +22,9 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Be_Set_Immutable()
     {
-        var id = QuadTests.CreateRecordId("1");
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var describes = QuadTests.CreateRecordIri("describes", "0");
+        var id = TestData.CreateRecordId("1");
+        var scope = TestData.CreateRecordIri("scope", "0");
+        var describes = TestData.CreateRecordIri("describes", "0");
 
         var mutable = new Mutable.Record(id)
             .WithAdditionalScopes(scope)
@@ -37,11 +37,11 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Receive_TripleStrings()
     {
-        var id = QuadTests.CreateRecordId("mutable");
+        var id = TestData.CreateRecordId("mutable");
 
-        var (s, p, o) = QuadTests.CreateRecordTriple("mute");
-        var scope = QuadTests.CreateRecordIri("scope", "1");
-        var describes = QuadTests.CreateRecordIri("describes", "1");
+        var (s, p, o) = TestData.CreateRecordTriple("mute");
+        var scope = TestData.CreateRecordIri("scope", "1");
+        var describes = TestData.CreateRecordIri("describes", "1");
 
         var mutableRecord = new Mutable.Record(id)
             .WithAdditionalTriples($"<{s}> <{p}> <{o}> .")
@@ -50,7 +50,7 @@ public class MutableRecordTests
             .WithAdditionalScopes(scope)
             .WithAdditionalDescribes(describes);
 
-        var (s2, p2, o2) = QuadTests.CreateRecordTriple("extra");
+        var (s2, p2, o2) = TestData.CreateRecordTriple("extra");
         mutableRecord.AddTriples($"<{s2}> <{p2}> <{o2}> .");
         mutableRecord.Id.Should().Be(id);
         mutableRecord.QuadStrings.Should().Contain($"<{s}> <{p}> <{o}> <{id}> .");
@@ -65,20 +65,20 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Receive_SafeQuads()
     {
-        var id = QuadTests.CreateRecordId("mute");
+        var id = TestData.CreateRecordId("mute");
         var mutable = new Mutable.Record(id);
 
         var quadNum = 10;
         for (var i = 0; i < quadNum; i++)
         {
-            var (s, p, o) = QuadTests.CreateRecordTriple(i.ToString());
+            var (s, p, o) = TestData.CreateRecordTriple(i.ToString());
             var quad = Quad.CreateSafe(s, p, o, id);
             mutable.AddQuads(quad);
         }
 
         for (var i = 0; i < quadNum; i++)
         {
-            var (s, p, o) = QuadTests.CreateRecordTriple(i.ToString());
+            var (s, p, o) = TestData.CreateRecordTriple(i.ToString());
             var quad = Quad.CreateSafe(s, p, o, id);
             mutable.QuadStrings.Should().Contain(quad.ToString());
         }
