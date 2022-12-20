@@ -5,97 +5,12 @@ namespace Records.Tests;
 
 public class RecordRepositoryTests
 {
-    private const string rdf = @"
-{
-    ""@context"": {
-        ""@version"": 1.1,
-        ""@vocab"": ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""@base"":  ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""record"": ""https://rdf.equinor.com/ontology/record/"",
-        ""eqn"": ""https://rdf.equinor.com/fam/"",
-        ""akso"": ""https://akersolutions.com/data/"",
-        ""record:isInScope"": { ""@type"": ""@id"" },
-        ""record:describes"": { ""@type"": ""@id"" } 
-    },
-    ""@id"": ""akso:RecordID123"",
-    ""@graph"": [
-        {
-            ""@id"": ""akso:RecordID123"",
-            ""@type"": ""record:Record"",
-            ""record:replaces"": ""https://ssi.example.com/record/0"",
-            ""record:isInScope"": [
-                ""eqn:TestScope1"",
-                ""eqn:TestScope2""
-            ],
-            ""record:describes"": [
-                ""eqn:Document/Wist/C277-AS-W-LA-00001.F01""
-            ]
-        },
-        {
-            ""@id"": ""eqn:Document/Wist/C277-AS-W-LA-00001.F01"",
-            ""@type"": ""eqn:Revision"",
-            ""RevisionSequence"": ""01"",
-            ""Revision"": ""F01"",
-            ""ReasonForIssue"": ""Revision text"",
-            ""Author"": ""Kari Nordkvinne"",
-            ""CheckedBy"": ""NN"",
-            ""DisciplineApprovedBy"": ""NM""
-        }
-    ]
-}
-        ";
-
-    private const string rdf2 = @"
-{
-    ""@context"": {
-        ""@version"": 1.1,
-        ""@vocab"": ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""@base"":  ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""record"": ""https://rdf.equinor.com/ontology/record/"",
-        ""eqn"": ""https://rdf.equinor.com/fam/"",
-        ""akso"": ""https://akersolutions.com/data/""
-    },
-    ""@id"": ""akso:RecordID123"",
-    ""@graph"": [
-        {
-            ""@id"": ""akso:RecordID123"",
-            ""record:replaces"": ""https://ssi.example.com/record/0"",
-            ""record:isInScope"": [
-                ""eqn:TestScope1"",
-                ""eqn:TestScope2""
-            ],
-            ""record:describes"": [
-                ""eqn:Document/Wist/C277-AS-W-LA-00001.F01""
-            ]
-        },
-        {
-            ""@id"": ""eqn:Document/WIST/C277-AS-W-LA-00001.F01"",
-            ""@type"": ""eqn:Revision"",
-            ""RevisionSequence"": ""01"",
-            ""Revision"": ""F01"",
-            ""ReasonForIssue"": ""Revision text"",
-            ""Author"": ""Kari Nordkvinne"",
-            ""CheckedBy"": ""NN"",
-            ""DisciplineApprovedBy"": ""NM""
-        }
-    ]
-}
-        ";
-
-    private const string rdf3 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
-
     [Fact]
     public void RecordRepository_Can_Add_Records()
     {
         var repo = new RecordRepository();
-        var record1 = new Record(rdf);
-        var record2 = new Record(rdf3);
+        var record1 = TestData.ValidRecord(TestData.CreateRecordId("1"));
+        var record2 = TestData.ValidRecord(TestData.CreateRecordId("2"));
 
         repo.Add(record2);
         repo.Add(record1);
@@ -108,8 +23,8 @@ public class RecordRepositoryTests
     public void RecordRepository_Can_Remove_Records()
     {
         var repo = new RecordRepository();
-        var record1 = new Record(rdf);
-        var record2 = new Record(rdf3);
+        var record1 = TestData.ValidRecord(TestData.CreateRecordId("1"));
+        var record2 = TestData.ValidRecord(TestData.CreateRecordId("2"));
 
         repo.Add(record2);
         repo.Add(record1);
@@ -123,24 +38,10 @@ public class RecordRepositoryTests
     }
 
     [Fact]
-    public void RecordRepository_Is_Serialisable()
-    {
-        var repo = new RecordRepository();
-        var record1 = new Record(rdf);
-        var record2 = new Record(rdf3);
-
-        repo.Add(record2);
-        repo.Add(record1);
-
-        var result = repo.ToString().Split("\n").Length;
-        result.Should().Be(20);
-    }
-
-    [Fact]
     public void RecordRepository_Can_Be_Initialised_With_Collection()
     {
-        var record1 = new Record(rdf);
-        var record2 = new Record(rdf3);
+        var record1 = TestData.ValidRecord(TestData.CreateRecordId("1"));
+        var record2 = TestData.ValidRecord(TestData.CreateRecordId("2"));
 
         var repo = new RecordRepository(new[] { record1, record2 });
         var repoCount = repo.Count;
@@ -151,9 +52,9 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Can_Validate()
     {
-        var record1 = new Record(RecordTests.RandomRecord(id: "0", numberDescribes: 3, numberScopes: 1));
-        var record2 = new Record(RecordTests.RandomRecord(id: "1", numberDescribes: 2, numberScopes: 1));
-
+        var record1 = TestData.ValidRecord(TestData.CreateRecordId("1"), 3, 1);
+        var record2 = TestData.ValidRecord(TestData.CreateRecordId("2"), 2, 1);
+        
         var repo = new RecordRepository(new[] { record1, record2 });
         var result = repo.Validate();
 
@@ -163,8 +64,8 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Fails_Validation()
     {
-        var record1 = new Record(RecordTests.RandomRecord(id: "1", numberDescribes: 2, numberScopes: 1));
-        var record2 = new Record(RecordTests.RandomRecord(id: "2", numberDescribes: 2, numberScopes: 1));
+        var record1 = TestData.ValidRecord(TestData.CreateRecordId("1"));
+        var record2 = TestData.ValidRecord(TestData.CreateRecordId("2"));
 
         var repo = new RecordRepository(new[] { record1, record2 });
         var result = repo.Validate();
@@ -175,7 +76,8 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Can_Retrieve_Record()
     {
-        var record = new Record(RecordTests.RandomRecord("0", 2, 1));
+        var record = TestData.ValidRecord();
+
         var repo = new RecordRepository(record);
 
         var success = repo.TryGetRecord(record.Id, out var result);
@@ -186,7 +88,7 @@ public class RecordRepositoryTests
     [Fact]
     public void RecordRepository_Cannot_Find_Unknown_Record()
     {
-        var record = new Record(RecordTests.RandomRecord("0", 2, 1));
+        var record = TestData.ValidRecord();
         var repo = new RecordRepository(record);
 
         var success = repo.TryGetRecord("https://ssi.example.com/invalid/id", out var result);
@@ -202,7 +104,7 @@ public class RecordRepositoryTests
 
         for (var i = 0; i < numberOfRecord; i++)
         {
-            var record = new Record(RecordTests.RandomRecord(i.ToString(), 5, 5));
+            var record = TestData.ValidRecord(TestData.CreateRecordId(i), 5, 5);
             repo.Add(record);
         }
 
@@ -231,7 +133,7 @@ public class RecordRepositoryTests
         for (var i = 0; i < totalRecords; i++)
         {
             var numberOfAttributes = (i < (totalRecords / 2)) ? halfRecords : fullRecords;
-            var record = new Record(RecordTests.RandomRecord(i.ToString(), numberOfAttributes, numberOfAttributes));
+            var record = TestData.ValidRecord(TestData.CreateRecordId(i), numberOfAttributes, numberOfAttributes);
             repo.Add(record);
         }
 
@@ -250,7 +152,7 @@ public class RecordRepositoryTests
 
         for (var i = 0; i < numberOfRecord; i++)
         {
-            var record = new Record(RecordTests.RandomRecord(i.ToString(), 5, 5));
+            var record = TestData.ValidRecord(TestData.CreateRecordId(i), 5, 5);
             repo.Add(record);
         }
 

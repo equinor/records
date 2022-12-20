@@ -99,8 +99,8 @@ public class RecordTests
     [Fact]
     public void Record_With_Same_Scopes_And_Describes_Are_Equal()
     {
-        var rdfString1 = RandomRecord(id: "1", numberScopes: 3, numberDescribes: 2);
-        var rdfString2 = RandomRecord(id: "2", numberScopes: 3, numberDescribes: 2);
+        var rdfString1 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
+        var rdfString2 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
 
         var record = new Record(rdfString1);
         var record2 = new Record(rdfString2);
@@ -111,34 +111,22 @@ public class RecordTests
     [Fact]
     public void Record_With_Different_Scopes_And_Describes_Are_Not_Equal()
     {
-        var rdfString1 = RandomRecord(id: "1", numberScopes: 3, numberDescribes: 2);
-        var rdfString2 = RandomRecord(id: "2", numberScopes: 3, numberDescribes: 2);
+        var id1 = TestData.CreateRecordId("1");
+        var id2 = TestData.CreateRecordId("2");
+
+        var rdfString1 = TestData.ValidNQuadRecordString(id1, 3, 2);
+        var rdfString2 = TestData.ValidNQuadRecordString(id2, 3, 2);
 
         var record = new Record(rdfString1);
         var record2 = new Record(rdfString2);
 
         record.Should().Be(record2);
 
-        var rdfString3 = RandomRecord(id: "3", numberScopes: 2, numberDescribes: 2);
+        var id3 = TestData.CreateRecordId("3");
+        var rdfString3 = TestData.ValidNQuadRecordString(id3, 2, 2);
+
         var record3 = new Record(rdfString3);
         record.Should().NotBe(record3);
-    }
-
-    public static string RandomRecord(string id = "0", int numberScopes = 1, int numberDescribes = 1)
-    {
-        var iri = $"https://ssi.example.com/record/{id}";
-        var start = $"<{iri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <{iri}> .";
-
-        var scopes = "";
-        var scopeTemplate = "<{0}> <https://rdf.equinor.com/ontology/record/isInScope> <https://ssi.example.com/scope/{1}> <{2}> .";
-        for (var i = 0; i < numberScopes; i++) scopes += string.Format(scopeTemplate, iri, i, iri) + '\n';
-
-        var descs = "";
-        var descTemplate = "<{0}> <https://rdf.equinor.com/ontology/record/describes> <https://ssi.example.com/described/{1}> <{2}> .";
-        for (var i = 0; i < numberDescribes; i++) descs += string.Format(descTemplate, iri, i, iri) + '\n';
-
-        var replaces = $"\n<{iri}> <{Namespaces.Record.Replaces}> <https://ssi.example.com/record/0> <{iri}> .";
-        return start + scopes + descs + replaces;
     }
 
     [Fact]
