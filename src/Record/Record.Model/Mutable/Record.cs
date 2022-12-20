@@ -118,6 +118,39 @@ public record Record(string Id)
     }
 
     /// <summary>
+    /// IsSubRecordOf is assumed to be a serialized IRI / URI without the angle brackets.
+    /// <example>
+    /// Examples:
+    /// <code>
+    /// "https://example.com/record/example"
+    /// </code>
+    /// </example>
+    /// Note: This method does not check if there already exists a rec:isSubRecordOf relation.
+    /// </summary>
+    public Record WithIsSubRecordof(string isSubRecordof) =>
+        this with
+        {
+            QuadStrings = QuadStrings
+                .Concat(new []{ SubRecordQuad(isSubRecordof) })
+                .ToList()
+        };
+
+    /// <summary>
+    /// IsSubRecordOf is assumed to be a serialized IRI / URI without the angle brackets.
+    /// <example>
+    /// Examples:
+    /// <code>
+    /// "https://example.com/record/example"
+    /// </code>
+    /// </example>
+    /// Note: This method does not check if there already exists a rec:isSubRecordOf relation.
+    /// </summary>
+    public void AddIsSubRecordOf(string isSubRecordof)
+    {
+        QuadStrings.Add(SubRecordQuad(isSubRecordof));
+    }
+
+    /// <summary>
     /// Input here is assumed to follow the NQuads format for RDF. Each string is one quad.
     /// Find format at <seealso href="https://www.w3.org/TR/n-quads/#sec-grammar">W3.org</seealso>
     /// </summary>
@@ -182,6 +215,7 @@ public record Record(string Id)
         QuadStrings.AddRange(quads.Select(q => q.ToString()));
     }
 
+    private string SubRecordQuad(string subRecordof) => $"<{Id}> <{Namespaces.Record.IsSubRecordOf}> <{subRecordof}> <{Id}> .";
     private string ReplacesQuad(string replaces) => $"<{Id}> <{Namespaces.Record.Replaces}> <{replaces}> <{Id}> .";
     private string ScopeQuad(string scope) => $"<{Id}> <{Namespaces.Record.IsInScope}> <{scope}> <{Id}>.";
     private string DescribesQuad(string describes) => $"<{Id}> <{Namespaces.Record.Describes}> <{describes}> <{Id}> .";
