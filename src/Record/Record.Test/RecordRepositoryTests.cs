@@ -54,7 +54,7 @@ public class RecordRepositoryTests
     {
         var record1 = TestData.ValidRecord(TestData.CreateRecordId("1"), 3, 1);
         var record2 = TestData.ValidRecord(TestData.CreateRecordId("2"), 2, 1);
-        
+
         var repo = new RecordRepository(new[] { record1, record2 });
         var result = repo.Validate();
 

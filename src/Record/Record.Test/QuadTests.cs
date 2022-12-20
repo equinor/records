@@ -10,7 +10,7 @@ public class QuadTests
     [Fact]
     public void QuadBuilder()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var quad = Quad.CreateBuilder()
             .WithSubject(subject)
@@ -30,7 +30,7 @@ public class QuadTests
     [Fact]
     public void Quad_Deconstruction()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var quad = Quad.CreateSafe(subject, predicate, @object, graphLabel);
 
@@ -45,7 +45,7 @@ public class QuadTests
     [Fact]
     public void Quad_Stringified()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var quad = Quad.CreateSafe(subject, predicate, @object, graphLabel);
         var result = quad.ToString();
@@ -56,7 +56,7 @@ public class QuadTests
     [Fact]
     public void Quad_From_Triple()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var graph = new Graph();
         graph.BaseUri = new Uri(graphLabel);
@@ -79,7 +79,7 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Can_Build_From_Triple()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var quad = Quad.CreateBuilder()
             .WithStatement($"<{subject}> <{predicate}> <{@object}> .")
@@ -105,7 +105,7 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Fluent()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var quad = new QuadBuilder()
             .WithGraphLabel(graphLabel)
@@ -124,7 +124,7 @@ public class QuadTests
     [Fact]
     public void QuadBuilder_Fluent_Multiple()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("1");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("1");
 
         var @object1 = TestData.CreateRecordObject("1");
 
@@ -184,7 +184,7 @@ public class QuadTests
     [Fact]
     public void SafeQuad_Can_Be_Cloned_With_New_Value()
     {
-        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuad("0");
+        var (subject, predicate, @object, graphLabel) = TestData.CreateRecordQuadStringTuple("0");
 
         var quad = Quad.CreateBuilder()
             .WithSubject(subject)
@@ -213,7 +213,7 @@ public class QuadTests
     [Fact]
     public void UnsafeQuad_Can_Be_Cloned_With_New_Value()
     {
-        var (subject, predicate, @object, id) = TestData.CreateRecordQuad("0");
+        var (subject, predicate, @object, id) = TestData.CreateRecordQuadStringTuple("0");
 
         var unsafeQuad = Quad.CreateUnsafe(subject, predicate, @object, id);
 

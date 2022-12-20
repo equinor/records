@@ -39,7 +39,7 @@ public class MutableRecordTests
     {
         var id = TestData.CreateRecordId("mutable");
 
-        var (s, p, o) = TestData.CreateRecordTriple("mute");
+        var (s, p, o) = TestData.CreateRecordTripleStringTuple("mute");
         var scope = TestData.CreateRecordIri("scope", "1");
         var describes = TestData.CreateRecordIri("describes", "1");
 
@@ -50,7 +50,7 @@ public class MutableRecordTests
             .WithAdditionalScopes(scope)
             .WithAdditionalDescribes(describes);
 
-        var (s2, p2, o2) = TestData.CreateRecordTriple("extra");
+        var (s2, p2, o2) = TestData.CreateRecordTripleStringTuple("extra");
         mutableRecord.AddTriples($"<{s2}> <{p2}> <{o2}> .");
         mutableRecord.Id.Should().Be(id);
         mutableRecord.QuadStrings.Should().Contain($"<{s}> <{p}> <{o}> <{id}> .");
@@ -71,14 +71,14 @@ public class MutableRecordTests
         var quadNum = 10;
         for (var i = 0; i < quadNum; i++)
         {
-            var (s, p, o) = TestData.CreateRecordTriple(i.ToString());
+            var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(s, p, o, id);
             mutable.AddQuads(quad);
         }
 
         for (var i = 0; i < quadNum; i++)
         {
-            var (s, p, o) = TestData.CreateRecordTriple(i.ToString());
+            var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(s, p, o, id);
             mutable.QuadStrings.Should().Contain(quad.ToString());
         }

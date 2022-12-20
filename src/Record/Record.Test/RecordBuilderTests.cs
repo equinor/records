@@ -65,7 +65,7 @@ public class RecordBuilderTests
         var numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id1);
             quads.Add(quad);
         }
@@ -98,7 +98,7 @@ public class RecordBuilderTests
         var numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id1);
             quads.Add(quad);
         }
@@ -128,7 +128,7 @@ public class RecordBuilderTests
         var numberOfTriples = 10;
         for (var i = 0; i < numberOfTriples; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var sub = graph.CreateUriNode(new Uri(subject));
             var pre = graph.CreateUriNode(new Uri(predicate));
             var obj = graph.CreateUriNode(new Uri(@object));
@@ -148,7 +148,7 @@ public class RecordBuilderTests
         record.Should().NotBeNull();
         for (var i = 0; i < numberOfTriples; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id0);
             record.ContainsQuad(quad).Should().BeTrue();
         }
@@ -162,7 +162,7 @@ public class RecordBuilderTests
 <http://example.com/object/version/1234/5678/738499902> <https://rdf.equinor.com/ontology/bravo-api#attachmentName> ""/scopeId=7f7bcbf0-b166-483e-8fd0-065991978824/year=2022/month=08/day=09/hour=13/minute=18/revisjon.png"" .
 <http://example.com/object/version/1234/5678/738499902> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Location> .
 ";
-        var (s, p, o, g) = TestData.CreateRecordQuad("0");
+        var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("0");
         var scope = TestData.CreateRecordIri("scope", "0");
         var desc = TestData.CreateRecordIri("describes", "0");
 
@@ -193,7 +193,7 @@ public class RecordBuilderTests
         const int numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTriple(i.ToString());
+            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id1);
             quads.Add(quad);
         }

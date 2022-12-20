@@ -42,7 +42,7 @@ public class RecordTests
     [Fact]
     public void Record_Does_Not_Have_Provenance()
     {
-        var (s, p, o, g) = TestData.CreateRecordQuad("1");
+        var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
         var result = () => new Record(rdf);

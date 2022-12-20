@@ -14,7 +14,7 @@ public static class TestData
     public static Immutable.Record ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
         id ??= CreateRecordId("1");
-        
+
         var scopes = CreateObjectList(numberScopes, "scope");
         var describes = CreateObjectList(numberDescribes, "describes");
         var content = CreateQuadList(numberQuads, id);
@@ -27,9 +27,9 @@ public static class TestData
             .Build();
     }
 
-    public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) 
+    public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<JsonLdRecordWriter>(id, numberScopes, numberDescribes, numberQuads);
-    public static string ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) 
+    public static string ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<NQuadsRecordWriter>(id, numberScopes, numberDescribes, numberQuads);
 
     public static string ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IRdfWriter, new()
@@ -47,7 +47,7 @@ public static class TestData
         => Enumerable.Range(1, 10)
             .Select(i =>
             {
-                var (s, p, o) = CreateRecordTriple(i.ToString());
+                var (s, p, o) = CreateRecordTripleStringTuple(i.ToString());
                 return Quad.CreateSafe(s, p, o, graphLabel);
             })
             .ToList();
@@ -59,12 +59,12 @@ public static class TestData
     public static string CreateRecordObject(string @object) => CreateRecordIri("object", @object);
     public static string CreateRecordBlankNode(string blankNode) => $"_:{blankNode}";
 
-    public static (string subject, string predicate, string @object) CreateRecordTriple(string id)
+    public static (string subject, string predicate, string @object) CreateRecordTripleStringTuple(string id)
     {
         return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id));
     }
 
-    public static (string subject, string predicate, string @object, string graphLabel) CreateRecordQuad(string id)
+    public static (string subject, string predicate, string @object, string graphLabel) CreateRecordQuadStringTuple(string id)
     {
         return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id), CreateRecordId(id));
     }
