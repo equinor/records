@@ -89,7 +89,7 @@ public class ImmutableRecordTests
 
         var scopeCount = scopes.Count();
         var describesCount = describes.Count();
-        
+
         scopeCount.Should().Be(5);
         describesCount.Should().Be(5);
     }
