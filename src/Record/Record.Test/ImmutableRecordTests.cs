@@ -1,15 +1,13 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using FluentAssertions;
 using Record = Records.Immutable.Record;
 using Records.Exceptions;
-using VDS.RDF;
 using VDS.RDF.Writing;
 
 namespace Records.Tests;
 
-public class RecordTests
+public class ImmutableRecordTests
 {
     public const string rdf = @"
 {
@@ -56,7 +54,7 @@ public class RecordTests
 }
         ";
 
-    private const string rdf2 = @"
+    public const string rdf2 = @"
 {
     ""@context"": {
         ""@version"": 1.1,
@@ -93,10 +91,29 @@ public class RecordTests
 }
         ";
 
-    private const string rdf3 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
+    public const string rdf3 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
 <http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
 <http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
 <http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
+
+    public const string rdf4 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isSubRecordOf> <http://ssi.example.com/record/original> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
+
+    public const string rdf5 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isSubRecordOf> <http://ssi.example.com/record/original> <http://example.com/data/Object1/Record0> .
+<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isSubRecordOf> <http://ssi.example.com/record/more-original> <http://example.com/data/Object1/Record0> .
 <http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
 <http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
 <http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
@@ -264,6 +281,42 @@ public class RecordTests
 
         var jsonObjectId = jsonObject?["@id"]?.GetValue<string>();
         jsonObjectId.Should().Be("https://akersolutions.com/data/RecordID123");
+    }
+
+    [Fact]
+    public void Record_Can_Be_SubRecord()
+    {
+        var record = default(Record);
+        var loadResult = () => record = new Record(rdf4);
+        loadResult.Should().NotThrow();
+
+        record.Should().NotBeNull();
+
+        record.IsSubRecordOf.Should().NotBeNull();
+        record.IsSubRecordOf.Should().Be("http://ssi.example.com/record/original");
+    }
+
+    [Fact]
+    public void Record_Does_Not_Need_SubRecordOf()
+    {
+        var record = default(Record);
+        var loadResult = () => record = new Record(rdf3);
+        loadResult.Should().NotThrow();
+
+        record.Should().NotBeNull();
+        record.IsSubRecordOf.Should().BeNull();
+    }
+
+    [Fact]
+    public void Record_Can_Have_At_Most_One_SuperRecord()
+    {
+        var record = default(Record);
+        var loadResult = () => record = new Record(rdf5);
+        loadResult.Should()
+            .Throw<RecordException>()
+            .WithMessage("Failure in record. A record can at most be the subrecord of one other record.");
+
+        record.Should().BeNull();
     }
 }
 
