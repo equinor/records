@@ -130,6 +130,15 @@ rec:RecordShape
 
     public RecordBuilder WithReplaces(params Uri[] replaces) => WithReplaces(replaces.Select(r => r.ToString()));
 
+    public RecordBuilder WithIsSubRecordOf(string isSubRecordOf) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                IsSubRecordOf = isSubRecordOf
+            }
+        };
+
     public RecordBuilder WithId(Uri id) =>
         this with
         {
@@ -290,6 +299,9 @@ rec:RecordShape
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
         recordQuads.Add(typeQuad);
 
+        if (_storage.IsSubRecordOf != null)
+            recordQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+
         recordQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
         recordQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
         recordQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
@@ -347,6 +359,9 @@ rec:RecordShape
         return Quad.CreateSafe(triple.Subject.ToString(), triple.Predicate.ToString(), triple.Object.ToString(), _graph.BaseUri.ToString());
     }
 
+    private SafeQuad CreateIsSubRecordOfQuad(string subRecordOf) =>
+        CreateQuadWithPredicateAndObject(Namespaces.Record.IsSubRecordOf, subRecordOf);
+
     private SafeQuad CreateScopeQuad(string scope) =>
         CreateQuadWithPredicateAndObject(Namespaces.Record.IsInScope, scope);
 
@@ -360,6 +375,7 @@ rec:RecordShape
     private record Storage
     {
         internal Uri? Id;
+        internal string? IsSubRecordOf;
         internal List<string> Replaces = new();
         internal List<string> Scopes = new();
         internal List<string> Describes = new();

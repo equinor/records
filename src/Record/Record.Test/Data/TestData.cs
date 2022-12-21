@@ -13,6 +13,12 @@ public static class TestData
 
     public static Immutable.Record ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
+        return ValidRecordBeforeBuildComplete(id, numberScopes, numberDescribes, numberQuads).Build();
+    }
+
+    public static RecordBuilder ValidRecordBeforeBuildComplete(string? id = null, int numberScopes = 5,
+        int numberDescribes = 5, int numberQuads = 10)
+    {
         id ??= CreateRecordId("1");
 
         var scopes = CreateObjectList(numberScopes, "scope");
@@ -23,8 +29,7 @@ public static class TestData
             .WithId(id)
             .WithScopes(scopes)
             .WithDescribes(describes)
-            .WithContent(content)
-            .Build();
+            .WithContent(content);
     }
 
     public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)

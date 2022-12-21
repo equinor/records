@@ -1,10 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using FluentAssertions;
 using Record = Records.Immutable.Record;
 using Records.Exceptions;
-using VDS.RDF;
 using VDS.RDF.Writing;
 
 namespace Records.Tests;
@@ -38,7 +36,6 @@ public class ImmutableRecordTests
         result.Should().Be(5);
     }
 
-
     [Fact]
     public void Record_Does_Not_Have_Provenance()
     {
@@ -46,6 +43,7 @@ public class ImmutableRecordTests
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
         var result = () => new Record(rdf);
+
         result.Should().Throw<RecordException>().WithMessage("Failure in record. A record must have exactly one provenance object.");
     }
 
@@ -91,7 +89,7 @@ public class ImmutableRecordTests
 
         var scopeCount = scopes.Count();
         var describesCount = describes.Count();
-
+        
         scopeCount.Should().Be(5);
         describesCount.Should().Be(5);
     }
@@ -133,6 +131,7 @@ public class ImmutableRecordTests
     public void Record_Can_Write_To_JsonLd()
     {
         var record = new Record(TestData.ValidNQuadRecordString());
+
         var jsonLdString = record.ToString<JsonLdRecordWriter>();
 
         var jsonObject = default(JsonObject);
@@ -145,6 +144,55 @@ public class ImmutableRecordTests
 
         var jsonObjectId = jsonObject?["@id"]?.GetValue<string>();
         jsonObjectId.Should().Be("https://ssi.example.com/record/1");
+    }
+
+    [Fact]
+    public void Record_Can_Be_SubRecord()
+    {
+        var record = default(Record);
+        var superRecordId = TestData.CreateRecordId("super");
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+                .WithIsSubRecordOf(superRecordId)
+                .Build();
+        };
+        loadResult.Should().NotThrow();
+
+        record.Should().NotBeNull();
+
+        record.IsSubRecordOf.Should().NotBeNull();
+        record.IsSubRecordOf.Should().Be(superRecordId);
+    }
+
+    [Fact]
+    public void Record_Does_Not_Need_SubRecordOf()
+    {
+        var record = default(Record);
+        var loadResult = () => record = new Record(TestData.ValidJsonLdRecordString());
+        loadResult.Should().NotThrow();
+
+        record.Should().NotBeNull();
+        record.IsSubRecordOf.Should().BeNull();
+    }
+
+    [Fact]
+    public void Record_Can_Have_At_Most_One_SuperRecord()
+    {
+        var record = default(Record);
+        var loadResult = () =>
+        {
+            var immutable = TestData.ValidRecordBeforeBuildComplete()
+                .WithIsSubRecordOf(TestData.CreateRecordId("super"))
+                .Build();
+            var mutable = new Mutable.Record(immutable).WithIsSubRecordof(TestData.CreateRecordId("superduper"));
+            record = mutable.ToImmutable();
+        };
+        loadResult.Should()
+            .Throw<RecordException>()
+            .WithMessage("Failure in record. A record can at most be the subrecord of one other record.");
+
+        record.Should().BeNull();
     }
 }
 

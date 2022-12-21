@@ -77,7 +77,6 @@ public class RecordRepositoryTests
     public void RecordRepository_Can_Retrieve_Record()
     {
         var record = TestData.ValidRecord();
-
         var repo = new RecordRepository(record);
 
         var success = repo.TryGetRecord(record.Id, out var result);

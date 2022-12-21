@@ -224,4 +224,80 @@ public class RecordBuilderTests
             .Should()
             .Contain(quads);
     }
+
+    [Fact]
+    public void RecordBuilder_Can_Add_IsSubRecordOf()
+    {
+        var id = TestData.CreateRecordId("1");
+        var scope = TestData.CreateRecordIri("scope", "1");
+        var describes = TestData.CreateRecordIri("describes", "1");
+
+        var superRecordId = TestData.CreateRecordId("super");
+
+        var content = Enumerable.Range(0, 10)
+            .Select(i =>
+            {
+                var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
+                return Quad.CreateSafe(s, p, o, id);
+            })
+            .ToList();
+
+        var builder = new RecordBuilder()
+            .WithId(id)
+            .WithScopes(scope)
+            .WithDescribes(describes)
+            .WithContent(content)
+            .WithIsSubRecordOf(superRecordId);
+
+        var record = default(Record);
+        var buildProcess = () => record = builder.Build();
+
+        buildProcess.Should().NotThrow();
+        record.Should().NotBeNull();
+
+        record.IsSubRecordOf.Should().Be(superRecordId);
+        record.Id.Should().Be(id);
+        record.Scopes.Should().Contain(scope);
+        record.Describes.Should().Contain(describes);
+        record.Quads().Should().Contain(content);
+    }
+
+    [Fact]
+    public void RecordBuilder_Only_Adds_Latest_IsSubRecordOf()
+    {
+        var id = TestData.CreateRecordId("1");
+        var scope = TestData.CreateRecordIri("scope", "1");
+        var describes = TestData.CreateRecordIri("describes", "1");
+
+        var superRecordId1 = TestData.CreateRecordId("super");
+        var superRecordId2 = TestData.CreateRecordId("superer");
+
+        var content = Enumerable.Range(0, 10)
+            .Select(i =>
+            {
+                var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
+                return Quad.CreateSafe(s, p, o, id);
+            })
+            .ToList();
+
+        var builder = new RecordBuilder()
+            .WithId(id)
+            .WithScopes(scope)
+            .WithDescribes(describes)
+            .WithContent(content)
+            .WithIsSubRecordOf(superRecordId1)
+            .WithIsSubRecordOf(superRecordId2);
+
+        var record = default(Record);
+        var buildProcess = () => record = builder.Build();
+
+        buildProcess.Should().NotThrow();
+        record.Should().NotBeNull();
+
+        record.IsSubRecordOf.Should().Be(superRecordId2);
+        record.Id.Should().Be(id);
+        record.Scopes.Should().Contain(scope);
+        record.Describes.Should().Contain(describes);
+        record.Quads().Should().Contain(content);
+    }
 }
