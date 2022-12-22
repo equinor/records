@@ -7,9 +7,9 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Initialise_From_ImmutableRecord()
     {
-        var original = "https://ssi.example.com/record/original";
+        var original = TestData.CreateRecordId("original");
+        var immutable = TestData.ValidRecord();
 
-        var immutable = new Immutable.Record(ImmutableRecordTests.rdf);
         var record = new Mutable.Record(immutable)
             .WithAdditionalReplaces(original);
 
@@ -23,9 +23,9 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Be_Set_Immutable()
     {
-        var id = QuadTests.CreateRecordId("1");
-        var scope = QuadTests.CreateRecordIri("scope", "0");
-        var describes = QuadTests.CreateRecordIri("describes", "0");
+        var id = TestData.CreateRecordId("1");
+        var scope = TestData.CreateObjectList(5, "scope").ToArray();
+        var describes = TestData.CreateObjectList(5, "describes").ToArray();
 
         var mutable = new Mutable.Record(id)
             .WithAdditionalScopes(scope)
@@ -38,11 +38,11 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Receive_TripleStrings()
     {
-        var id = QuadTests.CreateRecordId("mutable");
+        var id = TestData.CreateRecordId("mutable");
 
-        var (s, p, o) = QuadTests.CreateRecordTriple("mute");
-        var scope = QuadTests.CreateRecordIri("scope", "1");
-        var describes = QuadTests.CreateRecordIri("describes", "1");
+        var (s, p, o) = TestData.CreateRecordTripleStringTuple("mute");
+        var scope = TestData.CreateRecordIri("scope", "1");
+        var describes = TestData.CreateRecordIri("describes", "1");
 
         var mutableRecord = new Mutable.Record(id)
             .WithAdditionalTriples($"<{s}> <{p}> <{o}> .")
@@ -51,7 +51,7 @@ public class MutableRecordTests
             .WithAdditionalScopes(scope)
             .WithAdditionalDescribes(describes);
 
-        var (s2, p2, o2) = QuadTests.CreateRecordTriple("extra");
+        var (s2, p2, o2) = TestData.CreateRecordTripleStringTuple("extra");
         mutableRecord.AddTriples($"<{s2}> <{p2}> <{o2}> .");
         mutableRecord.Id.Should().Be(id);
         mutableRecord.QuadStrings.Should().Contain($"<{s}> <{p}> <{o}> <{id}> .");
@@ -66,20 +66,20 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Receive_SafeQuads()
     {
-        var id = QuadTests.CreateRecordId("mute");
+        var id = TestData.CreateRecordId("mute");
         var mutable = new Mutable.Record(id);
 
         var quadNum = 10;
         for (var i = 0; i < quadNum; i++)
         {
-            var (s, p, o) = QuadTests.CreateRecordTriple(i.ToString());
+            var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(s, p, o, id);
             mutable.AddQuads(quad);
         }
 
         for (var i = 0; i < quadNum; i++)
         {
-            var (s, p, o) = QuadTests.CreateRecordTriple(i.ToString());
+            var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(s, p, o, id);
             mutable.QuadStrings.Should().Contain(quad.ToString());
         }
@@ -95,8 +95,8 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Can_Add_IsSubRecordOf()
     {
-        var superRecord = QuadTests.CreateRecordId("super");
-        var immutable = new Immutable.Record(ImmutableRecordTests.rdf3);
+        var superRecord = TestData.CreateRecordId("super");
+        var immutable = TestData.ValidRecord();
 
         var record = default(Immutable.Record);
 
@@ -113,11 +113,13 @@ public class MutableRecordTests
     [Fact]
     public void MutableRecord_Does_Not_Check_Multiple_SubRecordOf()
     {
-        var superRecord = QuadTests.CreateRecordId("super");
-        var immutable = new Immutable.Record(ImmutableRecordTests.rdf4);
+        var immutable = TestData.ValidRecordBeforeBuildComplete()
+            .WithIsSubRecordOf(TestData.CreateRecordId("super"))
+            .Build();
 
         var record = default(Mutable.Record);
 
+        var superRecord = TestData.CreateRecordId("superduper");
         var mutableBuild = () => record = new Mutable.Record(immutable)
             .WithIsSubRecordof(superRecord);
 

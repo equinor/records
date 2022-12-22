@@ -9,206 +9,80 @@ namespace Records.Tests;
 
 public class ImmutableRecordTests
 {
-    public const string rdf = @"
-{
-    ""@context"": {
-        ""@version"": 1.1,
-        ""@vocab"": ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""@base"":  ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""record"": ""https://rdf.equinor.com/ontology/record/"",
-        ""eqn"": ""https://rdf.equinor.com/fam/"",
-        ""akso"": ""https://akersolutions.com/data/"",
-        ""record:isInScope"": { ""@type"": ""@id"" },
-        ""record:describes"": { ""@type"": ""@id"" } 
-    },
-    ""@id"": ""akso:RecordID123"",
-    ""@graph"": [
-        {
-            ""@id"": ""akso:RecordID123"",
-            ""@type"": ""record:Record"",
-            ""record:replaces"": ""https://ssi.example.com/record/0"",
-            ""record:isInScope"": [
-                ""eqn:TestScope1"",
-                ""eqn:TestScope2""
-            ],
-            ""record:describes"": [
-                ""eqn:Document/Wist/C277-AS-W-LA-00001.F01""
-            ]
-        },
-        {
-            ""@id"": ""eqn:Document/Wist/C277-AS-W-LA-00001.F01"",
-            ""@type"": ""eqn:Revision"",
-            ""RevisionSequence"": ""01"",
-            ""Revision"": ""F01"",
-            ""ReasonForIssue"": ""Revision text"",
-            ""Author"": ""Kari Nordkvinne"",
-            ""CheckedBy"": ""NN"",
-            ""DisciplineApprovedBy"": ""NM"",
-            ""DoubleHatTester"": ""Hei der ^^ eposten min er epost@example.com!"",
-            ""NestedAtTester"": {
-                ""@value"": ""Hei der ^^ eposten min er epost@example.com"",
-                ""@language"": ""no-nn""
-            }
-        }
-    ]
-}
-        ";
-
-    public const string rdf2 = @"
-{
-    ""@context"": {
-        ""@version"": 1.1,
-        ""@vocab"": ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""@base"":  ""https://rdf.equinor.com/ontology/fam/v1/"",
-        ""record"": ""https://rdf.equinor.com/ontology/record/"",
-        ""eqn"": ""https://rdf.equinor.com/fam/"",
-        ""akso"": ""https://akersolutions.com/data/""
-    },
-    ""@id"": ""akso:RecordID123"",
-    ""@graph"": [
-        {
-            ""@id"": ""akso:RecordID123"",
-            ""record:replaces"": ""https://ssi.example.com/record/0"",
-            ""record:isInScope"": [
-                ""eqn:TestScope1"",
-                ""eqn:TestScope2""
-            ],
-            ""record:describes"": [
-                ""eqn:Document/Wist/C277-AS-W-LA-00001.F01""
-            ]
-        },
-        {
-            ""@id"": ""eqn:Document/WIST/C277-AS-W-LA-00001.F01"",
-            ""@type"": ""eqn:Revision"",
-            ""RevisionSequence"": ""01"",
-            ""Revision"": ""F01"",
-            ""ReasonForIssue"": ""Revision text"",
-            ""Author"": ""Kari Nordkvinne"",
-            ""CheckedBy"": ""NN"",
-            ""DisciplineApprovedBy"": ""NM""
-        }
-    ]
-}
-        ";
-
-    public const string rdf3 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
-
-    public const string rdf4 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isSubRecordOf> <http://ssi.example.com/record/original> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
-
-    public const string rdf5 = @"<http://example.com/data/Object1/Record0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/describes> <http://example.com/data/Object1> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isInScope> <http://example.com/data/Project> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/replaces> <http://ssi.example.com/record/0> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isSubRecordOf> <http://ssi.example.com/record/original> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1/Record0> <https://rdf.equinor.com/ontology/record/isSubRecordOf> <http://ssi.example.com/record/more-original> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/mel/System> <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Length> ""0"" <http://example.com/data/Object1/Record0> .
-<http://example.com/data/Object1> <http://rds.posccaesar.org/ontology/plm/rdl/Weight> ""0"" <http://example.com/data/Object1/Record0> .";
-
     [Fact]
     public void Record_Has_Provenance()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Provenance.Count();
 
-        result.Should().Be(5);
+        result.Should().Be(11);
     }
 
     [Fact]
     public void Record_Finds_Id()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Id;
 
-        result.Should().Be("https://akersolutions.com/data/RecordID123");
+        result.Should().Be("https://ssi.example.com/record/1");
     }
 
     [Fact]
     public void Record_Can_Do_Queries()
     {
-        var record = new Record(rdf);
-        var queryResult = record.Sparql("construct { ?s ?p ?o } where { ?s ?p ?o . ?s <https://rdf.equinor.com/ontology/fam/v1/Author> ?o .}");
+        var record = new Record(TestData.ValidJsonLdRecordString());
+        var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}}");
         var result = queryResult.Count();
-        result.Should().Be(1);
-    }
-
-    [Fact]
-    public void Get_All_Triples()
-    {
-        var record = new Record(rdf);
-        var queryResult = record.Sparql("construct { ?s ?p ?o. } where { ?s ?p ?o . }");
-        var result = queryResult.Count();
-
-        result.Should().Be(14);
+        result.Should().Be(5);
     }
 
     [Fact]
     public void Record_Does_Not_Have_Provenance()
     {
-        var result = () => new Record(rdf2);
+        var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
+        var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
+
+        var result = () => new Record(rdf);
+
         result.Should().Throw<RecordException>().WithMessage("Failure in record. A record must have exactly one provenance object.");
     }
 
     [Fact]
     public void Record_Can_Be_Serialised_Nquad()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidJsonLdRecordString());
 
         var result = record.ToString<NQuadsRecordWriter>().Split("\n").Length;
 
-        result.Should().Be(15);
+        // This is how many quads are generated
+        result.Should().Be(22);
     }
 
     [Fact]
     public void Record_Can_Be_Serialised_Turtle()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidJsonLdRecordString());
 
         var result = record.ToString<TurtleWriter>().Split("\n").Length;
 
-        result.Should().Be(21);
+        // This is how many lines should be contained in the turtle serialisation
+        result.Should().Be(28);
     }
 
     [Fact]
     public void Record_Can_Produce_Quads()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Quads().Count();
 
-        result.Should().Be(14);
-    }
-
-    [Fact]
-    public void Record_Can_Produce_Quads_For_Specific_Subjects_Predicates_Or_Objects()
-    {
-        var record = new Record(rdf);
-
-        var subjectCountResult = record.QuadsWithSubject("https://rdf.equinor.com/fam/Document/Wist/C277-AS-W-LA-00001.F01").Count();
-        var predicateCountResult = record.QuadsWithPredicate("https://rdf.equinor.com/ontology/record/isInScope").Count();
-        var objectCountResult = record.QuadsWithObject("https://rdf.equinor.com/fam/Document/Wist/C277-AS-W-LA-00001.F01").Count();
-
-        subjectCountResult.Should().Be(9);
-        predicateCountResult.Should().Be(2);
-        objectCountResult.Should().Be(1);
+        // This is how many quads should be extraced from the JSON-LD
+        result.Should().Be(21);
     }
 
     [Fact]
     public void Record_Has_Scopes_And_Describes()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidJsonLdRecordString());
 
         var scopes = record.Scopes;
         var describes = record.Describes;
@@ -216,15 +90,15 @@ public class ImmutableRecordTests
         var scopeCount = scopes.Count();
         var describesCount = describes.Count();
 
-        scopeCount.Should().Be(2);
-        describesCount.Should().Be(1);
+        scopeCount.Should().Be(5);
+        describesCount.Should().Be(5);
     }
 
     [Fact]
     public void Record_With_Same_Scopes_And_Describes_Are_Equal()
     {
-        var rdfString1 = RandomRecord(id: "1", numberScopes: 3, numberDescribes: 2);
-        var rdfString2 = RandomRecord(id: "2", numberScopes: 3, numberDescribes: 2);
+        var rdfString1 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
+        var rdfString2 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
 
         var record = new Record(rdfString1);
         var record2 = new Record(rdfString2);
@@ -235,40 +109,29 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_With_Different_Scopes_And_Describes_Are_Not_Equal()
     {
-        var rdfString1 = RandomRecord(id: "1", numberScopes: 3, numberDescribes: 2);
-        var rdfString2 = RandomRecord(id: "2", numberScopes: 3, numberDescribes: 2);
+        var id1 = TestData.CreateRecordId("1");
+        var id2 = TestData.CreateRecordId("2");
+
+        var rdfString1 = TestData.ValidNQuadRecordString(id1, 3, 2);
+        var rdfString2 = TestData.ValidNQuadRecordString(id2, 3, 2);
 
         var record = new Record(rdfString1);
         var record2 = new Record(rdfString2);
 
         record.Should().Be(record2);
 
-        var rdfString3 = RandomRecord(id: "3", numberScopes: 2, numberDescribes: 2);
+        var id3 = TestData.CreateRecordId("3");
+        var rdfString3 = TestData.ValidNQuadRecordString(id3, 2, 2);
+
         var record3 = new Record(rdfString3);
         record.Should().NotBe(record3);
-    }
-
-    public static string RandomRecord(string id = "0", int numberScopes = 1, int numberDescribes = 1)
-    {
-        var iri = $"https://ssi.example.com/record/{id}";
-        var start = $"<{iri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/ontology/record/Record> <{iri}> .";
-
-        var scopes = "";
-        var scopeTemplate = "<{0}> <https://rdf.equinor.com/ontology/record/isInScope> <https://ssi.example.com/scope/{1}> <{2}> .";
-        for (var i = 0; i < numberScopes; i++) scopes += string.Format(scopeTemplate, iri, i, iri) + '\n';
-
-        var descs = "";
-        var descTemplate = "<{0}> <https://rdf.equinor.com/ontology/record/describes> <https://ssi.example.com/described/{1}> <{2}> .";
-        for (var i = 0; i < numberDescribes; i++) descs += string.Format(descTemplate, iri, i, iri) + '\n';
-
-        var replaces = $"\n<{iri}> <{Namespaces.Record.Replaces}> <https://ssi.example.com/record/0> <{iri}> .";
-        return start + scopes + descs + replaces;
     }
 
     [Fact]
     public void Record_Can_Write_To_JsonLd()
     {
-        var record = new Record(rdf);
+        var record = new Record(TestData.ValidNQuadRecordString());
+
         var jsonLdString = record.ToString<JsonLdRecordWriter>();
 
         var jsonObject = default(JsonObject);
@@ -280,27 +143,33 @@ public class ImmutableRecordTests
         jsonObject?.ContainsKey("@id").Should().BeTrue();
 
         var jsonObjectId = jsonObject?["@id"]?.GetValue<string>();
-        jsonObjectId.Should().Be("https://akersolutions.com/data/RecordID123");
+        jsonObjectId.Should().Be("https://ssi.example.com/record/1");
     }
 
     [Fact]
     public void Record_Can_Be_SubRecord()
     {
         var record = default(Record);
-        var loadResult = () => record = new Record(rdf4);
+        var superRecordId = TestData.CreateRecordId("super");
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+                .WithIsSubRecordOf(superRecordId)
+                .Build();
+        };
         loadResult.Should().NotThrow();
 
         record.Should().NotBeNull();
 
         record.IsSubRecordOf.Should().NotBeNull();
-        record.IsSubRecordOf.Should().Be("http://ssi.example.com/record/original");
+        record.IsSubRecordOf.Should().Be(superRecordId);
     }
 
     [Fact]
     public void Record_Does_Not_Need_SubRecordOf()
     {
         var record = default(Record);
-        var loadResult = () => record = new Record(rdf3);
+        var loadResult = () => record = new Record(TestData.ValidJsonLdRecordString());
         loadResult.Should().NotThrow();
 
         record.Should().NotBeNull();
@@ -311,7 +180,14 @@ public class ImmutableRecordTests
     public void Record_Can_Have_At_Most_One_SuperRecord()
     {
         var record = default(Record);
-        var loadResult = () => record = new Record(rdf5);
+        var loadResult = () =>
+        {
+            var immutable = TestData.ValidRecordBeforeBuildComplete()
+                .WithIsSubRecordOf(TestData.CreateRecordId("super"))
+                .Build();
+            var mutable = new Mutable.Record(immutable).WithIsSubRecordof(TestData.CreateRecordId("superduper"));
+            record = mutable.ToImmutable();
+        };
         loadResult.Should()
             .Throw<RecordException>()
             .WithMessage("Failure in record. A record can at most be the subrecord of one other record.");
