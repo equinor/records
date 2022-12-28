@@ -1,0 +1,54 @@
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfox: <http://oxfordsemantic.tech/RDFox#> .
+@prefix schema: <http://oxfordsemantic.tech/shacl#> .
+@prefix rdfox: <http://oxfordsemantic.tech/RDFox#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rec: <https://rdf.equinor.com/ontology/record/> .
+@prefix ex: <http://example.com/data/> .
+
+#Puts replaces in special tuple table
+Replaces(?new, ?old) :-
+    [?new, rec:replaces, ?old] ?new .
+
+
+Records(?rec, rec:describes, ?o) :-
+    [?rec, rec:describes, ?o] ?rec .
+Records(?rec, rec:isInScope, ?o) :-
+    [?rec, rec:isInScope, ?o] ?rec .
+Records(?rec, rec:replaces, ?o) :-
+    [?rec, rec:replaces, ?o] ?rec .
+
+# Puts all provenance in the named graph Records
+[?rec, ?p, ?o] ex:Records :-
+    [?rec, ?p, ?o] ?rec ,
+    #rec:Record[?rec] ?rec .
+    [?rec, rdf:type, rec:Record] ?rec .
+
+
+
+# Puts everything with scope1 in ex:Branch1
+# [?s, ?p, ?o] ex:Branch1 :-
+#     rec:isInScope[?rec, ex:Scope1] ?rec,
+#     rec:Record[?rec] ?rec,
+#     [?s, ?p, ?o] ?rec .
+
+# Puts everything with scope1 and 2 in ex:Branch12
+# [?s, ?p, ?o] ex:Branch12 :-
+#     rec:isInScope[?rec, ex:Scope1] ?rec,
+#     rec:isInScope[?rec, ex:Scope2] ?rec,
+#     rec:Record[?rec] ?rec,
+#     [?s, ?p, ?o] ?rec .
+
+
+# Puts everything in head of scope1 and 2 in ex:Branch12
+Branch1Head(?s, ?p, ?o) :-
+    #Records(?rec, rec:isInScope, ex:Scope1)  ,
+    #Records(?rec, rec:isInScope, ex:Scope2)  ,
+    #Records(?rec, a, rec:Record) ,
+    [?s, ?p, ?o] ?rec .
+    # FILTER (?s != ?rec) ,
+    # FILTER (?p != rec:describes),
+    # FILTER (?p != rec:isInScope),
+    # FILTER (?p != rec:isSubRecordOf),
+    # NOT EXISTS ?pred IN Replaces(?pred, ?rec) .
+    

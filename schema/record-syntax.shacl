@@ -98,6 +98,6 @@ rec:RecordShape
         sh:minCount 1;
         sh:deactivated true;
         sh:name "SuperRecordScope";
-        sh:message "All records must have at least one scope reachable via subRecordOf relations";
+        sh:message "All records must have at least one scope, potentially reachable via subRecordOf relations";
     ] .
     

@@ -41,3 +41,5 @@ rec:replacesInf rdf:type owl:ObjectProperty ,
                                          rec:replaces
                                        ) ;
                 rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation" .
+###  https://rdf.equinor.com/ontology/record/replaces
+rec:replaces rdfs:subPropertyOf rec:replacesInf .
