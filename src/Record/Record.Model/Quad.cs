@@ -15,14 +15,17 @@ public abstract class Quad : IEquatable<Quad>
     public static QuadBuilder CreateBuilder(string id) => new QuadBuilder().WithGraphLabel(id);
     public static QuadBuilder CreateBuilder(Uri id) => new QuadBuilder().WithGraphLabel(id.ToString());
 
-    public static SafeQuad CreateSafe(string s, string p, string o, string g)
+    public static SafeQuad CreateSafe(string s, string p, string o, string g, bool objectLiteral = false)
     {
-        return CreateBuilder()
+        var builder = CreateBuilder()
             .WithSubject(s)
             .WithPredicate(p)
-            .WithObject(o)
-            .WithGraphLabel(g)
-            .Build();
+            .WithGraphLabel(g);
+
+        if(objectLiteral) builder = builder.WithObjectLiteral(o);
+        else builder = builder.WithObject(o);
+        
+        return builder.Build();
     }
 
     public static SafeQuad CreateSafe(Triple triple, string g)

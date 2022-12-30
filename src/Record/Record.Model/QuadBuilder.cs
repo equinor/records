@@ -33,6 +33,12 @@ public record QuadBuilder
             Object = CreateObject(@object)
         };
 
+    public QuadBuilder WithObjectLiteral(string objectLiteral) =>
+        this with
+        {
+            Object = CreateObjectLiteral(objectLiteral)
+        };
+
     public QuadBuilder WithGraphLabel(string graphLabel) =>
         this with
         {
@@ -75,11 +81,13 @@ public record QuadBuilder
         writer.Save(tempGraph, sw);
         var quadString = sw.ToString().Trim().Replace(" .", $" <{GraphLabel}> .");
 
+        var objectString = (Object is LiteralNode) ? $"\"{Object}\"" : Object.ToString();
+
         return new SafeQuad
         {
             Subject = triple.Subject.ToString(),
             Predicate = triple.Predicate.ToString(),
-            Object = triple.Object.ToString(),
+            Object = objectString,
             GraphLabel = GraphLabel.ToString(),
             String = quadString
         };
@@ -128,13 +136,30 @@ public record QuadBuilder
         try
         {
             if (@object.StartsWith("_:")) return _graph.CreateBlankNode(@object);
-            if (Uri.IsWellFormedUriString(@object, UriKind.RelativeOrAbsolute))
+            try
+            {
                 return _graph.CreateUriNode(new Uri(@object));
-            return _graph.CreateLiteralNode(@object);
+            }
+            catch
+            {
+                return _graph.CreateLiteralNode(@object);
+            }
         }
         catch
         {
             throw new QuadException("Failed to parse object.");
+        }
+    }
+
+    private INode? CreateObjectLiteral(string objectLiteral)
+    {
+        try
+        {
+            return _graph.CreateLiteralNode(objectLiteral);
+        }
+        catch
+        {
+            throw new QuadException("Failed to parse object literal."); 
         }
     }
 
