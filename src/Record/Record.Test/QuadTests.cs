@@ -286,4 +286,21 @@ public class QuadTests
 
         quad.Object.Should().Be($"\"{o}\"");
     }
+
+    [Fact]
+    public void Quad_Weird_Object_Becomes_Literal()
+    {
+        var (s, p, _, g) = TestData.CreateRecordQuadStringTuple("1");
+        var builder = new QuadBuilder()
+                    .WithSubject(s)
+                    .WithPredicate(p)
+                    .WithObject("ex: weird uri")
+                    .WithGraphLabel(g);
+
+        builder.Object.Should().BeOfType<UriNode>();
+
+        var quad = builder.Build();
+
+        quad.Object.Should().Be("ex:%20weird%20uri");
+    }
 }
