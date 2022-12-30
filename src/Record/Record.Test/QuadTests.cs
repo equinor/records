@@ -233,4 +233,74 @@ public class QuadTests
         newUnsafeQuad.Predicate.Should().Be(predicate);
         newUnsafeQuad.Object.Should().Be(@object);
     }
+
+    [Fact]
+    public void QuadBuilder_Handles_Literals()
+    {
+        var (s, p, _, g) = TestData.CreateRecordQuadStringTuple("1");
+        var o = "literal";
+
+        var builder = new QuadBuilder().WithSubject(s).WithPredicate(p).WithObject(o).WithGraphLabel(g);
+
+        builder.Object.Should().BeOfType<LiteralNode>();
+
+        var quad = default(SafeQuad);
+        var quadProcess = () => quad = builder.Build();
+
+        quadProcess.Should().NotThrow();
+
+        quad.Object.Should().Be($"\"{o}\"");
+    }
+
+    [Fact]
+    public void QuadBuilder_Can_Explictily_Set_Literal()
+    {
+        var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
+
+        var builder = new QuadBuilder()
+                            .WithSubject(s)
+                            .WithPredicate(p)
+                            .WithObjectLiteral(o)
+                            .WithGraphLabel(g);
+
+        builder.Object.Should().BeOfType<LiteralNode>();
+
+        var quad = default(SafeQuad);
+        var buildProcess = () => quad = builder.Build();
+        buildProcess.Should().NotThrow();
+
+        quad.Subject.Should().Be(s);
+        quad.Predicate.Should().Be(p);
+        quad.Object.Should().Be($"\"{o}\"");
+        quad.GraphLabel.Should().Be(g);
+    }
+
+    [Fact]
+    public void Quad_Can_Explicitly_Set_Literal()
+    {
+        var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
+
+        var quad = default(SafeQuad);
+        var quadProcess = () => quad = Quad.CreateSafe(s, p, o, g, objectLiteral: true);
+        quadProcess.Should().NotThrow();
+
+        quad.Object.Should().Be($"\"{o}\"");
+    }
+
+    [Fact]
+    public void Quad_Weird_Object_Becomes_Literal()
+    {
+        var (s, p, _, g) = TestData.CreateRecordQuadStringTuple("1");
+        var builder = new QuadBuilder()
+                    .WithSubject(s)
+                    .WithPredicate(p)
+                    .WithObject("ex: weird uri")
+                    .WithGraphLabel(g);
+
+        builder.Object.Should().BeOfType<UriNode>();
+
+        var quad = builder.Build();
+
+        quad.Object.Should().Be("ex:%20weird%20uri");
+    }
 }
