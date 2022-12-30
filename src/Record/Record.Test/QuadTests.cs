@@ -257,7 +257,7 @@ public class QuadTests
     {
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
 
-        var builder =  new QuadBuilder()
+        var builder = new QuadBuilder()
                             .WithSubject(s)
                             .WithPredicate(p)
                             .WithObjectLiteral(o)

@@ -22,9 +22,9 @@ public abstract class Quad : IEquatable<Quad>
             .WithPredicate(p)
             .WithGraphLabel(g);
 
-        if(objectLiteral) builder = builder.WithObjectLiteral(o);
+        if (objectLiteral) builder = builder.WithObjectLiteral(o);
         else builder = builder.WithObject(o);
-        
+
         return builder.Build();
     }
 

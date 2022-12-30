@@ -159,7 +159,7 @@ public record QuadBuilder
         }
         catch
         {
-            throw new QuadException("Failed to parse object literal."); 
+            throw new QuadException("Failed to parse object literal.");
         }
     }
 
