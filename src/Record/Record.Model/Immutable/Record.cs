@@ -127,7 +127,7 @@ public class Record : IEquatable<Record>
     {
         var writer = new T();
         if (writer is JsonLdRecordWriter && _jsonLdString != null) return _jsonLdString;
-        if(writer is NQuadsRecordWriter && _nQuadsString != null) return _nQuadsString;
+        if (writer is NQuadsRecordWriter && _nQuadsString != null) return _nQuadsString;
 
         var stringWriter = new StringWriter();
         writer.Save(_graph, stringWriter);
