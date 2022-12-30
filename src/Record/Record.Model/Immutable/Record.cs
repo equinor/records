@@ -23,7 +23,8 @@ public class Record : IEquatable<Record>
 
     public Record(string rdfString) => LoadFromString(rdfString);
 
-    private string _nQuadsString;
+    private string? _nQuadsString = null;
+    private string? _jsonLdString = null;
 
     private void LoadFromString(string rdfString)
     {
@@ -53,6 +54,7 @@ public class Record : IEquatable<Record>
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
         _nQuadsString = ToString<NQuadsRecordWriter>();
+        _jsonLdString = ToString<JsonLdRecordWriter>();
     }
 
     /// <summary>
@@ -124,6 +126,9 @@ public class Record : IEquatable<Record>
     public string ToString<T>() where T : IRdfWriter, new()
     {
         var writer = new T();
+        if (writer is JsonLdRecordWriter && _jsonLdString != null) return _jsonLdString;
+        if(writer is NQuadsRecordWriter && _nQuadsString != null) return _nQuadsString;
+
         var stringWriter = new StringWriter();
         writer.Save(_graph, stringWriter);
         return stringWriter.ToString();
