@@ -1,10 +1,11 @@
-@prefix : <https://rdf.equinor.com/ontology/revision#> .
+@prefix : <https://rdf.equinor.com/ontology/revision/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov: <http://www.w3.org/ns/prov> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @base <https://rdf.equinor.com/ontology/revision> .
 
 <https://rdf.equinor.com/ontology/revision> rdf:type owl:Ontology ;
@@ -12,18 +13,24 @@
                                              owl:imports <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> .
 
 #################################################################
-#    Object Properties
+#    Annotation properties
 #################################################################
 
-###  http://purl.org/stuff/rev#revises
-<http://purl.org/stuff/rev#revises> rdf:type owl:ObjectProperty ;
-                                    rdfs:subPropertyOf <http://www.w3.org/ns/prov#used> ;
-                                    rdf:type owl:AsymmetricProperty ,
-                                             owl:IrreflexiveProperty ;
-                                    rdfs:domain <http://purl.org/stuff/rev#Revision> ;
-                                    rdfs:range <https://rdf.equinor.com/ontology/record/Record> ;
-                                    rdfs:comment "A revision revises a non-empty collection of records. They represent the imutable state which the revision author(s) used for the revision process." .
+###  http://www.w3.org/2004/02/skos/core#prefLabel
+skos:prefLabel rdf:type owl:AnnotationProperty .
 
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#date
+xsd:date rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
 
 ###  http://www.w3.org/ns/prov#used
 <http://www.w3.org/ns/prov#used> rdf:type owl:ObjectProperty ;
@@ -32,22 +39,26 @@
                                  rdfs:comment "Usage is the beginning of utilizing an entity by an activity. Before usage, the activity had not begun to utilize this entity and could not have been affected by the entity." .
 
 
+###  https://rdf.equinor.com/ontology/revision/isNewEditionOf
+:isNewEditionOf rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf <http://www.w3.org/ns/prov#wasDerivedFrom> ;
+                rdfs:domain <https://rdf.equinor.com/ontology/revision/Edition> ;
+                rdfs:range <https://rdf.equinor.com/ontology/revision/Edition> .
+
+
+###  https://rdf.equinor.com/ontology/revision/contains
+<https://rdf.equinor.com/ontology/revision/contains> rdf:type owl:ObjectProperty ;
+                                                         rdfs:subPropertyOf <http://www.w3.org/ns/prov#hadMember> ;
+                                                         rdf:type owl:AsymmetricProperty ,
+                                                                  owl:IrreflexiveProperty ;
+                                                         rdfs:domain <https://rdf.equinor.com/ontology/revision/Edition> ;
+                                                         rdfs:range <https://rdf.equinor.com/ontology/record/Record> ;
+                                                         rdfs:comment "An edition continas one or more records. They represent the imutable state which the revision author(s) used for the revision process." .
+
+
 #################################################################
 #    Data properties
 #################################################################
-
-###  http://purl.org/stuff/rev#revisedAtDate
-<http://purl.org/stuff/rev#revisedAtDate> rdf:type owl:DatatypeProperty ;
-                                          rdfs:subPropertyOf <http://www.w3.org/ns/prov#endedAtTime> ;
-                                          rdfs:comment "A revision is associated with the date or time at which the revision was made" .
-
-
-###  http://purl.org/stuff/rev#wasRevisedBy
-<http://purl.org/stuff/rev#wasRevisedBy> rdf:type owl:DatatypeProperty ;
-                                         rdfs:domain <http://purl.org/stuff/rev#Revision> ;
-                                         rdfs:range xsd:string ;
-                                         rdfs:comment "The name(s) of the revisor(s)" .
-
 
 ###  http://www.w3.org/ns/prov#endedAtTime
 <http://www.w3.org/ns/prov#endedAtTime> rdf:type owl:DatatypeProperty ;
@@ -56,24 +67,30 @@
                                         rdfs:comment "End is when an activity is deemed to have been ended by an entity, known as trigger. The activity no longer exists after its end. Any usage, generation, or invalidation involving an activity precedes the activity's end. An end may refer to a trigger entity that terminated the activity, or to an activity, known as ender that generated the trigger." .
 
 
+###  https://rdf.equinor.com/ontology/revision/revisionNumber
+:revisionNumber rdf:type owl:DatatypeProperty ;
+                rdfs:domain <https://rdf.equinor.com/ontology/revision/DocumentEdition> ;
+                rdfs:range xsd:string ;
+                rdfs:comment "This name or number identifies the edition in a series of editions." .
+
+
+###  https://rdf.equinor.com/ontology/revision/issuedBy
+:issuedBy rdf:type owl:DatatypeProperty ;
+          rdfs:domain <https://rdf.equinor.com/ontology/revision/DocumentEdition> ;
+          rdfs:range xsd:string ;
+          rdfs:comment "The author or responsible for the edition" .
+
+
+###  https://rdf.equinor.com/ontology/revision/issuedAtDate
+:issuedAtDate rdf:type owl:DatatypeProperty ;
+                                                             rdfs:domain <https://rdf.equinor.com/ontology/revision/DocumentEdition> ;
+                                                             rdfs:range xsd:date ;
+                                                             rdfs:comment "A revision is associated with the date or time at which the revision was made" .
+
+
 #################################################################
 #    Classes
 #################################################################
-
-###  http://purl.org/stuff/rev#Revision
-<http://purl.org/stuff/rev#Revision> rdf:type owl:Class ;
-                                     rdfs:subClassOf <http://www.w3.org/ns/prov#Activity> ,
-                                                     [ rdf:type owl:Restriction ;
-                                                       owl:onProperty <http://purl.org/stuff/rev#revises> ;
-                                                       owl:someValuesFrom <https://rdf.equinor.com/ontology/record/Record>
-                                                     ] ,
-                                                     [ rdf:type owl:Restriction ;
-                                                       owl:onProperty <http://purl.org/stuff/rev#revises> ;
-                                                       owl:allValuesFrom <https://rdf.equinor.com/ontology/record/Record>
-                                                     ] ;
-                                     rdfs:comment "A business revision is the activity of stating that several records together have a certain property. A revision has a date, author and at least one revises relation." ;
-                                     rdfs:label "Revision" .
-
 
 ###  http://www.w3.org/ns/prov#Activity
 <http://www.w3.org/ns/prov#Activity> rdf:type owl:Class ;
@@ -83,5 +100,19 @@
 
 
 ###  http://www.w3.org/ns/prov#Entity
+
+###  https://rdf.equinor.com/ontology/revision/DocumentEdition
+<https://rdf.equinor.com/ontology/revision/DocumentEdition> rdf:type owl:Class ;
+                                                                rdfs:subClassOf <https://rdf.equinor.com/ontology/revision/Edition> ;
+                                                                rdfs:comment "An edition of a document is often calld a revision. It has an author and a issued by date." ;
+                                                                rdfs:label "Document edition" .
+
+
+###  https://rdf.equinor.com/ontology/revision/Edition
+<https://rdf.equinor.com/ontology/revision/Edition> rdf:type owl:Class ;
+                                                        rdfs:subClassOf <http://www.w3.org/ns/prov#Collection> ;
+                                                        rdfs:comment "An edition is a collection of records. It can also point to the previous edition." ;
+                                                        rdfs:label "Edition" .
+
 
 ###  Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi

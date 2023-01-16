@@ -1,0 +1,50 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rev: <https://rdf.equinor.com/ontology/revision/>.
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
+@prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+rev:EditionShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
+    sh:targetClass rev:Edition ;
+    sh:property [ 
+        sh:path rev:isNewEditionOf;
+        sh:maxCount 1;
+        sh:name "EditionHistory";
+        sh:message "An edition can be a new version of at most one other edition";
+        sh:severity sh:Violation;
+    ] , 
+    [ 
+        sh:path rev:contains;
+        sh:minCount 1;
+        sh:name "EditionContent";
+        sh:message "An edition must contain at least one record";
+        sh:severity sh:Violation;
+    ] .
+
+rev:DocumentEditionShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
+    sh:targetClass rev:DocumentEdition ;
+    sh:property [
+        sh:path rev:revisionNumber;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "RevisionNumber";
+        sh:message "A document edition has exactly one revision number";
+    ] ,
+    [
+        sh:path rev:issuedAtDate;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "RevisionDate";
+        sh:message "A documnt edition has exactly one date";
+    ] ,
+    [
+        sh:path rev:issuedBy;
+        sh:minCount 1;
+        sh:name "IssuedBy";
+        sh:message "A documnt edition is issued by at least one author";
+    ] .
