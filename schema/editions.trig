@@ -1,0 +1,51 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<https://example.com/data/RecordID123> {
+    <https://example.com/data/RecordID123> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                 rdfs:comment "Container record, defines scope for subrecords"^^xsd:string;
+                                                 <https://rdf.equinor.com/ontology/record/isInScope> <https://rdf.equinor.com/fam/Contract/12345678>,
+                                                                                                     <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001>,
+                                                                                                     <https://rdf.equinor.com/fam/Facility/EXMPL>,
+                                                                                                     <https://rdf.equinor.com/fam/Project/L.01234A.001>.
+}
+
+<https://example.com/data/RecordID123.0> {
+    <https://example.com/data/RecordID123.0> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                   rdfs:comment "First MEL delivered on Example Facility"^^xsd:string;
+                                                   <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
+    <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001> a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
+                                                                   rdfs:label "B123-EX-W-LA-00001"^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/DocumentType> "LA"^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Facility> <https://rdf.equinor.com/fam/Facility/EXMPL>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/FunctionalSystem> <https://rdf.equinor.com/ontology/fam/v1/FunctionalSystem/ENG>;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Location> "Northsea"^^xsd:string;
+                                                                   <https://rdf.equinor.com/ontology/fam/v1/Title> "MASTER EQUIPMENT LIST - MEL"^^xsd:string.
+}
+
+<https://example.com/data/RecordID123.1> {
+    <https://example.com/data/RecordID123.1> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                   <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
+    <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01> a <https://rdf.equinor.com/ontology/revision/DocumentEdition>;
+                                                                       rdfs:label "First delivered revision of MEL"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/revision/revisionNumber> "F01"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/revision/issuedAtDate> "2022-11-02"^^xsd:date;
+                                                                       <https://rdf.equinor.com/ontology/revision/issuedBy> "Kari Nordkvinne"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/revision/isNewEditionOf> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.A01>;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/DisciplineApprovedBy> "NM"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/fam/v1/ReasonForIssue> "Revision text"^^xsd:string;
+                                                                       <https://rdf.equinor.com/ontology/revision/contains> <https://example.com/data/RecordID123.2>.
+}
+
+<https://example.com/data/RecordID123.2> {
+    <https://example.com/data/RecordID123.2> <https://rdf.equinor.com/ontology/record/describes> <https://example.com/data/EXMPL/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP>;
+                                                   <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
+    <https://example.com/data/EXMPL/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP> a <https://rdf.equinor.com/ontology/mel/System>;
+                                                                              rdfs:comment "Electrical Field Equipment without Taghierarchy"^^xsd:string;
+                                                                              rdfs:label "20-Electrical-Field-Equip"^^xsd:string;
+                                                                              <https://rdf.equinor.com/ontology/fam/v1/TOP_TAG> "0"^^xsd:boolean;
+                                                                              <https://rdf.equinor.com/ontology/fam/v1/TagNumber> <https://stid.equinor.com/EXMPL/20-ELECTRICAL-FIELD-EQUIP>.
+}
