@@ -5,46 +5,46 @@
 @prefix lis: <http://standards.iso.org/iso/15926/part14/>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
-rev:EditionShape
+rev:RevisionShape
     a sh:NodeShape ;
     rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
-    sh:targetClass rev:Edition ;
+    sh:targetClass rev:Revision ;
     sh:property [ 
-        sh:path rev:isNewEditionOf;
+        sh:path rev:isNewRevisionOf;
         sh:maxCount 1;
-        sh:name "EditionHistory";
-        sh:message "An edition can be a new version of at most one other edition";
+        sh:name "RevisionHistory";
+        sh:message "A revision can be a new version of at most one other revision";
         sh:severity sh:Violation;
     ] , 
     [ 
         sh:path rev:contains;
         sh:minCount 1;
-        sh:name "EditionContent";
-        sh:message "An edition must contain at least one record";
+        sh:name "RevisionContent";
+        sh:message "A revision must contain at least one record";
         sh:severity sh:Violation;
     ] .
 
-rev:DocumentEditionShape
+rev:DocumentRevisionShape
     a sh:NodeShape ;
     rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
-    sh:targetClass rev:DocumentEdition ;
+    sh:targetClass rev:DocumentRevision ;
     sh:property [
         sh:path rev:revisionNumber;
         sh:minCount 1;
         sh:maxCount 1;
         sh:name "RevisionNumber";
-        sh:message "A document edition has exactly one revision number";
+        sh:message "A document revision has exactly one revision number";
     ] ,
     [
         sh:path rev:issuedAtDate;
         sh:minCount 1;
         sh:maxCount 1;
         sh:name "RevisionDate";
-        sh:message "A documnt edition has exactly one date";
+        sh:message "A documnt revision has exactly one date";
     ] ,
     [
         sh:path rev:issuedBy;
         sh:minCount 1;
         sh:name "IssuedBy";
-        sh:message "A documnt edition is issued by at least one author";
+        sh:message "A documnt revision is issued by at least one author";
     ] .

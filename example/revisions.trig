@@ -29,12 +29,12 @@
     <https://example.com/data/RecordID123.1> a <https://rdf.equinor.com/ontology/record/Record>;
                                                    <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01>;
                                                    <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
-    <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01> a <https://rdf.equinor.com/ontology/revision/DocumentEdition>;
+    <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01> a <https://rdf.equinor.com/ontology/revision/DocumentRevision>;
                                                                        rdfs:label "First delivered revision of MEL"^^xsd:string;
                                                                        <https://rdf.equinor.com/ontology/revision/revisionNumber> "F01"^^xsd:string;
                                                                        <https://rdf.equinor.com/ontology/revision/issuedAtDate> "2022-11-02"^^xsd:date;
                                                                        <https://rdf.equinor.com/ontology/revision/issuedBy> "Kari Nordkvinne"^^xsd:string;
-                                                                       <https://rdf.equinor.com/ontology/revision/isNewEditionOf> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.A01>;
+                                                                       <https://rdf.equinor.com/ontology/revision/isNewRevisionOf> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.A01>;
                                                                        <https://rdf.equinor.com/ontology/fam/v1/DisciplineApprovedBy> "NM"^^xsd:string;
                                                                        <https://rdf.equinor.com/ontology/fam/v1/ReasonForIssue> "Revision text"^^xsd:string;
                                                                        <https://rdf.equinor.com/ontology/revision/contains> <https://example.com/data/RecordID123.2>.
