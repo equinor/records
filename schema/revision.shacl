@@ -4,6 +4,7 @@
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
 @prefix lis: <http://standards.iso.org/iso/15926/part14/>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 
 rev:RevisionShape
     a sh:NodeShape ;
@@ -36,7 +37,7 @@ rev:DocumentRevisionShape
         sh:message "A document revision has exactly one revision number";
     ] ,
     [
-        sh:path rev:issuedAtDate;
+        sh:path prov:generatedAtTime;
         sh:minCount 1;
         sh:maxCount 1;
         sh:name "RevisionDate";

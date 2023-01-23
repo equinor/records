@@ -5,6 +5,7 @@
 <https://example.com/data/RecordID123> {
     <https://example.com/data/RecordID123> a <https://rdf.equinor.com/ontology/record/Record>;
                                                  rdfs:comment "Container record, defines scope for subrecords"^^xsd:string;
+                                                 <http://www.w3.org/ns/prov#generatedAtTime> "2022-11-03"^^xsd:date;
                                                  <https://rdf.equinor.com/ontology/record/isInScope> <https://rdf.equinor.com/fam/Contract/12345678>,
                                                                                                      <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001>,
                                                                                                      <https://rdf.equinor.com/fam/Facility/EXMPL>,
@@ -14,6 +15,7 @@
 <https://example.com/data/RecordID123.0> {
     <https://example.com/data/RecordID123.0> a <https://rdf.equinor.com/ontology/record/Record>;
                                                    rdfs:comment "First MEL delivered on Example Facility"^^xsd:string;
+                                                   <http://www.w3.org/ns/prov#generatedAtTime> "2022-11-03"^^xsd:date;
                                                    <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001>;
                                                    <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
     <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001> a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
@@ -27,12 +29,13 @@
 
 <https://example.com/data/RecordID123.1> {
     <https://example.com/data/RecordID123.1> a <https://rdf.equinor.com/ontology/record/Record>;
+                                                   <http://www.w3.org/ns/prov#generatedAtTime> "2022-11-03"^^xsd:date;
                                                    <https://rdf.equinor.com/ontology/record/describes> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01>;
                                                    <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
     <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.F01> a <https://rdf.equinor.com/ontology/revision/DocumentRevision>;
                                                                        rdfs:label "First delivered revision of MEL"^^xsd:string;
                                                                        <https://rdf.equinor.com/ontology/revision/revisionNumber> "F01"^^xsd:string;
-                                                                       <https://rdf.equinor.com/ontology/revision/issuedAtDate> "2022-11-02"^^xsd:date;
+                                                                       <http://www.w3.org/ns/prov#generatedAtTime> "2022-11-03"^^xsd:date;
                                                                        <https://rdf.equinor.com/ontology/revision/issuedBy> "Kari Nordkvinne"^^xsd:string;
                                                                        <https://rdf.equinor.com/ontology/revision/isNewRevisionOf> <https://rdf.equinor.com/fam/Document/EXMPL/B123-EX-W-LA-00001.A01>;
                                                                        <https://rdf.equinor.com/ontology/fam/v1/DisciplineApprovedBy> "NM"^^xsd:string;
@@ -42,6 +45,7 @@
 
 <https://example.com/data/RecordID123.2> {
     <https://example.com/data/RecordID123.2> <https://rdf.equinor.com/ontology/record/describes> <https://example.com/data/EXMPL/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP>;
+                                                   <http://www.w3.org/ns/prov#generatedAtTime> "2022-11-03"^^xsd:date;
                                                    <https://rdf.equinor.com/ontology/record/subRecordOf> <https://example.com/data/RecordID123>.
     <https://example.com/data/EXMPL/tag?tagNo=20-ELECTRICAL-FIELD-EQUIP> a <https://rdf.equinor.com/ontology/mel/System>;
                                                                               rdfs:comment "Electrical Field Equipment without Taghierarchy"^^xsd:string;
