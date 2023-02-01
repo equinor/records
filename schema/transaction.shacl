@@ -19,8 +19,9 @@ rev:TransactionShape
         sh:message "A transaction has exactly one date when it is received";
     ] ,
     [
-        sh:path rev:issuedBy;
+        sh:path prov:wasGeneratedBy;
         sh:minCount 1;
-        sh:name "IssuedBy";
-        sh:message "A transaction has at least one sender";
+        sh:maxCountr 1;
+        sh:name "Transaction sender";
+        sh:message "A transaction has exactly one sender, related to with prov:wasGeneratedBy";
     ] .
