@@ -46,9 +46,12 @@ xsd:date rdf:type rdfs:Datatype .
                 rdfs:domain <https://rdf.equinor.com/ontology/revision/Revision> ;
                 rdfs:range <https://rdf.equinor.com/ontology/revision/Revision> .
 
+###  https://rdf.equinor.com/ontology/revision/describes
+:describes rdf:type owl:ObjectProperty ;
+                rdfs:domain <https://rdf.equinor.com/ontology/revision/Revision> .
 
-###  https://rdf.equinor.com/ontology/revision/contains
-<https://rdf.equinor.com/ontology/revision/contains> rdf:type owl:ObjectProperty ;
+###  https://rdf.equinor.com/ontology/revision/containsRecord
+<https://rdf.equinor.com/ontology/revision/containsRecord> rdf:type owl:ObjectProperty ;
                                                          rdfs:subPropertyOf <http://www.w3.org/ns/prov#hadMember> ;
                                                          rdf:type owl:AsymmetricProperty ,
                                                                   owl:IrreflexiveProperty ;

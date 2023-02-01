@@ -18,7 +18,7 @@ rev:RevisionShape
         sh:severity sh:Violation;
     ] , 
     [ 
-        sh:path rev:contains;
+        sh:path rev:containsRecord;
         sh:minCount 1;
         sh:name "RevisionContent";
         sh:message "A revision must contain at least one record";
@@ -35,6 +35,13 @@ rev:DocumentRevisionShape
         sh:maxCount 1;
         sh:name "RevisionNumber";
         sh:message "A document revision has exactly one revision number";
+    ] ,
+    [
+        sh:path rev:describes;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "RevisionObject";
+        sh:message "A document revision is a revision of exactly one object (usually a document)";
     ] ,
     [
         sh:path prov:generatedAtTime;
