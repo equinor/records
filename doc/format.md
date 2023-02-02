@@ -9,6 +9,8 @@ The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and
 
 ## Namespaces
 * rec: https://rdf.equinor.com/ontology/record/
+* rev: https://rdf.equinor.com/ontology/revision/
+* tra: https://rdf.equinor.com/ontology/transaction/
 * prov: http://www.w3.org/ns/prov#
 * ex: http://example.com/data/ 
 
@@ -103,4 +105,6 @@ This is useful to change the scopes of large numbers of records.
 When querying over a set of records, it will usually be with a filter over scopes. There are two different ways to filter over scopes. We expect the domain-oriented queries to be using an inclusive filtering, that is, include any record that has at least the given scopes. For exploring the history or provenance it will also be beneficial with queries that use precise scope queries, that is, give me all the records that have exactly these scopes.
 
 ### Modelling pattern for revisions and versions
-Some work processes have their own concepts of revisions and versions. These patterns might in some cases be modelled directly by records, but only in the cases where such a revision or version can never be changed. In the cases where revisions and versions can be changed, it is better to model the revisions as a separate concept in the content, and use the subrecord relation to relate the revisions to the version of the data they revise.
+Some work processes have their own concepts of revisions and versions. These patterns might in some cases be modelled directly by records, but only in the cases where such a revision or version can never be changed. In the cases where revisions and versions can be changed, it is better to model the revisions as a separate concept. 
+`rev:Revision` is a quite general concept for any revision/edition of data. It must have at least one `rev:containsRecord` relation to a record, and at most one `rev:isNewRevisionOf` relation to a previous revision. Note that revisions are objects in the content, even though they have relations to records. 
+There are two subclasses of `rev:Revisions`, one for revisions of documents, and one for transactions into a record store. Revisions of documents have author and dates, while transactions have source systems and date. Document revisions are intended to support existing workflows where documents have editions/revisions/versions that are issued at certain times, while transactions support storing the information about what data/records are entered into a system at some point. Transactions are most useful for systems that already have a transaction concept in their interface. 
