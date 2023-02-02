@@ -33,13 +33,6 @@ xsd:date rdf:type rdfs:Datatype .
 #    Object Properties
 #################################################################
 
-###  http://www.w3.org/ns/prov#used
-<http://www.w3.org/ns/prov#used> rdf:type owl:ObjectProperty ;
-                                 rdfs:domain <http://www.w3.org/ns/prov#Activity> ;
-                                 rdfs:range <http://www.w3.org/ns/prov#Entity> ;
-                                 rdfs:comment "Usage is the beginning of utilizing an entity by an activity. Before usage, the activity had not begun to utilize this entity and could not have been affected by the entity." .
-
-
 ###  https://rdf.equinor.com/ontology/revision/isNewRevisionOf
 :isNewRevisionOf rdf:type owl:ObjectProperty ;
                 rdfs:subPropertyOf <http://www.w3.org/ns/prov#wasDerivedFrom> ;
