@@ -54,5 +54,5 @@ rev:DocumentRevisionShape
         sh:path rev:issuedBy;
         sh:minCount 1;
         sh:name "IssuedBy";
-        sh:message "A documnt revision is issued by at least one author";
+        sh:message "A document revision is issued by at least one author";
     ] .
