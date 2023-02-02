@@ -83,15 +83,6 @@ xsd:date rdf:type rdfs:Datatype .
 #    Classes
 #################################################################
 
-###  http://www.w3.org/ns/prov#Activity
-<http://www.w3.org/ns/prov#Activity> rdf:type owl:Class ;
-                                     owl:disjointWith <http://www.w3.org/ns/prov#Entity> ;
-                                     rdfs:comment "An activity is something that occurs over a period of time and acts upon or with entities; it may include consuming, processing, transforming, modifying, relocating, using, or generating entities." ;
-                                     rdfs:label "Activity" .
-
-
-###  http://www.w3.org/ns/prov#Entity
-
 ###  https://rdf.equinor.com/ontology/revision/DocumentRevision
 <https://rdf.equinor.com/ontology/revision/DocumentRevision> rdf:type owl:Class ;
                                                                 rdfs:subClassOf <https://rdf.equinor.com/ontology/revision/Revision> ;
