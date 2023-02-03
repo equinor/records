@@ -11,6 +11,7 @@
 @prefix project: <https://rdf.equinor.com/fam/Project/>.
 @prefix fsystem: <https://rdf.equinor.com/fam/FunctionalSystem/>.
 @prefix famvocab: <https://rdf.equinor.com/ontology/fam/v1/>.
+@prefix tie: <https://rdf.equinor.com/ontology/TIE#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
 
 exdata:RecordID123 {
@@ -43,14 +44,14 @@ exdata:RecordID123.1 {
                         prov:generatedAtTime "2022-11-03"^^xsd:date;
                         rec:describes document:B123-EX-W-LA-00001.F01;
                         rec:isSubRecordOf exdata:RecordID123.
-    document:B123-EX-W-LA-00001.F01 a rev:DocumentRevision;
+    document:B123-EX-W-LA-00001.F01 a rev:DocumentRevision, tie:OfficialProject, tie:RevisionForReview;
                                     rdfs:label "First delivered revision of MEL"^^xsd:string;
                                     rev:revisionNumber "F01"^^xsd:string;
                                     prov:generatedAtTime "2022-11-03"^^xsd:date;
                                     rev:issuedBy "Kari Nordkvinne"^^xsd:string;
                                     rev:isNewRevisionOf document:B123-EX-W-LA-00001.A01;
                                     famvocab:DisciplineApprovedBy "NM"^^xsd:string;
-                                    famvocab:ReasonForIssue "Revision text"^^xsd:string;
+                                    tie:wasIssuedForReason "Revision text"^^xsd:string;
                                     rev:describes document:B123-EX-W-LA-00001;
                                     rev:containsRecord exdata:RecordID123.2, exdata:RecordID123.3, exdata:RecordID123.0 .
 }
