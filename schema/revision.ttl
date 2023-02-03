@@ -3,39 +3,47 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix prov: <http://www.w3.org/ns/prov> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
 @base <https://rdf.equinor.com/ontology/revision> .
 
 <https://rdf.equinor.com/ontology/revision> rdf:type owl:Ontology ;
-                                             owl:versionIRI <https://rdf.equinor.com/ontology/revision/v1.0> ;
+                                             owl:versionIRI :v1.0 ;
                                              owl:imports <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> .
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#date
+xsd:date rdf:type rdfs:Datatype .
 
 
 #################################################################
 #    Object Properties
 #################################################################
 
-###  https://rdf.equinor.com/ontology/revision/isNewRevisionOf
-:isNewRevisionOf rdf:type owl:ObjectProperty ;
-                rdfs:subPropertyOf <http://www.w3.org/ns/prov#wasDerivedFrom> ;
-                rdfs:domain <https://rdf.equinor.com/ontology/revision/Revision> ;
-                rdfs:range <https://rdf.equinor.com/ontology/revision/Revision> .
+###  https://rdf.equinor.com/ontology/revision/containsRecord
+:containsRecord rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf prov:hadMember ;
+                rdf:type owl:AsymmetricProperty ,
+                         owl:IrreflexiveProperty ;
+                rdfs:domain :Revision ;
+                rdfs:range <https://rdf.equinor.com/ontology/record/Record> ;
+                rdfs:comment "A revision contains one or more records. They represent the imutable state which the revision author(s) used for the revision process." .
+
 
 ###  https://rdf.equinor.com/ontology/revision/describes
 :describes rdf:type owl:ObjectProperty ;
-                rdfs:domain <https://rdf.equinor.com/ontology/revision/Revision> .
+           rdfs:domain :Revision .
 
-###  https://rdf.equinor.com/ontology/revision/containsRecord
-<https://rdf.equinor.com/ontology/revision/containsRecord> rdf:type owl:ObjectProperty ;
-                                                         rdfs:subPropertyOf <http://www.w3.org/ns/prov#hadMember> ;
-                                                         rdf:type owl:AsymmetricProperty ,
-                                                                  owl:IrreflexiveProperty ;
-                                                         rdfs:domain <https://rdf.equinor.com/ontology/revision/Revision> ;
-                                                         rdfs:range <https://rdf.equinor.com/ontology/record/Record> ;
-                                                         rdfs:comment "A revision contains one or more records. They represent the imutable state which the revision author(s) used for the revision process." .
+
+###  https://rdf.equinor.com/ontology/revision/isNewRevisionOf
+:isNewRevisionOf rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf prov:wasDerivedFrom ;
+                 rdfs:domain :Revision ;
+                 rdfs:range :Revision .
 
 
 #################################################################
@@ -43,25 +51,29 @@
 #################################################################
 
 ###  http://www.w3.org/ns/prov#generatedAtTime
-<http://www.w3.org/ns/prov#generatedAtTime> rdf:type owl:DatatypeProperty ;
-                                        rdfs:domain <http://www.w3.org/ns/prov#Entity> ;
-                                        rdfs:range xsd:date ;
-                                        rdfs:comment "Generation is the completion of production of a new entity by an activity. This entity did not exist before generation and becomes available for usage after this generation." .
+prov:generatedAtTime rdf:type owl:DatatypeProperty ;
+                     rdfs:domain prov:Entity ;
+                     rdfs:range xsd:date ;
+                     rdfs:comment "Generation is the completion of production of a new entity by an activity. This entity did not exist before generation and becomes available for usage after this generation." .
 
 
-###  https://rdf.equinor.com/ontology/revision/revisionNumber
-:revisionNumber rdf:type owl:DatatypeProperty ;
-                rdfs:domain <https://rdf.equinor.com/ontology/revision/DocumentRevision> ;
-                rdfs:range xsd:string ;
-                rdfs:comment "This name or number identifies the Revision in a series of Revisions." .
+###  http://www.w3.org/ns/prov#wasAttributedTo
+prov:wasAttributedTo rdf:type owl:DatatypeProperty .
 
 
 ###  https://rdf.equinor.com/ontology/revision/issuedBy
 :issuedBy rdf:type owl:DatatypeProperty ;
           rdfs:subPropertyOf prov:wasAttributedTo ;
-          rdfs:domain <https://rdf.equinor.com/ontology/revision/DocumentRevision> ;
+          rdfs:domain :DocumentRevision ;
           rdfs:range xsd:string ;
           rdfs:comment "The author or responsible for the Revision" .
+
+
+###  https://rdf.equinor.com/ontology/revision/revisionNumber
+:revisionNumber rdf:type owl:DatatypeProperty ;
+                rdfs:domain :DocumentRevision ;
+                rdfs:range xsd:string ;
+                rdfs:comment "This name or number identifies the Revision in a series of Revisions." .
 
 
 #################################################################
@@ -69,17 +81,17 @@
 #################################################################
 
 ###  https://rdf.equinor.com/ontology/revision/DocumentRevision
-<https://rdf.equinor.com/ontology/revision/DocumentRevision> rdf:type owl:Class ;
-                                                                rdfs:subClassOf <https://rdf.equinor.com/ontology/revision/Revision> ;
-                                                                rdfs:comment "A revision of a document is often calld a revision. It has an author and a issued by date." ;
-                                                                rdfs:label "Document Revision" .
+:DocumentRevision rdf:type owl:Class ;
+                  rdfs:subClassOf :Revision ;
+                  rdfs:comment "A revision of a document is some published edition or version or the documnet which the producer gives a special status. It has an author and a issued by date." ;
+                  rdfs:label "Document Revision" .
 
 
 ###  https://rdf.equinor.com/ontology/revision/Revision
-<https://rdf.equinor.com/ontology/revision/Revision> rdf:type owl:Class ;
-                                                        rdfs:subClassOf <http://www.w3.org/ns/prov#Collection> ;
-                                                        rdfs:comment "A revision is a collection of records. It can also point to the previous Revision." ;
-                                                        rdfs:label "Revision" .
+:Revision rdf:type owl:Class ;
+          rdfs:subClassOf prov:Collection ;
+          rdfs:comment "A revision is a collection of records. It can also point to the previous Revision." ;
+          rdfs:label "Revision" .
 
 
 ###  Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi
