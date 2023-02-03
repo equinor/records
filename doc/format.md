@@ -101,3 +101,6 @@ Scope inheritance from the superrecord propagates with replaces. That is, if ex:
 This is useful to change the scopes of large numbers of records.
 ### Querying on scopes
 When querying over a set of records, it will usually be with a filter over scopes. There are two different ways to filter over scopes. We expect the domain-oriented queries to be using an inclusive filtering, that is, include any record that has at least the given scopes. For exploring the history or provenance it will also be beneficial with queries that use precise scope queries, that is, give me all the records that have exactly these scopes.
+
+### Modelling pattern for revisions and versions
+Some work processes have their own concepts of revisions and versions. These patterns might in some cases be modelled directly by records, but only in the cases where such a revision or version can never be changed. In the cases where revisions and versions can be changed, it is better to model the revisions as a separate concept in the content, and use the subrecord relation to relate the revisions to the version of the data they revise.
