@@ -110,4 +110,4 @@ Some work processes have their own concepts of revisions and versions. These pat
 *  [Shacl rules](../schema/revision.shacl)
 *  [Example](../example/revisions.trig)
   
-There is currently only one subclass of `rev:Revisions` for revisions of documents. Revisions of documents have author and dates. The can also have the relation `rev:describes` to the document it revises. Note that this is not the same relation as `rec:describes` in the record provenance. Document revisions are intended to support existing workflows where documents have editions/revisions/versions that are issued at certain times.
+There is currently only one subclass of `rev:Revision` for revisions of documents. Revisions of documents have author and dates. The can also have the relation `rev:describes` to the document it revises. Note that this is not the same relation as `rec:describes` in the record provenance. Document revisions are intended to support existing workflows where documents have editions/revisions/versions that are issued at certain times.
