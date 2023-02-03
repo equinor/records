@@ -13,21 +13,6 @@
                                              owl:versionIRI <https://rdf.equinor.com/ontology/revision/2023-01-10> ;
                                              owl:imports <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> .
 
-#################################################################
-#    Annotation properties
-#################################################################
-
-###  http://www.w3.org/2004/02/skos/core#prefLabel
-skos:prefLabel rdf:type owl:AnnotationProperty .
-
-
-#################################################################
-#    Datatypes
-#################################################################
-
-###  http://www.w3.org/2001/XMLSchema#date
-xsd:date rdf:type rdfs:Datatype .
-
 
 #################################################################
 #    Object Properties
