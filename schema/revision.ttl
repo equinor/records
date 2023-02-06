@@ -58,7 +58,9 @@ prov:generatedAtTime rdf:type owl:DatatypeProperty ;
 
 
 ###  http://www.w3.org/ns/prov#wasAttributedTo
-prov:wasAttributedTo rdf:type owl:DatatypeProperty .
+prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
+                    rdfs:domain prov:Entity ;
+                    rdfs:comment "Attribution is the ascribing of an entity to an agent." .
 
 
 ###  https://rdf.equinor.com/ontology/revision/issuedBy
