@@ -41,6 +41,7 @@ rev:DocumentRevisionShape
         sh:minCount 1;
         sh:maxCount 1;
         sh:name "RevisionObject";
+        sh:class rev:Document;
         sh:message "A document revision is a revision of exactly one object (usually a document)";
     ] ,
     [
@@ -55,4 +56,34 @@ rev:DocumentRevisionShape
         sh:minCount 1;
         sh:name "IssuedBy";
         sh:message "A document revision is issued by at least one author";
+    ] .
+
+rev:DocumentShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for named documents." ;
+    sh:targetClass rev:Document ;
+    sh:property [
+        sh:path rev:hasAttachment;
+        sh:class rev:Attachment;
+        sh:name "DocumentAttachment";
+        sh:message "A document may have any number of attachments";
+    ] ,
+    [
+        sh:path rdfs:label;
+        sh:minCount 1;
+        sh:name "DocumentName";
+        sh:message "A document must have at least one name"
+    ] .
+
+rev:AttachmentShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for physical files attached/about a document." ;
+    sh:targetClass rev:Attachment ;
+    sh:property [
+        sh:path [ sh:inversePath rev:hasAttachment ];
+        sh:class rev:Document;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "DocumentAttachment";
+        sh:message "An attachment is attached to exactly one document";
     ] .
