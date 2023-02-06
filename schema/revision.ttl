@@ -3,7 +3,6 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix prov: <http://www.w3.org/ns/prov> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
@@ -23,6 +22,12 @@
                 rdfs:subPropertyOf <http://www.w3.org/ns/prov#wasDerivedFrom> ;
                 rdfs:domain <https://rdf.equinor.com/ontology/revision/Revision> ;
                 rdfs:range <https://rdf.equinor.com/ontology/revision/Revision> .
+
+###  https://rdf.equinor.com/ontology/revision/hasAttachment
+:hasAttachment rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf prov:hadMember ;
+                rdfs:domain <https://rdf.equinor.com/ontology/revision/Document> ;
+                rdfs:range <https://rdf.equinor.com/ontology/revision/Attachment> .
 
 ###  https://rdf.equinor.com/ontology/revision/describes
 :describes rdf:type owl:ObjectProperty ;
@@ -70,10 +75,30 @@
 
 ###  https://rdf.equinor.com/ontology/revision/DocumentRevision
 <https://rdf.equinor.com/ontology/revision/DocumentRevision> rdf:type owl:Class ;
-                                                                rdfs:subClassOf <https://rdf.equinor.com/ontology/revision/Revision> ;
-                                                                rdfs:comment "A revision of a document is often calld a revision. It has an author and a issued by date." ;
-                                                                rdfs:label "Document Revision" .
+                                                            rdfs:subClassOf <https://rdf.equinor.com/ontology/revision/Revision> ;
+                                                            owl:equivalentClass [ rdf:type owl:Restriction ;
+                                                                                    owl:onProperty :describes ;
+                                                                                    owl:someValuesFrom :Document
+                                                            ] ;
+                                                            rdfs:comment "A revision of a document is often calld a revision. It has an author and a issued by date." ;
+                                                            rdfs:label "Document Revision" .
 
+###  https://rdf.equinor.com/ontology/revision/Document
+<https://rdf.equinor.com/ontology/revision/Document> rdf:type owl:Class ;
+                                                                rdfs:subClassOf prov:Collection ;
+                                                                rdfs:superClassOf [
+                                                                    rdf:type owl:Restriction ;
+                                                                    owl:onProperty [ owl:inverseOf :describes ];
+                                                                    owl:someValuesFrom :DocumentRevision
+                                                                ];
+                                                                rdfs:comment "A document is a named collection of files with a purpose." ;
+                                                                rdfs:label "Document" .
+
+###  https://rdf.equinor.com/ontology/revision/Attachment
+<https://rdf.equinor.com/ontology/revision/Attachment> rdf:type owl:Class ;
+                                                                rdfs:subClassOf prov:Entity ;
+                                                                rdfs:comment "An attachment is a physical file, for example an excel file. It is " ;
+                                                                rdfs:label "Attachment" .
 
 ###  https://rdf.equinor.com/ontology/revision/Revision
 <https://rdf.equinor.com/ontology/revision/Revision> rdf:type owl:Class ;
