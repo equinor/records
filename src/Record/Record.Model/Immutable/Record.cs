@@ -84,7 +84,7 @@ public class Record : IEquatable<Record>
         };
     }
 
-    public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+    public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
 
