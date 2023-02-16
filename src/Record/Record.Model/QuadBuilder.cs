@@ -81,7 +81,15 @@ public record QuadBuilder
         writer.Save(tempGraph, sw);
         var quadString = sw.ToString().Trim().Replace(" .", $" <{GraphLabel}> .");
 
-        var objectString = (Object is LiteralNode) ? $"\"{Object}\"" : Object.ToString();
+        var objectString = triple.Object.ToString();
+
+        if(triple.Object is LiteralNode literalObject)
+        {
+            var dataType = literalObject.DataType.ToString();
+            var dataValue = literalObject.Value;
+
+            objectString = $"\"{dataValue}\"^^<{dataType}>";
+        }
 
         return new SafeQuad
         {
