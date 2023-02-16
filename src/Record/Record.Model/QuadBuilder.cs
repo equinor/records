@@ -1,6 +1,7 @@
 ﻿using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Writing.Formatting;
 
 namespace Records;
 
@@ -66,6 +67,7 @@ public record QuadBuilder
         if (Subject == null || Predicate == null || Object == null) throw new QuadException("Missing one or more properties.");
 
         var tempGraph = new Graph();
+        tempGraph.BaseUri = new Uri(GraphLabel.ToString());
         Subject = Subject.CopyNode(tempGraph);
         Predicate = Predicate.CopyNode(tempGraph);
         Object = Object.CopyNode(tempGraph);
@@ -76,27 +78,18 @@ public record QuadBuilder
         if (tempGraph.Triples.Count != 1) throw new QuadException("Unexpected number of triples asserted.");
         var triple = tempGraph.Triples.First();
 
-        var writer = new NQuadsRecordWriter();
-        var sw = new StringWriter();
-        writer.Save(tempGraph, sw);
-        var quadString = sw.ToString().Trim().Replace(" .", $" <{GraphLabel}> .");
+        var formatter = new NQuadsFormatter();
+        var quadString = triple.ToString(formatter);
 
-        var objectString = triple.Object.ToString();
-
-        if(triple.Object is LiteralNode literalObject)
-        {
-            var dataType = literalObject.DataType.ToString();
-            var dataValue = literalObject.Value;
-
-            objectString = $"\"{dataValue}\"^^<{dataType}>";
-        }
+        var quadSplit = quadString.Split(" ");
+        if (quadSplit.Length != 5) throw new QuadException("Unexpected number of elements in quad.");
 
         return new SafeQuad
         {
-            Subject = triple.Subject.ToString(),
-            Predicate = triple.Predicate.ToString(),
-            Object = objectString,
-            GraphLabel = GraphLabel.ToString(),
+            Subject = quadSplit[0],
+            Predicate = quadSplit[1],
+            Object = quadSplit[2],
+            GraphLabel = quadSplit[3],
             String = quadString
         };
     }
