@@ -2,6 +2,7 @@
 using Records.Exceptions;
 using Record = Records.Immutable.Record;
 using VDS.RDF;
+using Newtonsoft.Json.Linq;
 
 namespace Records.Tests;
 public class RecordBuilderTests
@@ -299,5 +300,47 @@ public class RecordBuilderTests
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
         record.Quads().Should().Contain(content);
+    }
+
+    [Fact]
+    public void RecordBuilder_Builds_Object_Literals_Correctly_Check_With_JsonLd()
+    {
+        var graph = new Graph();
+        var (s, p, _, g) = TestData.CreateRecordQuadStringTuple("1");
+        graph.BaseUri = new Uri(g);
+
+        var dateTypeUri = UriFactory.Create("http://www.w3.org/2001/XMLSchema#date");
+        var stringTypeUri = UriFactory.Create($"http://www.w3.org/2001/XMLSchema#string");
+
+        var subject = graph.CreateUriNode(new Uri(s));
+        var predicate = graph.CreateUriNode(new Uri(p));
+        var @object1 = graph.CreateLiteralNode("date", dateTypeUri);
+        var @object2 = graph.CreateLiteralNode("string", stringTypeUri);
+
+        graph.Assert(new Triple(subject, predicate, @object1));
+        graph.Assert(new Triple(subject, predicate, @object2));
+
+        var quads = graph.Triples.Select(triple => Quad.CreateSafe(triple, graph.BaseUri));
+
+        var scopes = TestData.CreateObjectList(2, "scope");
+
+        var record = new RecordBuilder()
+            .WithId(g)
+            .WithScopes(scopes)
+            .WithContent(quads)
+            .Build();
+
+        record.Id.Should().Be(graph.BaseUri.ToString());
+
+        var jsonLd = record.ToString<JsonLdRecordWriter>();
+        JArray.Parse(jsonLd)?
+            .Single()
+            .Value<JArray>("@graph")?
+            .First()
+            .Value<JArray>(p)?
+            .First()
+            .Value<string>("@type")
+            .Should()
+            .Be(dateTypeUri.ToString());
     }
 }

@@ -1,7 +1,10 @@
 ﻿using FluentAssertions;
+using Newtonsoft.Json.Linq;
 using Records;
 using Records.Exceptions;
+using System.Text.Json;
 using VDS.RDF;
+using VDS.RDF.Writing.Formatting;
 
 namespace Records.Tests;
 
@@ -21,10 +24,10 @@ public class QuadTests
 
         var (s, p, o, g) = quad;
 
-        s.Should().Be(subject);
-        p.Should().Be(predicate);
-        o.Should().Be(@object);
-        g.Should().Be(graphLabel);
+        s.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        p.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        o.Should().Be(TestData.PutStringInAngleBrackets(@object));
+        g.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
     }
 
     [Fact]
@@ -36,10 +39,10 @@ public class QuadTests
 
         var (s, p, o, g) = quad;
 
-        s.Should().Be(subject);
-        p.Should().Be(predicate);
-        o.Should().Be(@object);
-        g.Should().Be(graphLabel);
+        s.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        p.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        o.Should().Be(TestData.PutStringInAngleBrackets(@object));
+        g.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
     }
 
     [Fact]
@@ -70,10 +73,10 @@ public class QuadTests
 
         var (s, p, o, g) = quad;
 
-        s.Should().Be(subject);
-        p.Should().Be(predicate);
-        o.Should().Be(@object);
-        g.Should().Be(graphLabel);
+        s.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        p.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        o.Should().Be(TestData.PutStringInAngleBrackets(@object));
+        g.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
     }
 
     [Fact]
@@ -88,10 +91,10 @@ public class QuadTests
 
         var (s, p, o, g) = quad;
 
-        s.Should().Be(subject);
-        p.Should().Be(predicate);
-        o.Should().Be(@object);
-        g.Should().Be(graphLabel);
+        s.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        p.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        o.Should().Be(TestData.PutStringInAngleBrackets(@object));
+        g.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
     }
 
     [Fact]
@@ -115,10 +118,10 @@ public class QuadTests
             .Build();
 
         quad.Should().BeOfType<SafeQuad>();
-        quad.GraphLabel.Should().Be(graphLabel);
-        quad.Subject.Should().Be(subject);
-        quad.Predicate.Should().Be(predicate);
-        quad.Object.Should().Be(@object);
+        quad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
+        quad.Subject.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        quad.Predicate.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        quad.Object.Should().Be(TestData.PutStringInAngleBrackets(@object));
     }
 
     [Fact]
@@ -140,16 +143,16 @@ public class QuadTests
         var quad1 = builder1.Build();
 
         quad.Should().BeOfType<SafeQuad>();
-        quad.GraphLabel.Should().Be(graphLabel);
-        quad.Subject.Should().Be(subject);
-        quad.Predicate.Should().Be(predicate);
-        quad.Object.Should().Be(@object);
+        quad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
+        quad.Subject.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        quad.Predicate.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        quad.Object.Should().Be(TestData.PutStringInAngleBrackets(@object));
 
         quad1.Should().BeOfType<SafeQuad>();
-        quad1.GraphLabel.Should().Be(graphLabel);
-        quad1.Subject.Should().Be(subject);
-        quad1.Predicate.Should().Be(predicate);
-        quad1.Object.Should().Be(@object1);
+        quad1.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
+        quad1.Subject.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        quad1.Predicate.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        quad1.Object.Should().Be(TestData.PutStringInAngleBrackets(@object1));
     }
 
     [Fact]
@@ -193,21 +196,21 @@ public class QuadTests
             .WithGraphLabel(graphLabel)
             .Build();
 
-        quad.Subject.Should().Be(subject);
-        quad.Predicate.Should().Be(predicate);
-        quad.Object.Should().Be(@object);
-        quad.GraphLabel.Should().Be(graphLabel);
+        quad.Subject.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        quad.Predicate.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        quad.Object.Should().Be(TestData.PutStringInAngleBrackets(@object));
+        quad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
 
         var newId = TestData.CreateRecordId("1");
         var newQuad = quad.WithGraphLabel(newId);
 
-        newQuad.Subject.Should().Be(subject);
-        newQuad.Predicate.Should().Be(predicate);
-        newQuad.Object.Should().Be(@object);
-        newQuad.GraphLabel.Should().Be(newId);
+        newQuad.Subject.Should().Be(TestData.PutStringInAngleBrackets(subject));
+        newQuad.Predicate.Should().Be(TestData.PutStringInAngleBrackets(predicate));
+        newQuad.Object.Should().Be(TestData.PutStringInAngleBrackets(@object));
+        newQuad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(newId));
 
         quad.Should().NotBe(newQuad);
-        quad.GraphLabel.Should().Be(graphLabel);
+        quad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(graphLabel));
     }
 
     [Fact]
@@ -269,10 +272,10 @@ public class QuadTests
         var buildProcess = () => quad = builder.Build();
         buildProcess.Should().NotThrow();
 
-        quad.Subject.Should().Be(s);
-        quad.Predicate.Should().Be(p);
+        quad.Subject.Should().Be(TestData.PutStringInAngleBrackets(s));
+        quad.Predicate.Should().Be(TestData.PutStringInAngleBrackets(p));
         quad.Object.Should().Be($"\"{o}\"");
-        quad.GraphLabel.Should().Be(g);
+        quad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(g));
     }
 
     [Fact]
@@ -301,6 +304,6 @@ public class QuadTests
 
         var quad = builder.Build();
 
-        quad.Object.Should().Be("ex:%20weird%20uri");
+        quad.Object.Should().Be("<ex:%20weird%20uri>");
     }
 }

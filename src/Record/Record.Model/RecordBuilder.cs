@@ -356,7 +356,7 @@ rec:RecordShape
 
     private SafeQuad CreateQuadFromTriple(Triple triple)
     {
-        return Quad.CreateSafe(triple.Subject.ToString(), triple.Predicate.ToString(), triple.Object.ToString(), _graph.BaseUri.ToString());
+        return Quad.CreateSafe(triple, _graph.BaseUri.ToString());
     }
 
     private SafeQuad CreateIsSubRecordOfQuad(string subRecordOf) =>

@@ -66,12 +66,9 @@ public abstract class Quad : IEquatable<Quad>
 
     public Triple ToTriple()
     {
-        var builder = CreateBuilder()
-            .WithSubject(Subject)
-            .WithObject(Object)
-            .WithPredicate(Predicate);
-
-        return new Triple(builder.Subject, builder.Predicate, builder.Object, builder.Graph);
+        var temp = new TripleStore();
+        temp.LoadFromString(String);
+        return temp.Graphs.Single().Triples.Single();
     }
 
     public override string ToString() => String;
@@ -162,7 +159,10 @@ public class SafeQuad : Quad
 
     public SafeQuad WithGraphLabel(string graphLabel)
     {
-        return CreateSafe(Subject, Predicate, Object, graphLabel);
+        return CreateBuilder()
+            .WithStatement(String)
+            .WithGraphLabel(graphLabel)
+            .Build();
     }
 
     public string ToTripleString() => String[..String.LastIndexOf('<')] + " .";
