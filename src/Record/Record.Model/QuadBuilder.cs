@@ -81,15 +81,13 @@ public record QuadBuilder
         var formatter = new NQuadsFormatter();
         var quadString = triple.ToString(formatter);
 
-        var quadSplit = quadString.Split(" ");
-        if (quadSplit.Length != 5) throw new QuadException("Unexpected number of elements in quad.");
 
         return new SafeQuad
         {
-            Subject = quadSplit[0],
-            Predicate = quadSplit[1],
-            Object = quadSplit[2],
-            GraphLabel = quadSplit[3],
+            Subject = triple.Subject.ToString(formatter),
+            Predicate = triple.Predicate.ToString(formatter),
+            Object = triple.Object.ToString(formatter),
+            GraphLabel = quadString.Split(" ").Last(x => !x.Equals(".")),
             String = quadString
         };
     }
