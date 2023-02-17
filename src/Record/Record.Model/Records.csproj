@@ -9,7 +9,7 @@
 	  <EnvironmentSuffix></EnvironmentSuffix>
 	  <ReleaseType></ReleaseType>
 	  <PackageId>Record</PackageId>
-	  <VersionPrefix>4.0.0$(ReleaseType)</VersionPrefix>
+	  <VersionPrefix>5.0.0$(ReleaseType)</VersionPrefix>
   </PropertyGroup>
 
 	<ItemGroup>
