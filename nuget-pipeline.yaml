@@ -1,8 +1,7 @@
 trigger:
   branches:
     include:
-      - test
-      - prod
+      - main
   paths:
     include:
       - 'src/Record/Record.Model'
@@ -14,8 +13,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  isTest: $[eq(variables['Build.SourceBranch'], 'refs/heads/test')]
-  isProd: $[eq(variables['Build.SourceBranch'], 'refs/heads/prod')]
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
 
 steps:
 
@@ -36,7 +34,7 @@ steps:
       arguments: '--configuration $(buildConfiguration)'
 
   - task: DotNetCoreCLI@2
-    condition: and(succeeded(), eq(variables.isTest, 'true'))
+    condition: and(succeeded(), eq(variables.isMain, 'true'))
     inputs:
       command: 'pack'
       packagesToPack: 'src/Record/Record.Model/Records.csproj'
@@ -44,15 +42,6 @@ steps:
       buildProperties: 'ReleaseType="-prerelease";description="A library for using records."'
       versioningScheme: 'off'
   
-  - task: DotNetCoreCLI@2
-    condition: and(succeeded(), eq(variables.isProd, 'true'))
-    inputs:
-      command: 'pack'
-      packagesToPack: 'src/Record/Record.Model/Records.csproj'
-      includeReferencedProjects: true
-      buildProperties: 'description="A library for using records.'  
-      versioningScheme: 'off'
-
   - task: NuGetCommand@2
     inputs:
       command: 'push'
