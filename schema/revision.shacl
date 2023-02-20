@@ -48,11 +48,5 @@ rev:DocumentRevisionShape
         sh:minCount 1;
         sh:maxCount 1;
         sh:name "RevisionDate";
-        sh:message "A document revision has exactly one date";
-    ] ,
-    [
-        sh:path rev:issuedBy;
-        sh:minCount 1;
-        sh:name "IssuedBy";
-        sh:message "A document revision is issued by at least one author";
-    ] .
+        sh:message "A documnt revision has exactly one date";
+    ].
