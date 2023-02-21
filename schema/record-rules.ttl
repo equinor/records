@@ -10,6 +10,7 @@
 @base <https://rdf.equinor.com/ontology/record/> .
 
 <https://rdf.equinor.com/ontology/record-rules/> rdf:type owl:Ontology ;
+                                            rdfs:comment "This ontology does not make sense to apply to individual records, and does not give rules for individual records. Rather, the provenance from several records can be collected in a single graph, and then this ontology can be used on that graph to calculate head and scopes based on this. ";
                                             owl:imports <https://rdf.equinor.com/ontology/record-syntax/>;
                                             owl:versionIRI <https://rdf.equinor.com/ontology/record/2022-12-05> .
 
