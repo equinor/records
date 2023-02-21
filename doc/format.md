@@ -19,7 +19,7 @@ We require these triples in the provenance graph to have a special meaning and o
 * The record is related to at most one other record with the relation rec:isSubRecordOf. That is, rec:isSubRecordOf is functional, but not inverse functional. The subrecord relation is used to avoid duplication.
 * The record is related to at least one resource with rec:isInScope (possibly indirectly through rec:isSubRecordOf). These resources are called scopes.
 * The record is related to any number of resources with rec:describes. 
-* The record is related to any number of records with rec:replaces. However, the reverse is functional, a record can be replaced by at most one other record.
+* The record is related to any number of records with rec:replaces. In other words it is a many-to-many relation.
 
 ### Scopes
 The intention of the 'scopes' is to make explicit the scope in which the content of the record is valid. If there are several scopes, the content is valid in all of them. This implies an intersection-type semantics for scope. 
