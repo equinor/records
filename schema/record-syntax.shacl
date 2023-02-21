@@ -8,13 +8,17 @@ rec:ReplacedRecordShape
     a sh:NodeShape ;
     rdf:comment "" ;
     sh:targetClass rec:ReplacedRecord ;
-    sh:maxExclusive 0 .
+    sh:maxExclusive 0 ;
+    sh:name "ReplacedRecord" ;
+    sh:message "The inferred replaced record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces" .
 
 rec:NewestRecordShape
     a sh:NodeShape ;
     rdf:comment "" ;
     sh:targetClass rec:NewestRecord ;
-    sh:maxExclusive 0 .
+    sh:maxExclusive 0 ;
+    sh:name "NewestRecord" ;
+    sh:message "The inferred newest record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces" .
 
 rec:RecordShape
     a sh:NodeShape ;
