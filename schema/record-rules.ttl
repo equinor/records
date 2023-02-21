@@ -48,7 +48,6 @@ rec:replacedBy rdf:type owl:ObjectProperty ,
                 rdfs:range rec:Record ;
                 rdfs:comment "This is the transitive closure of the inverse relation rec:replaces." .
 
-
 ###  https://rdf.equinor.com/ontology/record/replaces
 rec:replaces rdfs:subPropertyOf [ owl:inverseOf rec:replacedBy ] .
 
@@ -61,7 +60,7 @@ rec:ReplacedRecord rdf:type owl:Class ;
                                         ] ;
                     rdfs:comment "This is a record which has been replaced." .
 
-###  https://rdf.equinor.com/ontology/record/ReplacedRecord
+###  https://rdf.equinor.com/ontology/record/NewestRecord
 rec:NewestRecord rdf:type owl:Class ;
                    rdfs:subClassOf rec:Record ;
                    owl:equivalentClass [ a owl:Restricton ;
