@@ -16,6 +16,7 @@
 ###  https://rdf.equinor.com/ontology/record/isInSubRecordTreeOf
 rec:isInSubRecordTreeOf rdf:type owl:ObjectProperty ,
                                  owl:TransitiveProperty ;
+                rdfs:subPropertyOf rec:hasNewerSuperRecordInf  ;
                 rdfs:domain rec:Record ;
                 rdfs:range rec:Record ;
                 rdfs:comment "This is the transitive closure of the relation rec:isSubRecordOf." .
@@ -31,15 +32,41 @@ rec:isInScopeInf rdf:type owl:ObjectProperty ;
                 rdfs:domain rec:Record ;
                 rdfs:comment "These are the scopes that a record inherits from its super-records, union with the explicit given scopes" .
 
-###  https://rdf.equinor.com/ontology/record/replacesInf
-rec:replacesInf rdf:type owl:ObjectProperty ,
-                                owl:TransitiveProperty ;
-                rdfs:subPropertyOf prov:wasRevisionOf ;
+###  https://rdf.equinor.com/ontology/record/hasNewerSuperRecordInf
+rec:hasNewerSuperRecordInf rdf:type owl:ObjectProperty ;
                 rdfs:domain rec:Record ;
                 rdfs:range rec:Record ;
                 owl:propertyChainAxiom ( rec:isInSubRecordTreeOf
-                                         rec:replaces
+                                         rec:replacedBy
                                        ) ;
-                rdfs:comment "This is the inferred replaces/derived from relation using subrecord and replaces relation" .
+                rdfs:comment "These are all the super records which replaces the asserted super record." .
+
+###  https://rdf.equinor.com/ontology/record/replacedBy
+rec:replacedBy rdf:type owl:ObjectProperty ,
+                       owl:TransitiveProperty ;
+                rdfs:domain rec:Record ;
+                rdfs:range rec:Record ;
+                rdfs:comment "This is the transitive closure of the inverse relation rec:replaces." .
+
+
 ###  https://rdf.equinor.com/ontology/record/replaces
-rec:replaces rdfs:subPropertyOf rec:replacesInf .
+rec:replaces rdfs:subPropertyOf [ owl:inverseOf rec:replacedBy ] .
+
+###  https://rdf.equinor.com/ontology/record/ReplacedRecord
+rec:ReplacedRecord rdf:type owl:Class ;
+                   rdfs:subClassOf rec:Record ;
+                   owl:equivalentClass [ a owl:Restricton ;
+                                           owl:onProperty rec:replacedBy ;
+                                           owl:someValuesFrom rec:Record 
+                                        ] ;
+                    rdfs:comment "This is a record which has been replaced." .
+
+###  https://rdf.equinor.com/ontology/record/ReplacedRecord
+rec:NewestRecord rdf:type owl:Class ;
+                   rdfs:subClassOf rec:Record ;
+                   owl:equivalentClass [ a owl:Restricton ;
+                                           owl:onProperty rec:replacedBy ;
+                                           owl:maxCardinality 0 
+                                        ] ;
+                   owl:disjointWith rec:ReplacedRecord ;
+                   rdfs:comment "This is a record which has not been replaced, and is therefore the newest." .
