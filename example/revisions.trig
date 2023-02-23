@@ -14,28 +14,16 @@
 @prefix tie: <https://rdf.equinor.com/ontology/TIE#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
 
-exdata:RecordID123 {
-    exdata:RecordID123 a rec:Record;
-                        rdfs:comment "Container record, defines scope for subrecords"^^xsd:string;
-                        prov:generatedAtTime "2022-11-03"^^xsd:date;
-                        rec:isInScope contract:12345678,
-                                    document:B123-EX-W-LA-00001,
-                                    facility:EXMPL,
-                                    project:L.01234A.001.
-}
 
 exdata:RecordID123.0 {
     exdata:RecordID123.0 a rec:Record;
                         rdfs:comment "First MEL delivered on Example Facility"^^xsd:string;
                         prov:generatedAtTime "2022-11-03"^^xsd:date;
-                        rec:describes document:B123-EX-W-LA-00001;
-                        rec:isSubRecordOf exdata:RecordID123.
+                        rec:describes document:B123-EX-W-LA-00001.
     document:B123-EX-W-LA-00001 a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
                                 rdfs:label "B123-EX-W-LA-00001"^^xsd:string;
                                 famvocab:DocumentType "LA"^^xsd:string;
                                 famvocab:Facility facility:EXMPL;
-                                famvocab:FunctionalSystem fsystem:ENG;
-                                famvocab:Location "Northsea"^^xsd:string;
                                 famvocab:Title "MASTER EQUIPMENT LIST - MEL"^^xsd:string.
 }
 
@@ -43,12 +31,11 @@ exdata:RecordID123.1 {
     exdata:RecordID123.1 a rec:Record;
                         prov:generatedAtTime "2022-11-03"^^xsd:date;
                         rec:describes document:B123-EX-W-LA-00001.F01;
-                        rec:isSubRecordOf exdata:RecordID123.
+                        rec:isSubRecordOf exdata:RecordID123.0.
     document:B123-EX-W-LA-00001.F01 a rev:DocumentRevision, tie:OfficialProject, tie:RevisionForReview;
                                     rdfs:label "First delivered revision of MEL"^^xsd:string;
                                     rev:revisionNumber "F01"^^xsd:string;
                                     prov:generatedAtTime "2022-11-03"^^xsd:date;
-                                    rev:issuedBy "Kari Nordkvinne"^^xsd:string;
                                     rev:isNewRevisionOf document:B123-EX-W-LA-00001.A01;
                                     famvocab:DisciplineApprovedBy "NM"^^xsd:string;
                                     tie:wasIssuedForReason "Revision text"^^xsd:string;
@@ -59,7 +46,7 @@ exdata:RecordID123.1 {
 exdata:RecordID123.2 {
     exdata:RecordID123.2 rec:describes exdata:tagNo20PG123N;
                         prov:generatedAtTime "2023-01-25"^^xsd:date;
-                        rec:isSubRecordOf exdata:RecordID123.
+                        rec:isSubRecordOf exdata:RecordID123.0.
     exdata:tagNo20PG123N a <https://rdf.equinor.com/ontology/mel/System>;
                         rdfs:comment "4th Stage Separator Water Pump Y"^^xsd:string;
                         rdfs:label "20PG123N"^^xsd:string;
@@ -70,7 +57,7 @@ exdata:RecordID123.2 {
 exdata:RecordID123.3 {
     exdata:RecordID123.3 rec:describes exdata:tagNo18ER509;
                         prov:generatedAtTime "2023-01-25"^^xsd:date;
-                        rec:isSubRecordOf exdata:RecordID123.
+                        rec:isSubRecordOf exdata:RecordID123.0.
     exdata:tagNo18ER508 a <https://rdf.equinor.com/ontology/mel/System>;
                         rdfs:comment "DCFO Power Unit Go"^^xsd:string;
                         rdfs:label "18ER509"^^xsd:string;

@@ -75,5 +75,7 @@ public static class TestData
     }
 
     public static string CreateRecordIri(string subset, string id) => $"https://ssi.example.com/{subset}/{id}";
+
+    public static string PutStringInAngleBrackets(string node) => $"<{node}>";
 }
 

@@ -1,19 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <EnvironmentSuffix></EnvironmentSuffix>
-	  <ReleaseType></ReleaseType>
-	  <PackageId>Record</PackageId>
-	  <VersionPrefix>4.0.0$(ReleaseType)</VersionPrefix>
-  </PropertyGroup>
+	<PropertyGroup>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<EnvironmentSuffix></EnvironmentSuffix>
+		<ReleaseType></ReleaseType>
+		<PackageId>Record</PackageId>
+		<VersionPrefix>5.0.1$(ReleaseType)</VersionPrefix>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
 
 	<ItemGroup>
-    <PackageReference Include="dotNetRDF" Version="2.7.5" />
-  </ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="dotNetRDF" Version="2.7.5" />
+	</ItemGroup>
 
 </Project>
