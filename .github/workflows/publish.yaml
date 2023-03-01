@@ -7,24 +7,8 @@ on:
     include:
       - 'src/Record/Record.Model'
 
-
-  workflow_call:
-    secrets:  
-        NUGETAPIKEY:
-            required: true
-            description: "Key for publishing to nuget.org"
-   
-variables:
-  buildConfiguration: 'Release'
-  isDev: $[eq(variables['Build.SourceBranch'], 'refs/heads/development')]
-  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 jobs:
-  publish-main:
-    if: and(succeeded(), eq(variables.isMain, 'true'))
+  publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,23 +20,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build -c release --no-restore  /p:'ReleaseType="";description="A library for using records."'
+      run: dotnet build ./src/Record/Record.Model -c release --no-restore  /p:'ReleaseType="";description="A library for using records."'
     - name: Publish
-      run: dotnet nuget push ./Record.Model/bin/Release/Record*.nupkg --api-key ${{ secrets.NUGETAPIKEY }}  --source https://api.nuget.org/v3/index.json
-
-  publish-dev:
-    if: and(succeeded(), eq(variables.isDev, 'true'))
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: 6.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build -c release --no-restore  /p:'ReleaseType="-prerelease";description="A (pre-release) library for using records."'
-    - name: Publish
-      run: dotnet nuget push ./Record.Model/bin/Release/Record*.nupkg --api-key ${{ secrets.NUGETAPIKEY }}  --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push ./src/Record/Record.Model/bin/Release/Record*.nupkg --api-key ${{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json
