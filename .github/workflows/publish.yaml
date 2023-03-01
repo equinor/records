@@ -5,7 +5,7 @@ on:
     branches:
       - "main"
     paths:
-      - 'src/Record/Record.Model'
+      - '.*src/Record/Record.Model/.*'
 
 jobs:
   publish:
