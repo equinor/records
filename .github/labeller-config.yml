@@ -1,0 +1,14 @@
+version: 1
+labels:
+  - label: "C# Library"
+    files:
+      - "src/Record/.*"
+  - label: "Workflows"
+    files:
+      - ".*yml"
+  - label: "SHACL"
+    files:
+      - ".*shacl"
+  - label: "Schema"
+    files:
+      - "schema/.*"

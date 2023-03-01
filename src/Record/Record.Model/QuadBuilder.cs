@@ -1,6 +1,7 @@
 ﻿using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Writing.Formatting;
 
 namespace Records;
 
@@ -33,6 +34,12 @@ public record QuadBuilder
             Object = CreateObject(@object)
         };
 
+    public QuadBuilder WithObjectLiteral(string objectLiteral) =>
+        this with
+        {
+            Object = CreateObjectLiteral(objectLiteral)
+        };
+
     public QuadBuilder WithGraphLabel(string graphLabel) =>
         this with
         {
@@ -60,6 +67,7 @@ public record QuadBuilder
         if (Subject == null || Predicate == null || Object == null) throw new QuadException("Missing one or more properties.");
 
         var tempGraph = new Graph();
+        tempGraph.BaseUri = new Uri(GraphLabel.ToString());
         Subject = Subject.CopyNode(tempGraph);
         Predicate = Predicate.CopyNode(tempGraph);
         Object = Object.CopyNode(tempGraph);
@@ -70,17 +78,16 @@ public record QuadBuilder
         if (tempGraph.Triples.Count != 1) throw new QuadException("Unexpected number of triples asserted.");
         var triple = tempGraph.Triples.First();
 
-        var writer = new NQuadsRecordWriter();
-        var sw = new StringWriter();
-        writer.Save(tempGraph, sw);
-        var quadString = sw.ToString().Trim().Replace(" .", $" <{GraphLabel}> .");
+        var formatter = new NQuadsFormatter();
+        var quadString = triple.ToString(formatter);
+
 
         return new SafeQuad
         {
-            Subject = triple.Subject.ToString(),
-            Predicate = triple.Predicate.ToString(),
-            Object = triple.Object.ToString(),
-            GraphLabel = GraphLabel.ToString(),
+            Subject = triple.Subject.ToString(formatter),
+            Predicate = triple.Predicate.ToString(formatter),
+            Object = triple.Object.ToString(formatter),
+            GraphLabel = quadString.Split(" ").Last(x => !x.Equals(".")),
             String = quadString
         };
     }
@@ -128,13 +135,30 @@ public record QuadBuilder
         try
         {
             if (@object.StartsWith("_:")) return _graph.CreateBlankNode(@object);
-            if (Uri.IsWellFormedUriString(@object, UriKind.RelativeOrAbsolute))
+            try
+            {
                 return _graph.CreateUriNode(new Uri(@object));
-            return _graph.CreateLiteralNode(@object);
+            }
+            catch
+            {
+                return _graph.CreateLiteralNode(@object);
+            }
         }
         catch
         {
             throw new QuadException("Failed to parse object.");
+        }
+    }
+
+    private INode? CreateObjectLiteral(string objectLiteral)
+    {
+        try
+        {
+            return _graph.CreateLiteralNode(objectLiteral);
+        }
+        catch
+        {
+            throw new QuadException("Failed to parse object literal.");
         }
     }
 

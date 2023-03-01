@@ -15,14 +15,17 @@ public abstract class Quad : IEquatable<Quad>
     public static QuadBuilder CreateBuilder(string id) => new QuadBuilder().WithGraphLabel(id);
     public static QuadBuilder CreateBuilder(Uri id) => new QuadBuilder().WithGraphLabel(id.ToString());
 
-    public static SafeQuad CreateSafe(string s, string p, string o, string g)
+    public static SafeQuad CreateSafe(string s, string p, string o, string g, bool objectLiteral = false)
     {
-        return CreateBuilder()
+        var builder = CreateBuilder()
             .WithSubject(s)
             .WithPredicate(p)
-            .WithObject(o)
-            .WithGraphLabel(g)
-            .Build();
+            .WithGraphLabel(g);
+
+        if (objectLiteral) builder = builder.WithObjectLiteral(o);
+        else builder = builder.WithObject(o);
+
+        return builder.Build();
     }
 
     public static SafeQuad CreateSafe(Triple triple, string g)
@@ -63,12 +66,9 @@ public abstract class Quad : IEquatable<Quad>
 
     public Triple ToTriple()
     {
-        var builder = CreateBuilder()
-            .WithSubject(Subject)
-            .WithObject(Object)
-            .WithPredicate(Predicate);
-
-        return new Triple(builder.Subject, builder.Predicate, builder.Object, builder.Graph);
+        var temp = new TripleStore();
+        temp.LoadFromString(String);
+        return temp.Graphs.Single().Triples.Single();
     }
 
     public override string ToString() => String;
@@ -159,7 +159,10 @@ public class SafeQuad : Quad
 
     public SafeQuad WithGraphLabel(string graphLabel)
     {
-        return CreateSafe(Subject, Predicate, Object, graphLabel);
+        return CreateBuilder()
+            .WithStatement(String)
+            .WithGraphLabel(graphLabel)
+            .Build();
     }
 
     public string ToTripleString() => String[..String.LastIndexOf('<')] + " .";

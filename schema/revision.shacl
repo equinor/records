@@ -1,0 +1,52 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rev: <https://rdf.equinor.com/ontology/revision/>.
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
+@prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+rev:RevisionShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
+    sh:targetClass rev:Revision ;
+    sh:property [ 
+        sh:path rev:isNewRevisionOf;
+        sh:maxCount 1;
+        sh:name "RevisionHistory";
+        sh:message "A revision can be a new version of at most one other revision";
+        sh:severity sh:Violation;
+    ] , 
+    [ 
+        sh:path rev:containsRecord;
+        sh:minCount 1;
+        sh:name "RevisionContent";
+        sh:message "A revision must contain at least one record";
+        sh:severity sh:Violation;
+    ] .
+
+rev:DocumentRevisionShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
+    sh:targetClass rev:DocumentRevision ;
+    sh:property [
+        sh:path rev:revisionNumber;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "RevisionNumber";
+        sh:message "A document revision has exactly one revision number";
+    ] ,
+    [
+        sh:path rev:describes;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "RevisionObject";
+        sh:message "A document revision is a revision of exactly one object (usually a document)";
+    ] ,
+    [
+        sh:path prov:generatedAtTime;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "RevisionDate";
+        sh:message "A documnt revision has exactly one date";
+    ].
