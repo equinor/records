@@ -4,6 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<PackageReadMeFile>README.md</PackageReadMeFile>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -20,6 +21,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+		<None Include="README.md" Pack="true" PackagePath="\"/>
 	</ItemGroup>
 	
 	<ItemGroup>
