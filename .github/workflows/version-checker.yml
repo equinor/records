@@ -26,6 +26,6 @@ jobs:
           exit 1
         else
           echo "status=success" >> $GITHUB_ENV
-          echo "Version number changed."
+          echo "Version number changed from $base_version to $current_version."
           exit 0
         fi
