@@ -41,5 +41,3 @@ jobs:
           echo "Version number changed."
           exit 0
         fi
-
-        
