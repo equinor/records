@@ -1,0 +1,45 @@
+name: Version Number Check
+on:
+  pull_request:
+    paths:
+      - 'src/Record/Record.Model/**'
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Checkout base branch
+      run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+    - name: Check if project file(s) have been modified
+      id: check-project-modification
+      run: |
+        if git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep -qE .*src/Record/Record.Model/.*; then
+          echo "Changes detected."
+          echo "modified=true" >> $GITHUB_ENV
+        else
+          echo "No changes detected."
+          echo "modified=false" >> $GITHUB_ENV
+        fi
+
+    - name: Check if <VersionPrefix> tag has been updated
+      id: check-version-tag
+      if: env.modified == 'true'
+      run: |
+        base_version=$(git show origin/${{ github.event.pull_request.base.ref }}:src/Record/Record.Model/Records.csproj | grep -oP '(?<=<VersionPrefix>)[^$]*(?=\$\()')
+        current_version=$(grep -oP '(?<=<VersionPrefix>)[^$]*(?=\$\()' src/Record/Record.Model/Records.csproj)
+        
+        if [ "$base_version" == "$current_version" ]; then
+          echo "status=failure" >> $GITHUB_ENV
+          echo "Detected change in project, but no change in version number. Upgrade as appropriate from version '$current_version'."
+          exit 1
+        else
+          echo "status=success" >> $GITHUB_ENV
+          echo "Version number changed."
+          exit 0
+        fi
+
+        
