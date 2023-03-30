@@ -67,6 +67,8 @@ rec:replaces rdf:type owl:ObjectProperty ;
              rdfs:subPropertyOf prov:wasRevisionOf ;
              rdfs:domain rec:Record ;
              rdfs:range rec:Record ;
+             rdfs:seeAlso <http://purl.org/dc/terms/replaces> ;
+             rdfs:seeAlso <http://www.w3.org/ns/dcat#previousVersion> ;
              rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record. Note that subrecords are inherited from the replaced record" .
 
 #################################################################
