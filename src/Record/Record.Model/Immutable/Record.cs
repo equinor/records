@@ -1,4 +1,5 @@
 ﻿using Records.Exceptions;
+using System;
 using System.Diagnostics;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -9,7 +10,7 @@ using StringWriter = System.IO.StringWriter;
 namespace Records.Immutable;
 
 [DebuggerDisplay($"{{{nameof(Id)}}}")]
-public class Record : IEquatable<Record>
+public partial class Record : IEquatable<Record>
 {
     public string Id { get; private set; } = null!;
     private IGraph _graph = new Graph();
