@@ -56,7 +56,7 @@ public partial class Record
 
     private static void CreateChecksumQuad(List<Quad> quadList, string attachmentIri, string recordId, string? checksum, string? checksumAlgorithm)
     {
-        if(checksum != null && checksumAlgorithm != null)
+        if (checksum != null && checksumAlgorithm != null)
         {
             quadList.Add(Quad.CreateSafe(attachmentIri, "http://spdx.org/rdf/terms#Checksum", "_:checksum", recordId));
             quadList.Add(Quad.CreateSafe("_:checksum", "http://spdx.org/rdf/terms#algorithm", checksumAlgorithm, recordId));

@@ -9,28 +9,11 @@ namespace Records.Tests;
 
 public class AttachmentRecordTests
 {
-    private string _id;
-    private string _attachmentIri;
-    private string _scope;
-    private string[] _additionalScopes;
+    private readonly string _id;
+    private readonly string _attachmentIri;
+    private readonly string _scope;
+    private readonly string[] _additionalScopes;
 
-    /**
-    * 
-    public static Record CreateAttachmentRecord(string recordId,
-    string scope,
-    string[] additionalScopes,
-    string attachmentIri,
-    string? mediaType = null,
-    string? checksum = null,
-    string? checksumAlgorithm = null,
-    string? byteSize = null,
-    string[]? downloadUrls = null,
-    string? fileName = null,
-    DateTime? issuedDate = null,
-    string? language = null
-    )
-    * 
-    */
     public AttachmentRecordTests()
     {
         _id = TestData.CreateRecordId("1");
@@ -38,18 +21,18 @@ public class AttachmentRecordTests
         _scope = TestData.CreateRecordIri("attachmentReference", "1");
         _additionalScopes = TestData.CreateObjectList(3, "scopes").ToArray();
     }
-    
+
     [Fact]
     public void Add_Quad_To_Content_If_Object_Not_Null()
     {
         var mediaType = TestData.CreateRecordIri("mediaType", "1");
-        var mediaQuad = Quad.CreateSafe(_attachmentIri, "http://www.w3.org/ns/dcat#mediaType",mediaType, _id);
+        var mediaQuad = Quad.CreateSafe(_attachmentIri, "http://www.w3.org/ns/dcat#mediaType", mediaType, _id);
 
-        var record = Record.CreateAttachmentRecord(_id, 
-            _attachmentIri, 
-            _scope, 
-            _additionalScopes, 
-            mediaType : mediaType);
+        var record = Record.CreateAttachmentRecord(_id,
+            _attachmentIri,
+            _scope,
+            _additionalScopes,
+            mediaType: mediaType);
 
         record.ContainsQuad(mediaQuad).Should().BeTrue();
         record.Quads().Count().Should().Be(7);
@@ -76,7 +59,7 @@ public class AttachmentRecordTests
             checksum: checksumValue,
             checksumAlgorithm: checksumAlgorithm);
 
-        record.Quads().Select(q=>q.Object).Where(o => o.StartsWith("_:")).Count().Should().Be(1);
+        record.Quads().Select(q => q.Object).Where(o => o.StartsWith("_:")).Count().Should().Be(1);
         record.Quads().Select(q => q.Subject).Where(s => s.StartsWith("_:")).Count().Should().Be(2);
         record.Quads().Count().Should().Be(9);
     }
