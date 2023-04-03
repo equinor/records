@@ -22,7 +22,7 @@ public partial class Record
     public static Record CreateAttachmentRecord(string recordId,
     string scope,
     string[] additionalScopes,
-    string describes,
+    string attachmentIri,
     string? mediaType = null,
     string? checksum = null,
     string? checksumAlgorithm = null,
@@ -35,47 +35,47 @@ public partial class Record
     {
 
         var quadList = new List<Quad>();
-        CreateChecksumQuad(quadList, recordId, checksum, checksumAlgorithm);
-        CreateMediaTypeQuad(quadList, recordId, mediaType);
-        CreateByteSizeQuad(quadList, recordId, byteSize);
-        CreateFileNameQuad(quadList, recordId, fileName);
-        CreateIssuedDateQuad(quadList, recordId, issuedDate.ToString());
-        CreateLanguageQuad(quadList, recordId, language);
-        CreateDownloadUrlQuads(quadList, recordId, downloadUrls);
+        CreateChecksumQuad(quadList, attachmentIri, recordId, checksum, checksumAlgorithm);
+        CreateMediaTypeQuad(quadList, attachmentIri, recordId, mediaType);
+        CreateByteSizeQuad(quadList, attachmentIri, recordId, byteSize);
+        CreateFileNameQuad(quadList, attachmentIri, recordId, fileName);
+        CreateIssuedDateQuad(quadList, attachmentIri, recordId, issuedDate.ToString());
+        CreateLanguageQuad(quadList, attachmentIri, recordId, language);
+        CreateDownloadUrlQuads(quadList, attachmentIri, recordId, downloadUrls);
 
         var record = new RecordBuilder()
             .WithId(recordId)
             .WithScopes(scope)
             .WithAdditionalScopes(additionalScopes)
-            .WithDescribes(describes)
+            .WithDescribes(attachmentIri)
             .WithContent(quadList)
             .Build();
 
         return record;
     }
 
-    private static void CreateChecksumQuad(List<Quad> quadList, string recordId, string? checksum, string? checksumAlgorithm)
+    private static void CreateChecksumQuad(List<Quad> quadList, string attachmentIri, string recordId, string? checksum, string? checksumAlgorithm)
     {
 
-        CreateQuadIfObjectNotNull(quadList, recordId, "http://spdx.org/rdf/terms#Checksum", "_:checksum");
-        CreateQuadIfObjectNotNull(quadList, "_:checksum", "http://spdx.org/rdf/terms#algorithm", checksumAlgorithm);
-        CreateQuadIfObjectNotNull(quadList, "_:checksum", "http://spdx.org/rdf/terms#checksumValue", checksum);
+        CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://spdx.org/rdf/terms#Checksum", "_:checksum", recordId);
+        CreateQuadIfObjectNotNull(quadList, "_:checksum", "http://spdx.org/rdf/terms#algorithm", checksumAlgorithm, recordId);
+        CreateQuadIfObjectNotNull(quadList, "_:checksum", "http://spdx.org/rdf/terms#checksumValue", checksum, recordId);
     }
 
-    private static void CreateMediaTypeQuad(List<Quad> quadList, string recordId, string? mediaType) => CreateQuadIfObjectNotNull(quadList, recordId, "http://www.w3.org/ns/dcat#mediaType", mediaType);
+    private static void CreateMediaTypeQuad(List<Quad> quadList, string attachmentIri, string recordId, string? mediaType) => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://www.w3.org/ns/dcat#mediaType", mediaType, recordId);
 
-    private static void CreateByteSizeQuad(List<Quad> quadList, string recordId, string? byteSize) => CreateQuadIfObjectNotNull(quadList, recordId, "http://www.w3.org/ns/dcat#byteSize", byteSize);
+    private static void CreateByteSizeQuad(List<Quad> quadList, string attachmentIri, string recordId, string? byteSize) => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://www.w3.org/ns/dcat#byteSize", byteSize, recordId);
 
-    private static void CreateFileNameQuad(List<Quad> quadList, string recordId, string? fileName) => CreateQuadIfObjectNotNull(quadList, recordId, "http://purl.org/dc/terms/title", fileName);
+    private static void CreateFileNameQuad(List<Quad> quadList, string attachmentIri, string recordId, string? fileName) => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://purl.org/dc/terms/title", fileName, recordId);
 
-    private static void CreateIssuedDateQuad(List<Quad> quadList, string recordId, string? issuedDate) => CreateQuadIfObjectNotNull(quadList, recordId, "http://purl.org/dc/terms/issued", issuedDate);
+    private static void CreateIssuedDateQuad(List<Quad> quadList, string attachmentIri, string recordId, string? issuedDate) => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://purl.org/dc/terms/issued", issuedDate, recordId);
 
-    private static void CreateLanguageQuad(List<Quad> quadList, string recordId, string? language) => CreateQuadIfObjectNotNull(quadList, recordId, "http://purl.org/dc/terms/language", language);
+    private static void CreateLanguageQuad(List<Quad> quadList, string attachmentIri, string recordId, string? language) => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://purl.org/dc/terms/language", language, recordId);
 
-    private static void CreateDownloadUrlQuads(List<Quad> quadList, string recordId, string[]? downloadUrl) => downloadUrl?.ToList().ForEach(url => CreateQuadIfObjectNotNull(quadList, recordId, "http://www.w3.org/ns/dcat#downloadURL", url));
+    private static void CreateDownloadUrlQuads(List<Quad> quadList, string attachmentIri, string recordId, string[]? downloadUrl) => downloadUrl?.ToList().ForEach(url => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://www.w3.org/ns/dcat#downloadURL", url, recordId));
 
-    private static void CreateQuadIfObjectNotNull(List<Quad> quadList, string recordId, string predicate, string? @object)
+    private static void CreateQuadIfObjectNotNull(List<Quad> quadList, string attachmentIri, string predicate, string? @object, string recordId)
     {
-        if (@object != null) quadList.Add(Quad.CreateSafe(recordId, predicate, @object, recordId));
+        if (@object != null) quadList.Add(Quad.CreateSafe(attachmentIri, predicate, @object, recordId));
     }
 }
