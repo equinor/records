@@ -20,9 +20,9 @@ public partial class Record
     /// <param name="language"><see cref="http://purl.org/dc/terms/language"/></param>
     /// <returns></returns>
     public static Record CreateAttachmentRecord(string recordId,
+    string attachmentIri,
     string scope,
     string[] additionalScopes,
-    string attachmentIri,
     string? mediaType = null,
     string? checksum = null,
     string? checksumAlgorithm = null,
@@ -56,10 +56,12 @@ public partial class Record
 
     private static void CreateChecksumQuad(List<Quad> quadList, string attachmentIri, string recordId, string? checksum, string? checksumAlgorithm)
     {
-
-        CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://spdx.org/rdf/terms#Checksum", "_:checksum", recordId);
-        CreateQuadIfObjectNotNull(quadList, "_:checksum", "http://spdx.org/rdf/terms#algorithm", checksumAlgorithm, recordId);
-        CreateQuadIfObjectNotNull(quadList, "_:checksum", "http://spdx.org/rdf/terms#checksumValue", checksum, recordId);
+        if(checksum != null && checksumAlgorithm != null)
+        {
+            quadList.Add(Quad.CreateSafe(attachmentIri, "http://spdx.org/rdf/terms#Checksum", "_:checksum", recordId));
+            quadList.Add(Quad.CreateSafe("_:checksum", "http://spdx.org/rdf/terms#algorithm", checksumAlgorithm, recordId));
+            quadList.Add(Quad.CreateSafe("_:checksum", "http://spdx.org/rdf/terms#checksumValue", checksum, recordId));
+        }
     }
 
     private static void CreateMediaTypeQuad(List<Quad> quadList, string attachmentIri, string recordId, string? mediaType) => CreateQuadIfObjectNotNull(quadList, attachmentIri, "http://www.w3.org/ns/dcat#mediaType", mediaType, recordId);
@@ -76,6 +78,6 @@ public partial class Record
 
     private static void CreateQuadIfObjectNotNull(List<Quad> quadList, string attachmentIri, string predicate, string? @object, string recordId)
     {
-        if (@object != null) quadList.Add(Quad.CreateSafe(attachmentIri, predicate, @object, recordId));
+        if (!string.IsNullOrEmpty(@object)) quadList.Add(Quad.CreateSafe(attachmentIri, predicate, @object, recordId));
     }
 }
