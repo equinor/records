@@ -1,4 +1,5 @@
-﻿namespace Records;
+﻿
+namespace Records;
 public struct Namespaces
 {
     public struct Record
@@ -9,6 +10,28 @@ public struct Namespaces
         public const string IsInScope = $"{BaseUrl}isInScope";
         public const string Describes = $"{BaseUrl}describes";
         public const string IsSubRecordOf = $"{BaseUrl}isSubRecordOf";
+    }
+    public struct FileRecord 
+    {
+        public const string Type = "https://rdf.equinor.com/ontology/attachment/File";
+
+        public const string Xsd = "http://www.w3.org/2001/XMLSchema#";
+
+        public const string Dcat = "http://www.w3.org/ns/dcat#";
+        public const string HasDownloadUrl = $"{Dcat}downloadUrl";
+        public const string HasByteSize = $"{Dcat}byteSize";
+        public const string HasMediaType = $"{Dcat}mediaType";
+        public const string MediaType = "https://www.iana.org/assignments/media-types/application/";
+
+        public const string Dcterms = "http://purl.org/dc/terms/";
+        public const string WasIssued = $"{Dcterms}issued";
+        public const string HasLanguage = $"{Dcterms}language";
+
+        public const string Spdx = "http://spdx.org/rdf/terms#";
+        public const string HasTitle = $"{Spdx}fileName";
+        public const string HasChecksum = $"{Spdx}checksum";
+        public const string HasChecksumValue = $"{Spdx}checksumValue";
+        public const string HasChecksumAlgorithm = $"{Spdx}algorithm";
     }
 
     public struct Rdf

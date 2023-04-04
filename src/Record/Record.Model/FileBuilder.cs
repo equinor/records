@@ -3,26 +3,17 @@ using AngleSharp.Dom;
 using System.Security.Cryptography;
 using Records.Exceptions;
 
-
 namespace Records;
 
 public record FileBuilder
 {
-    private IGraph _graph = new Graph();
     private Storage _storage = new();
 
     private record Storage
     {
         internal string? BelongsToGraph; 
         internal string? Id;
-        //internal string? DownLoadUrl;
-        //internal DateTime IssuedDate;
-        //internal string Name;
-        //internal string MediaType;
-        //internal string ByteSize;
-        //internal string Checksum;
-        //internal string Language;
-        internal IEnumerable<Quad> Quads;
+        internal IEnumerable<Quad> Quads = Enumerable.Empty<Quad>();
     }
     /**
      *     
@@ -101,7 +92,7 @@ public record FileBuilder
      {
          _storage = _storage with
          {
-             Quads = _storage.Quads.Append(CreateIssuedDateQuad(mediaType))
+             Quads = _storage.Quads.Append(CreateMediaTypeQuad(mediaType))
          }
      };
     public FileBuilder WithByteSize(string byteSize) =>
@@ -109,9 +100,11 @@ public record FileBuilder
      {
          _storage = _storage with
          {
-             Quads = _storage.Quads.Append(CreateIssuedDateQuad(byteSize))
+             Quads = _storage.Quads.Append(CreateByteSizeQuad(byteSize))
          }
      };
+
+    public FileBuilder WithByteSize(double bytes) => WithByteSize(bytes.ToString());
 
     public FileBuilder WithCheckSum(byte[] content) =>
         this with
@@ -138,22 +131,22 @@ public record FileBuilder
     private List<SafeQuad> CreateChecksumQuad(string checksum) =>
         new()
         { 
-            Quad.CreateSafe(_storage.Id!, "http://spdx.org/rdf/terms#Checksum", "_:checksum", _storage.BelongsToGraph!),
-            Quad.CreateSafe("_:checksum", "http://spdx.org/rdf/terms#algorithm", ":MD5", _storage.BelongsToGraph!),
-            Quad.CreateSafe("_:checksum", "http://spdx.org/rdf/terms#checksumValue", checksum, _storage.BelongsToGraph !) 
+            Quad.CreateSafe(_storage.Id!,Namespaces.FileRecord.HasChecksum, "_:checksum", _storage.BelongsToGraph!),
+            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumAlgorithm, $"{Namespaces.FileRecord.Spdx}checksumAlgorithm_md5", _storage.BelongsToGraph!),
+            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumValue, $"{checksum}^^{Namespaces.FileRecord.Xsd}hexBinary" , _storage.BelongsToGraph !) 
         };
 
-    private SafeQuad CreateMediaTypeQuad(string mediaType) => Quad.CreateSafe(_storage.Id!, "http://www.w3.org/ns/dcat#mediaType", mediaType, _storage.BelongsToGraph!);
+    private SafeQuad CreateMediaTypeQuad(string mediaType) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasMediaType, $"{Namespaces.FileRecord.HasMediaType}{mediaType}", _storage.BelongsToGraph!);
 
-    private SafeQuad CreateByteSizeQuad( string byteSize) => Quad.CreateSafe(_storage.Id!, "http://www.w3.org/ns/dcat#byteSize", byteSize, _storage.BelongsToGraph!);
+    private SafeQuad CreateByteSizeQuad( string byteSize) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasByteSize, $"{byteSize}^^{Namespaces.FileRecord.Xsd}decimal", _storage.BelongsToGraph!);
 
-    private SafeQuad CreateFileNameQuad(string fileName) => Quad.CreateSafe(_storage.Id!, "http://purl.org/dc/terms/title", fileName, _storage.BelongsToGraph!);
+    private SafeQuad CreateFileNameQuad(string fileName) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasTitle, fileName, _storage.BelongsToGraph!);
 
-    private SafeQuad CreateIssuedDateQuad(string issuedDate) => Quad.CreateSafe(_storage.Id!, "http://purl.org/dc/terms/issued", issuedDate, _storage.BelongsToGraph!);
+    private SafeQuad CreateIssuedDateQuad(string issuedDate) => Quad.CreateSafe(_storage.Id!,Namespaces.FileRecord.WasIssued, $"{issuedDate}^^{Namespaces.FileRecord.Xsd}date", _storage.BelongsToGraph!);
 
-    private SafeQuad CreateLanguageQuad(string language) => Quad.CreateSafe(_storage.Id!, "http://purl.org/dc/terms/language", language, _storage.BelongsToGraph!);
+    private SafeQuad CreateLanguageQuad(string language) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasLanguage, $"{language}^^{Namespaces.FileRecord.Xsd}language", _storage.BelongsToGraph!);
 
-    private SafeQuad CreateDownloadUrlQuads(string downloadUrl) => Quad.CreateSafe(_storage.Id!, "http://www.w3.org/ns/dcat#downloadURL", downloadUrl, _storage.BelongsToGraph!);
+    private SafeQuad CreateDownloadUrlQuads(string downloadUrl) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasDownloadUrl, downloadUrl, _storage.BelongsToGraph!);
 
     #endregion
 
@@ -172,7 +165,8 @@ public record FileBuilder
             };
         }));
 
-        //TODO : add a type quad
+        var typeQuad = Quad.CreateSafe(_storage.Id, Namespaces.Rdf.Type, Namespaces.FileRecord.Type, _storage.BelongsToGraph);
+        recordQuads.Add(typeQuad);  
         return recordQuads; 
     }
 
