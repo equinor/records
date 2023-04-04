@@ -1,0 +1,83 @@
+@prefix : <https://rdf.equinor.com/ontology/attachment/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcat:<http://www.w3.org/ns/dcat#>.
+@prefix	downloadurls: <http://www.w3.org/ns/dcat.#downloadURL>. #TODO
+@prefix mediatype: <https://www.iana.org/assignments/media-types/application/>.
+@prefix spdxterms:< http://spdx.org/rdf/terms#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@base <https://rdf.equinor.com/ontology/attachment> .
+
+<https://rdf.equinor.com/ontology/attachment> rdf:type owl:Ontology ;
+                                             owl:versionIRI :v1.0 ;
+                                             owl:imports <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#date
+xsd:date rdf:type rdfs:Datatype .
+
+#################################################################
+#    Individuals
+#################################################################
+
+spdxterms:checksumAlgorithm_md5 rdf:type owl:NamedIndividual ,
+                                spdxterms:ChecksumAlgorithm ;
+                       rdfs:comment "Indicates the algorithm used was MD5" .
+ 
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://rdf.equinor.com/ontology/attachment/describes
+:describes rdf:type owl:ObjectProperty ;
+           rdfs:domain :Attachment .
+
+#################################################################
+#    Data Properties
+#################################################################
+
+dcterms:issued a rdf:Property ;
+    rdfs:comment "Date of creation for the attachment file" .
+
+dcat:downloadURL a rdf:Property ;
+    rdfs:comment "The URL of the downloadable file in a given format. E.g. CSV file or RDF file. The format is indicated by the distribution's dct:format and/or dcat:mediaType." .
+
+dcterms:language a rdf:Property ;
+
+dcat:mediaTypa a rdf:Property ;
+
+dcat:byteSize a rdf:Property ;
+
+spdxterms:algorithm rdf:type owl:ObjectProperty ;
+           rdfs:domain spdxterms:Checksum ;
+           rdfs:comment "Identifies the algorithm used to produce the subject Checksum."
+
+#################################################################
+#    Classes
+#################################################################
+
+###  https://rdf.equinor.com/ontology/attachment/Attachment
+:Attachment rdf:type owl:Class ;
+                  rdfs:comment "" ;
+                  rdfs:label "Attachment" .
+
+###  https://rdf.equinor.com/ontology/attachment/FileObject
+:File rdf:type owl:Class ;
+                  rdfs:subClassOf spdxterms:File ;
+                  rdfs:comment "" ;
+                  rdfs:label "File" .
+
+###  http://spdx.org/rdf/terms#ChecksumAlgorithm
+spdxterms:ChecksumAlgorithm rdf:type owl:Class ;
+                   rdfs:comment "Algorithm for Checksums." .
+

@@ -1,9 +1,9 @@
+@prefix : <https://rdf.equinor.com/ontology/attachment/> .
 @prefix rec: <https://rdf.equinor.com/ontology/record/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix exdata: <https://example.com/data/>.
 @prefix scope: <https://rdf.equinor.com/scopes/>
-@prefix document: <https://rdf.equinor.com/fam/Attachment/>.
-@prefix dcatvocab:<http://www.w3.org/ns/dcat#>.
+@prefix dcat:<http://www.w3.org/ns/dcat#>.
 @prefix	downloadurls: <http://www.w3.org/ns/dcat.#downloadURL>. #TODO
 @prefix mediatype: <https://www.iana.org/assignments/media-types/application/>.
 @prefix spdxterms:< http://spdx.org/rdf/terms#>.
@@ -18,12 +18,14 @@ exdata:RecordID123.0 {
                             scope:attachmentReference ,
                             <https://rdf.equinor.com/fam/Facility/WIST> .
 
-    attachmentIri:WIST/EXAMPLE-FILE-NAME.XLSX dcterms:title "EXAMPLE TITLE";
+    attachmentIri:WIST/EXAMPLE-FILE-NAME.XLSX a :File; 
+                        dcterms:title "EXAMPLE TITLE";
                         dcterms:issued "2022-11-03"^^xsd:date;  
                         dcterms:language "en-US"^^xsd:language;
-                        dcatvocab:mediaType mediatype:"ld+json";
-                        dcatvocab:byteSize "1.2"^^xsd:decimal;
-                        spdxterms:Checksum [
+                        dcat:downloadUrl attachmentIri:WIST/EXAMPLE-FILE-NAME.XLSX;
+                        dcat:mediaType mediatype:"ld+json";
+                        dcat:byteSize "1.2"^^xsd:decimal;
+                        spdxterms:checksum [
                             spdxterms:algorithm spdxterms:checksumAlgorithm_md5;
                             spdxterms:checksumValue "hex value"^^xsd:hexBinary
                             ].
