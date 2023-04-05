@@ -2,18 +2,26 @@
 using AngleSharp.Dom;
 using System.Security.Cryptography;
 using Records.Exceptions;
+using Microsoft.AspNetCore.Http;
 
 namespace Records;
 
 public record FileBuilder
 {
     private Storage _storage = new();
+    internal string? _memberOfNamedGraph = "rec:123.0";
 
     private record Storage
     {
-        internal string? BelongsToGraph; 
         internal string? Id;
-        internal IEnumerable<Quad> Quads = Enumerable.Empty<Quad>();
+        internal string? DownLoadUrl;
+        internal byte[]? Content;
+        internal string? IssuedDate;
+        internal string? FileName;
+        internal string? MediaType;
+        internal string? ByteSize;
+        internal string? Checksum;
+        internal string? Language;
     }
     /**
      *     
@@ -36,17 +44,6 @@ public record FileBuilder
      */
 
     #region With-Methods
-    public FileBuilder WithNamedGraph(string namedGraphId) =>
-    this with
-    {
-        _storage = _storage with
-        {
-            BelongsToGraph = namedGraphId
-        }
-    };
-
-    public FileBuilder WithNamedGraph(Uri namedGraphId) => WithId(namedGraphId.ToString());
-
     public FileBuilder WithId(string id) =>
         this with
         {
@@ -55,36 +52,43 @@ public record FileBuilder
                 Id = id
             }
         };
-
+    public FileBuilder WithContent(byte[] content) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            Content = content,
+            Checksum = string.Join("", MD5.Create().ComputeHash(content).Select(x => x.ToString("x2"))),
+            ByteSize = content.Length.ToString()
+        }
+    };
+    public FileBuilder WithContent(Stream content) => WithContent(ToByteArray(content));
+    public FileBuilder WithContent(IFormFile content) => WithContent(ToByteArray(content.OpenReadStream()));
     public FileBuilder WithId(Uri id) => WithId(id.ToString());
-
     public FileBuilder WithDownloadUrl(string downloadUrl) =>
        this with
        {
            _storage = _storage with
            {
-               Quads = _storage.Quads.Append(CreateDownloadUrlQuads(downloadUrl))
+               DownLoadUrl = downloadUrl
            }
        };
-
     public FileBuilder WithDownloadUrl(Url downloadUrl) => WithDownloadUrl(downloadUrl.ToString());
     public FileBuilder WithIssuedDate(string date) =>
      this with
      {
          _storage = _storage with
          {
-             Quads = _storage.Quads.Append(CreateIssuedDateQuad(date))
+             IssuedDate = date
          }
      };
-
     public FileBuilder WithIssuedDate(DateOnly date) => WithIssuedDate(date.ToString());
-
     public FileBuilder WithFileName(string name) =>
      this with
      {
          _storage = _storage with
          {
-             Quads = _storage.Quads.Append(CreateFileNameQuad(name))
+             FileName = name
          }
      };
     public FileBuilder WithMediaType(string mediaType) =>
@@ -92,36 +96,15 @@ public record FileBuilder
      {
          _storage = _storage with
          {
-             Quads = _storage.Quads.Append(CreateMediaTypeQuad(mediaType))
+             MediaType = mediaType
          }
      };
-    public FileBuilder WithByteSize(string byteSize) =>
-     this with
-     {
-         _storage = _storage with
-         {
-             Quads = _storage.Quads.Append(CreateByteSizeQuad(byteSize))
-         }
-     };
-
-    public FileBuilder WithByteSize(double bytes) => WithByteSize(bytes.ToString());
-
-    public FileBuilder WithCheckSum(byte[] content) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                Quads = _storage.Quads.Concat(CreateChecksumQuad(string.Join("", MD5.Create().ComputeHash(content).Select(x => x.ToString("x2")))))
-            }
-        };
-    
-
     public FileBuilder WithLanguage(string language) =>
      this with
      {
          _storage = _storage with
          {
-             Quads = _storage.Quads.Append(CreateIssuedDateQuad(language))
+             Language = language
          }
      };
 
@@ -130,44 +113,57 @@ public record FileBuilder
     #region Create-Quads
     private List<SafeQuad> CreateChecksumQuad(string checksum) =>
         new()
-        { 
-            Quad.CreateSafe(_storage.Id!,Namespaces.FileRecord.HasChecksum, "_:checksum", _storage.BelongsToGraph!),
-            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumAlgorithm, $"{Namespaces.FileRecord.Spdx}checksumAlgorithm_md5", _storage.BelongsToGraph!),
-            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumValue, $"{checksum}^^{Namespaces.FileRecord.Xsd}hexBinary" , _storage.BelongsToGraph !) 
+        {
+            Quad.CreateSafe(_storage.Id!,Namespaces.FileRecord.HasChecksum, "_:checksum", _memberOfNamedGraph!),
+            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumAlgorithm, $"{Namespaces.FileRecord.Spdx}checksumAlgorithm_md5", _memberOfNamedGraph!),
+            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumValue, $"{checksum}^^{Namespaces.FileRecord.Xsd}hexBinary" , _memberOfNamedGraph!)
         };
 
-    private SafeQuad CreateMediaTypeQuad(string mediaType) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasMediaType, $"{Namespaces.FileRecord.HasMediaType}{mediaType}", _storage.BelongsToGraph!);
+    private SafeQuad CreateMediaTypeQuad(string mediaType) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasMediaType, $"{Namespaces.FileRecord.HasMediaType}{mediaType}", _memberOfNamedGraph!);
 
-    private SafeQuad CreateByteSizeQuad( string byteSize) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasByteSize, $"{byteSize}^^{Namespaces.FileRecord.Xsd}decimal", _storage.BelongsToGraph!);
+    private SafeQuad CreateByteSizeQuad(string byteSize) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasByteSize, $"{byteSize}^^{Namespaces.FileRecord.Xsd}decimal", _memberOfNamedGraph!);
 
-    private SafeQuad CreateFileNameQuad(string fileName) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasTitle, fileName, _storage.BelongsToGraph!);
+    private SafeQuad CreateFileNameQuad(string fileName) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasTitle, fileName, _memberOfNamedGraph!);
 
-    private SafeQuad CreateIssuedDateQuad(string issuedDate) => Quad.CreateSafe(_storage.Id!,Namespaces.FileRecord.WasIssued, $"{issuedDate}^^{Namespaces.FileRecord.Xsd}date", _storage.BelongsToGraph!);
+    private SafeQuad CreateIssuedDateQuad(string issuedDate) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.WasIssued, $"{issuedDate}^^{Namespaces.FileRecord.Xsd}date", _memberOfNamedGraph!);
 
-    private SafeQuad CreateLanguageQuad(string language) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasLanguage, $"{language}^^{Namespaces.FileRecord.Xsd}language", _storage.BelongsToGraph!);
+    private SafeQuad CreateLanguageQuad(string language) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasLanguage, $"{language}^^{Namespaces.FileRecord.Xsd}language", _memberOfNamedGraph!);
 
-    private SafeQuad CreateDownloadUrlQuads(string downloadUrl) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasDownloadUrl, downloadUrl, _storage.BelongsToGraph!);
+    private SafeQuad CreateDownloadUrlQuads(string downloadUrl) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasDownloadUrl, downloadUrl, _memberOfNamedGraph!);
 
     #endregion
-
-    public IEnumerable<Quad> Build()
+    private static byte[] ToByteArray(Stream content)
     {
-        if (_storage.Id == null) throw new RecordException("Record needs ID.");
-        if (_storage.BelongsToGraph == null) throw new RecordException("Record needs to belong to a named graph.");
-        var recordQuads = new List<SafeQuad>();
-        recordQuads.AddRange(_storage.Quads.Select(quad =>
-        {
-            return quad switch
-            {
-                SafeQuad safeQuad => safeQuad,
-                UnsafeQuad unsafeQuad => unsafeQuad.MakeSafe(),
-                _ => throw new QuadException($"You cannot use {nameof(Quad)} directly.")
-            };
-        }));
+        byte[] contentAsByteArray = new byte[content.Length];
+        content.Read(contentAsByteArray, 0, (int)content.Length);
+        return contentAsByteArray;
+    }
 
-        var typeQuad = Quad.CreateSafe(_storage.Id, Namespaces.Rdf.Type, Namespaces.FileRecord.Type, _storage.BelongsToGraph);
-        recordQuads.Add(typeQuad);  
-        return recordQuads; 
+    public IEnumerable<Triple> Build()
+    {
+        //TODO create FileException
+        if (_storage.Id == null) throw new RecordException("File needs ID.");
+        if (_storage.Content == null) throw new RecordException("File needs content");
+        if (_storage.DownLoadUrl == null) throw new RecordException("File needs a downloadURL");
+        if (_storage.FileName == null) throw new RecordException("File needs a name.");
+        if (_storage.MediaType == null) throw new RecordException("File needs a mediatype");
+
+        var typeQuad = Quad.CreateSafe(_storage.Id, Namespaces.Rdf.Type, Namespaces.FileRecord.Type, _memberOfNamedGraph!);
+        var recordQuads = new List<Quad>
+        {
+            CreateMediaTypeQuad(_storage.MediaType),
+            CreateByteSizeQuad(_storage.ByteSize),
+            CreateFileNameQuad(_storage.FileName),
+            CreateLanguageQuad(_storage.Language),
+            CreateDownloadUrlQuads(_storage.DownLoadUrl),
+            typeQuad
+        };
+
+        if (!string.IsNullOrEmpty(_storage.Language)) recordQuads.Add(CreateLanguageQuad(_storage.Language));
+        if (!string.IsNullOrEmpty(_storage.IssuedDate)) recordQuads.Add(CreateIssuedDateQuad(_storage.IssuedDate));
+        recordQuads.AddRange(CreateChecksumQuad(_storage.Checksum));
+
+        return recordQuads.Select(quad => quad.ToTriple());
     }
 
 }

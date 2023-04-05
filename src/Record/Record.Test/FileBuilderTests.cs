@@ -4,20 +4,18 @@ using Record = Records.Immutable.Record;
 
 namespace Records.Tests;
 
-public  class FileBuilderTests
+public class FileBuilderTests
 {
     [Fact]
     public void File_Should_Not_Be_Null()
     {
         var file = new FileBuilder()
             .WithId("att:B123-EX-W-LA-XLSX")
-            .WithNamedGraph("ex:recordId")
             .WithMediaType("xlsx")
             .WithFileName("B123-EX-W-LA-XLSX")
             .WithIssuedDate("04.04.2023")
-            .WithByteSize(1.2)
             .WithLanguage("en-US")
-            .WithCheckSum(Encoding.UTF8.GetBytes("This is file content"))
+            .WithContent(Encoding.UTF8.GetBytes("This is very cool file content"))
             .WithDownloadUrl("ex:downloadme.no")
             .Build();
 

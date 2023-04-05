@@ -11,7 +11,7 @@ public struct Namespaces
         public const string Describes = $"{BaseUrl}describes";
         public const string IsSubRecordOf = $"{BaseUrl}isSubRecordOf";
     }
-    public struct FileRecord 
+    public struct FileRecord
     {
         public const string Type = "https://rdf.equinor.com/ontology/attachment/File";
 

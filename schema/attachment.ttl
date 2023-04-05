@@ -33,7 +33,6 @@ spdxterms:checksumAlgorithm_md5 rdf:type owl:NamedIndividual ,
                                 spdxterms:ChecksumAlgorithm ;
                        rdfs:comment "Indicates the algorithm used was MD5" .
  
-
 #################################################################
 #    Object Properties
 #################################################################
@@ -71,7 +70,7 @@ spdxterms:algorithm rdf:type owl:ObjectProperty ;
                   rdfs:comment "" ;
                   rdfs:label "Attachment" .
 
-###  https://rdf.equinor.com/ontology/attachment/FileObject
+###  https://rdf.equinor.com/ontology/attachment/File
 :File rdf:type owl:Class ;
                   rdfs:subClassOf spdxterms:File ;
                   rdfs:comment "" ;
@@ -81,3 +80,9 @@ spdxterms:algorithm rdf:type owl:ObjectProperty ;
 spdxterms:ChecksumAlgorithm rdf:type owl:Class ;
                    rdfs:comment "Algorithm for Checksums." .
 
+
+The spdxterms:File class is used to represent computer files and their associated metadata, while the dcat:Distribution 
+class is used to represent a specific way in which a dataset, service, or software application may be distributed to users. 
+These are two distinct concepts and it would not make sense for one class to be a subclass of both.
+The dcat:Distribution class is used to represent a specific version of a dataset or 
+data distribution that can be downloaded or accessed. 
