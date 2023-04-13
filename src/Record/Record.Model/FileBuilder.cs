@@ -114,22 +114,22 @@ public record FileBuilder
     private List<SafeQuad> CreateChecksumQuad(string checksum) =>
         new()
         {
-            Quad.CreateSafe(_storage.Id!,Namespaces.FileRecord.HasChecksum, "_:checksum", _memberOfNamedGraph!),
-            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumAlgorithm, $"{Namespaces.FileRecord.Spdx}checksumAlgorithm_md5", _memberOfNamedGraph!),
-            Quad.CreateSafe("_:checksum", Namespaces.FileRecord.HasChecksumValue, $"{checksum}^^{Namespaces.FileRecord.Xsd}hexBinary" , _memberOfNamedGraph!)
+            Quad.CreateSafe(_storage.Id!,Namespaces.FileContent.HasChecksum, "_:checksum", _memberOfNamedGraph!),
+            Quad.CreateSafe("_:checksum", Namespaces.FileContent.HasChecksumAlgorithm, $"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5", _memberOfNamedGraph!),
+            Quad.CreateSafe("_:checksum", Namespaces.FileContent.HasChecksumValue, $"{checksum}^^{Namespaces.FileContent.Xsd}hexBinary" , _memberOfNamedGraph!)
         };
 
-    private SafeQuad CreateMediaTypeQuad(string mediaType) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasMediaType, $"{Namespaces.FileRecord.HasMediaType}{mediaType}", _memberOfNamedGraph!);
+    private SafeQuad CreateMediaTypeQuad(string mediaType) => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasMediaType, $"{Namespaces.FileContent.HasMediaType}{mediaType}", _memberOfNamedGraph!);
 
-    private SafeQuad CreateByteSizeQuad(string byteSize) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasByteSize, $"{byteSize}^^{Namespaces.FileRecord.Xsd}decimal", _memberOfNamedGraph!);
+    private SafeQuad CreateByteSizeQuad(string byteSize) => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasByteSize, $"{byteSize}^^{Namespaces.FileContent.Xsd}decimal", _memberOfNamedGraph!);
 
-    private SafeQuad CreateFileNameQuad(string fileName) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasTitle, fileName, _memberOfNamedGraph!);
+    private SafeQuad CreateFileNameQuad(string fileName) => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasTitle, fileName, _memberOfNamedGraph!);
 
-    private SafeQuad CreateIssuedDateQuad(string issuedDate) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.WasIssued, $"{issuedDate}^^{Namespaces.FileRecord.Xsd}date", _memberOfNamedGraph!);
+    private SafeQuad CreateIssuedDateQuad(string issuedDate) => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.WasIssued, $"{issuedDate}^^{Namespaces.FileContent.Xsd}date", _memberOfNamedGraph!);
 
-    private SafeQuad CreateLanguageQuad(string language) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasLanguage, $"{language}^^{Namespaces.FileRecord.Xsd}language", _memberOfNamedGraph!);
+    private SafeQuad CreateLanguageQuad(string language) => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasLanguage, $"{language}^^{Namespaces.FileContent.Xsd}language", _memberOfNamedGraph!);
 
-    private SafeQuad CreateDownloadUrlQuads(string downloadUrl) => Quad.CreateSafe(_storage.Id!, Namespaces.FileRecord.HasDownloadUrl, downloadUrl, _memberOfNamedGraph!);
+    private SafeQuad CreateDownloadUrlQuads(string downloadUrl) => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasDownloadUrl, downloadUrl, _memberOfNamedGraph!);
 
     #endregion
     private static byte[] ToByteArray(Stream content)
@@ -148,7 +148,7 @@ public record FileBuilder
         if (_storage.FileName == null) throw new RecordException("File needs a name.");
         if (_storage.MediaType == null) throw new RecordException("File needs a mediatype");
 
-        var typeQuad = Quad.CreateSafe(_storage.Id, Namespaces.Rdf.Type, Namespaces.FileRecord.Type, _memberOfNamedGraph!);
+        var typeQuad = Quad.CreateSafe(_storage.Id, Namespaces.Rdf.Type, Namespaces.FileContent.Type, _memberOfNamedGraph!);
         var recordQuads = new List<Quad>
         {
             CreateMediaTypeQuad(_storage.MediaType),

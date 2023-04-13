@@ -27,7 +27,7 @@
                                             rev:containsRecord exdata:RecordID123.2, 
                                                                exdata:RecordID123.3, 
                                                                exdata:RecordID123.0, 
-                                                               exdata:RecordID123.A ,
+                                                               exdata:RecordID123.A,
                                                                exdata:RecordID123.B .
         }
 
@@ -36,11 +36,8 @@
                         rec:isSubRecordOf exdata:RecordID123.1;
                         rec:describes att:B123-EX-W-LA-XLSX . 
            
-            att:B123-EX-W-LA-XLSX a att:File ;
+            att:B123-EX-W-LA-XLSX a att:File ; 
                     dcat:downloadUrl eq:excelDownloadIri;
-                    att:parsedTo 
-                        exdata:RecordID123.2,
-                        exdata:RecordID123.3;
                     spdx:fileName "B123-EX-W-LA-0001.xlsx";
                     dcat:mediaType mediaType:"vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                     dc:issued "2022-11-03"^^xsd:date;  
