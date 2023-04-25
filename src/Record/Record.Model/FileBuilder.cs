@@ -1,9 +1,7 @@
 ﻿using VDS.RDF;
-using AngleSharp.Dom;
 using System.Security.Cryptography;
 using Records.Exceptions;
 using Microsoft.AspNetCore.Http;
-using VDS.RDF.Parsing;
 
 namespace Records;
 
@@ -45,15 +43,6 @@ public record FileBuilder
     };
     public FileBuilder WithContent(Stream content) => WithContent(ToByteArray(content));
     public FileBuilder WithContent(IFormFile content) => WithContent(ToByteArray(content.OpenReadStream()));
-    public FileBuilder WithIssuedDate(string date) =>
-     this with
-     {
-         _storage = _storage with
-         {
-             IssuedDate = date
-         }
-     };
-    public FileBuilder WithIssuedDate(DateOnly date) => WithIssuedDate(date.ToString());
     public FileBuilder WithFileName(string name) =>
      this with
      {
@@ -98,8 +87,6 @@ public record FileBuilder
 
     private SafeQuad? CreateFileNameQuad(string? fileName) => NullOrDo(fileName, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasTitle, fileName, _storage.Id!));
 
-    private SafeQuad? CreateIssuedDateQuad(string? issuedDate) => NullOrDo(issuedDate, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.WasIssued, $"{issuedDate}^^{Namespaces.FileContent.Xsd}date", _storage.Id!));
-
     private SafeQuad? CreateLanguageQuad(string? language) => NullOrDo(language, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasLanguage, $"{language}^^{Namespaces.FileContent.Xsd}language", _storage.Id!));
 
     private static SafeQuad? NullOrDo(string? @object, Func<SafeQuad> function) => string.IsNullOrWhiteSpace(@object) ? null : function();
@@ -127,7 +114,6 @@ public record FileBuilder
             CreateByteSizeQuad(_storage.ByteSize),
             CreateFileNameQuad(_storage.FileName),
             CreateLanguageQuad(_storage.Language),
-            CreateIssuedDateQuad(_storage.IssuedDate),
             typeQuad
         }.Where(q => q is not null).Cast<Quad>().ToList();
 

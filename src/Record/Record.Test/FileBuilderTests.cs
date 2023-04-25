@@ -16,7 +16,6 @@ public class FileBuilderTests
             .WithId(attachmentRecordId)
             .WithMediaType("xlsx")
             .WithFileName(fileName)
-            .WithIssuedDate("04.04.2023")
             .WithLanguage("en-US")
             .WithContent(Encoding.UTF8.GetBytes("This is very cool file content"))
             .Build();

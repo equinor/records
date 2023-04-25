@@ -23,7 +23,6 @@ public struct Namespaces
         public const string MediaType = "https://www.iana.org/assignments/media-types/application/";
 
         public const string Dcterms = "http://purl.org/dc/terms/";
-        public const string WasIssued = $"{Dcterms}issued";
         public const string HasLanguage = $"{Dcterms}language";
 
         public const string Spdx = "http://spdx.org/rdf/terms#";
