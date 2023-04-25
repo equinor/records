@@ -12,7 +12,7 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>1.0.1$(ReleaseType)</VersionPrefix>
+		<VersionPrefix>1.1.0$(ReleaseType)</VersionPrefix>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -20,8 +20,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
-		<None Include="README.md" Pack="true" PackagePath="\"/>
+		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 	
 	<ItemGroup>
