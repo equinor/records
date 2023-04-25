@@ -9,11 +9,11 @@ public class FileBuilderTests
     [Fact]
     public void FileBuilder_ShouldCreate_ValidRecordContent()
     {
-        var recordId = "ex:recordId";
+        var attachmentRecordId = "ex:recordId";
         var fileName = "B123-EX-W-LA-XLSX";
 
         var file = new FileBuilder()
-            .WithId(recordId)
+            .WithId(attachmentRecordId)
             .WithMediaType("xlsx")
             .WithFileName(fileName)
             .WithIssuedDate("04.04.2023")
@@ -22,9 +22,9 @@ public class FileBuilderTests
             .Build();
 
         var attachmentRecord = new RecordBuilder()
-            .WithId(recordId)
+            .WithId(attachmentRecordId)
             .WithContent(file)
-            .WithDescribes(recordId)
+            .WithDescribes(attachmentRecordId)
             .WithScopes("ex:scope")
             .Build();
 
