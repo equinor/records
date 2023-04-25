@@ -81,7 +81,7 @@ public record FileBuilder
         return checksumGraph.Triples;
     }
 
-    private SafeQuad? CreateMediaTypeQuad(string? mediaType) => NullOrDo(mediaType, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasMediaType, $"{Namespaces.FileContent.HasMediaType}{mediaType}", _storage.Id!));
+    private SafeQuad? CreateMediaTypeQuad(string? mediaType) => NullOrDo(mediaType, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasMediaType, $"{Namespaces.FileContent.MediaType}{mediaType}", _storage.Id!));
 
     private SafeQuad? CreateByteSizeQuad(string? byteSize) => NullOrDo(byteSize, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasByteSize, $"{byteSize}^^{Namespaces.FileContent.Xsd}decimal", _storage.Id!));
 
