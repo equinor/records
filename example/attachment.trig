@@ -52,7 +52,7 @@
            
             exdata:RecordID123.A a att:File; 
                     spdx:fileName "B123-EX-W-LA-0001.xlsx";
-                    dcat:mediaType mediaType:"vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    dcat:mediaType mediaType:vnd.openxmlformats-officedocument.spreadsheetml.sheet;
                     dcat:byteSize "23"^^xsd:decimal;
                     spdx:language "en-US"^^xsd:language;
                     spdx:checksum [
@@ -70,7 +70,7 @@
 
             exdata:RecordID123.B a att:File ;
                     spdx:fileName "B123-EX-W-LA-0001.pdf";
-                    dcat:mediaType mediaType:"pdf";
+                    dcat:mediaType mediaType:pdf;
                     dcat:byteSize "512"^^xsd:decimal;
                     spdx:language "en-US"^^xsd:language;
                     spdx:checksum [
