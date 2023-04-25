@@ -102,10 +102,10 @@ public record FileBuilder
 
     public IEnumerable<Triple> Build()
     {
-        if (_storage.Id == null) throw new RecordException("File needs ID.");
-        if (_storage.Content == null) throw new RecordException("File needs content");
-        if (_storage.FileName == null) throw new RecordException("File needs a name.");
-        if (_storage.MediaType == null) throw new RecordException("File needs a mediatype");
+        if (_storage.Id == null) throw new RecordException("File needs the ID from the record of which it will be content for.");
+        if (_storage.Content == null) throw new FileException("File needs content");
+        if (_storage.FileName == null) throw new FileException("File needs a name.");
+        if (_storage.MediaType == null) throw new FileException("File needs a mediatype");
 
         var typeQuad = Quad.CreateSafe(_storage.Id, Namespaces.Rdf.Type, Namespaces.FileContent.Type, _storage.Id);
         var recordQuads = new List<Quad?>
