@@ -18,7 +18,6 @@ public struct Namespaces
         public const string Xsd = "http://www.w3.org/2001/XMLSchema#";
 
         public const string Dcat = "http://www.w3.org/ns/dcat#";
-        public const string HasDownloadUrl = $"{Dcat}downloadUrl";
         public const string HasByteSize = $"{Dcat}byteSize";
         public const string HasMediaType = $"{Dcat}mediaType";
         public const string MediaType = "https://www.iana.org/assignments/media-types/application/";

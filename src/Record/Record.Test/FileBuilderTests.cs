@@ -7,27 +7,30 @@ namespace Records.Tests;
 public class FileBuilderTests
 {
     [Fact]
-    public void File_Should_Not_Be_Null()
+    public void FileBuilder_ShouldCreate_ValidRecordContent()
     {
+        var recordId = "ex:recordId";
+        var fileName = "B123-EX-W-LA-XLSX";
+
         var file = new FileBuilder()
-            .WithId("att:B123-EX-W-LA-XLSX")
+            .WithId(recordId)
             .WithMediaType("xlsx")
-            .WithFileName("B123-EX-W-LA-XLSX")
+            .WithFileName(fileName)
             .WithIssuedDate("04.04.2023")
             .WithLanguage("en-US")
             .WithContent(Encoding.UTF8.GetBytes("This is very cool file content"))
-            .WithDownloadUrl("ex:downloadme.no")
             .Build();
 
         var attachmentRecord = new RecordBuilder()
-            .WithId("ex:recordId")
+            .WithId(recordId)
             .WithContent(file)
-            .WithDescribes("att:B123-EX-W-LA-XLSX")
-            .WithScopes("ex:attachmentRecord")
+            .WithDescribes(recordId)
+            .WithScopes("ex:scope")
             .Build();
 
         file.Should().NotBeNull();
         attachmentRecord.Should().NotBeNull();
+        attachmentRecord.QuadsWithPredicate(Namespaces.FileContent.HasTitle).Select(q => q.Object).FirstOrDefault().Should().Be(fileName);
     }
-
 }
+
