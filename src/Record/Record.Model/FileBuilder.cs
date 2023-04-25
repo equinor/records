@@ -82,13 +82,15 @@ public record FileBuilder
     #endregion
 
     #region Create-Quads
-    private List<SafeQuad?> CreateChecksumQuad(string checksum) => string.IsNullOrWhiteSpace(checksum) ? new List<SafeQuad?>() :
-        new()
-        {
-            Quad.CreateSafe(_storage.Id!,Namespaces.FileContent.HasChecksum, "_:checksum", _storage.Id!),
-            Quad.CreateSafe("_:checksum", Namespaces.FileContent.HasChecksumAlgorithm, $"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5", _storage.Id!),
-            Quad.CreateSafe("_:checksum", Namespaces.FileContent.HasChecksumValue, $"{checksum}^^{Namespaces.FileContent.Xsd}hexBinary" , _storage.Id!)
-        };
+    private IEnumerable<Triple?> CreateChecksumTriples(string checksum)
+    {
+        var checksumGraph = new Graph();
+        var checksumBlank = checksumGraph.CreateBlankNode();
+        checksumGraph.Assert(new Triple(checksumGraph.CreateUriNode(new Uri(_storage.Id!)), checksumGraph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
+        checksumGraph.Assert(new Triple(checksumBlank, checksumGraph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), checksumGraph.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
+        checksumGraph.Assert(new Triple(checksumBlank, checksumGraph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), checksumGraph.CreateLiteralNode(checksum, new Uri($"{Namespaces.FileContent.Xsd}hexBinary"))));
+        return checksumGraph.Triples;
+    }
 
     private SafeQuad? CreateMediaTypeQuad(string? mediaType) => NullOrDo(mediaType, () => Quad.CreateSafe(_storage.Id!, Namespaces.FileContent.HasMediaType, $"{Namespaces.FileContent.HasMediaType}{mediaType}", _storage.Id!));
 
@@ -129,9 +131,10 @@ public record FileBuilder
             typeQuad
         }.Where(q => q is not null).Cast<Quad>().ToList();
 
-        recordQuads.AddRange(CreateChecksumQuad(_storage.Checksum));
+        var recordTriples = recordQuads.Select(quad => quad.ToTriple());
+        recordTriples = recordTriples.Concat(CreateChecksumTriples(_storage.Checksum));
 
-        return recordQuads.Select(quad => quad.ToTriple());
+        return recordTriples;
     }
 
 }

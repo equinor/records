@@ -9,7 +9,7 @@ public class FileBuilderTests
     [Fact]
     public void FileBuilder_ShouldCreate_ValidRecordContent()
     {
-        var attachmentRecordId = "ex:recordId";
+        var attachmentRecordId = "https://example.com/recordId";
         var fileName = "B123-EX-W-LA-XLSX";
 
         var file = new FileBuilder()
