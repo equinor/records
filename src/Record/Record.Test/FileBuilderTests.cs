@@ -17,7 +17,7 @@ public class FileBuilderTests
             .WithMediaType("xlsx")
             .WithFileName(fileName)
             .WithLanguage("en-US")
-            .WithContent(Encoding.UTF8.GetBytes("This is very cool file content"))
+            .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content"))
             .Build();
 
         var attachmentRecord = new RecordBuilder()

@@ -13,7 +13,6 @@ public record FileBuilder
     {
         internal string? Id { get; set; }
         internal byte[]? Content { get; set; }
-        internal string? IssuedDate { get; set; }
         internal string? FileName { get; set; }
         internal string? MediaType { get; set; }
         internal string? ByteSize { get; set; }
@@ -31,7 +30,7 @@ public record FileBuilder
             }
         };
     public FileBuilder WithId(Uri id) => WithId(id.ToString());
-    public FileBuilder WithContent(byte[] content) =>
+    public FileBuilder WithFileContent(byte[] content) =>
     this with
     {
         _storage = _storage with
@@ -41,8 +40,8 @@ public record FileBuilder
             ByteSize = content.Length.ToString()
         }
     };
-    public FileBuilder WithContent(Stream content) => WithContent(ToByteArray(content));
-    public FileBuilder WithContent(IFormFile content) => WithContent(ToByteArray(content.OpenReadStream()));
+    public FileBuilder WithFileContent(Stream content) => WithFileContent(ToByteArray(content));
+    public FileBuilder WithFileContent(IFormFile content) => WithFileContent(ToByteArray(content.OpenReadStream()));
     public FileBuilder WithFileName(string name) =>
      this with
      {
