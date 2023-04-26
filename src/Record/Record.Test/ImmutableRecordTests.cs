@@ -63,7 +63,7 @@ public class ImmutableRecordTests
     {
         var record = new Record(TestData.ValidJsonLdRecordString());
 
-        var result = record.ToString<TurtleWriter>().Split("\n").Length;
+        var result = record.ToString<CompressingTurtleWriter>().Split("\n").Length;
 
         // This is how many lines should be contained in the turtle serialisation
         result.Should().Be(28);
