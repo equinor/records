@@ -2,11 +2,12 @@
 @prefix rec: <https://rdf.equinor.com/ontology/record/>.
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
 @prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 rec:ReplacedRecordShape
     a sh:NodeShape ;
-    rdf:comment "" ;
+    rdfs:comment "" ;
     sh:targetClass rec:ReplacedRecord ;
     sh:maxExclusive 0 ;
     sh:name "ReplacedRecord" ;
@@ -14,7 +15,7 @@ rec:ReplacedRecordShape
 
 rec:NewestRecordShape
     a sh:NodeShape ;
-    rdf:comment "" ;
+    rdfs:comment "" ;
     sh:targetClass rec:NewestRecord ;
     sh:maxExclusive 0 ;
     sh:name "NewestRecord" ;
@@ -22,10 +23,10 @@ rec:NewestRecordShape
 
 rec:RecordShape
     a sh:NodeShape ;
-    rdf:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
+    rdfs:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
     sh:targetClass rec:Record ;
     sh:property [ 
-        sh:path [ sh:alternativePath (rec:isSubrecordOf  rec:isInScope) ];
+        sh:path [ sh:alternativePath (rec:isSubRecordOf  rec:isInScope) ];
         sh:minCount 1;
         sh:name "Scope";
         sh:message "A record must either be a subrecord or have at least one scope";
@@ -56,7 +57,7 @@ rec:RecordShape
         sh:message "The inferred subrecord relation cannot be set explicitly. Please use rec:isSubRecordOf";
     ] ,
     [
-        sh:path rec:isSubrecordOf;
+        sh:path rec:isSubRecordOf;
         sh:class rec:Record;
         sh:minCount 0;
         sh:maxCount 1;

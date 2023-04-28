@@ -133,13 +133,12 @@ public record FileRecordBuilder
 
 
         var fileRecordTriples = fileRecordQuads.Select(quad => quad.ToTriple());
-        fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum));
+        fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!)!)!;
 
         var fileRecord = new RecordBuilder()
-                             .WithId(_storage.Id)
-                             .WithDescribes(_storage.Id)
-                             .WithIsSubRecordOf(_storage.IsSubRecordOf)
-                             .WithScopes(_storage.Scopes)
+                             .WithId(_storage.Id!)
+                             .WithDescribes(_storage.Id!)
+                             .WithIsSubRecordOf(_storage.IsSubRecordOf!)
                              .WithContent(fileRecordTriples)
                              .Build();
         return fileRecord;

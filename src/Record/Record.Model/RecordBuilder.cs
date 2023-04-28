@@ -22,14 +22,31 @@ public record RecordBuilder
 @prefix rec: <https://rdf.equinor.com/ontology/record/>.
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
 @prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+rec:ReplacedRecordShape
+    a sh:NodeShape ;
+    rdfs:comment """" ;
+    sh:targetClass rec:ReplacedRecord ;
+    sh:maxExclusive 0 ;
+    sh:name ""ReplacedRecord"" ;
+    sh:message ""The inferred replaced record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces"" .
+
+rec:NewestRecordShape
+    a sh:NodeShape ;
+    rdfs:comment """" ;
+    sh:targetClass rec:NewestRecord ;
+    sh:maxExclusive 0 ;
+    sh:name ""NewestRecord"" ;
+    sh:message ""The inferred newest record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces"" .
 
 rec:RecordShape
     a sh:NodeShape ;
+    rdfs:comment ""This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied."" ;
     sh:targetClass rec:Record ;
     sh:property [ 
-        sh:path [ sh:alternativePath (rec:isSubrecordOf  rec:isInScope) ];
+        sh:path [ sh:alternativePath (rec:isSubRecordOf  rec:isInScope) ];
         sh:minCount 1;
         sh:name ""Scope"";
         sh:message ""A record must either be a subrecord or have at least one scope"";
@@ -42,19 +59,41 @@ rec:RecordShape
         sh:message ""A record can have any number of scopes set directly"";
     ] ,
     [
-        sh:path rec:isSubrecordOf;
-        sh:class rec:Record;
-        sh:minCount 0;
-        sh:maxCount 1;
+        sh:path rec:isInScopeInf;
+        sh:maxCount 0;
+        sh:name ""InfScope"";
+        sh:message ""The inferred scope relation cannot be set explicitly. Please use rec:isInScope"";
+    ] ,
+    [
+        sh:path rec:isInSubRecordTreeOf;
+        sh:maxCount 0;
+        sh:name ""SubRecordTree"";
+        sh:message ""The inferred subrecord relation cannot be set explicitly. Please use rec:isSubRecordOf"";
+    ] ,
+    [
+        sh:path rec:hasNewerSuperRecordInf;
+        sh:maxCount 0;
+        sh:name ""HasNewerSuperRecordInf"";
+        sh:message ""The inferred subrecord relation cannot be set explicitly. Please use rec:isSubRecordOf"";
+    ] ,
+    [
+        sh:path rec:isSubRecordOf;
+        sh:sh:maxCount 1;
         sh:name ""SubRecord"";
         sh:message ""A record can be the subrecord of at most one record"";
         sh:severity sh:Violation;
     ] ,
     [
+        sh:path rec:replacedBy ;
+        sh:maxCount 0;
+        sh:name ""Replaced by (explicit)"" ;
+        sh:message ""The inferred replaced by relation cannot be set explicitly. Please use rec:replaces"";
+    ],
+    [
         sh:path rec:describes;
         sh:minCount 0;
         sh:name ""Describes"";
-        sh:message ""A record can describe any number of objects/entities"";
+        sh:message ""A record can describe any number of objects/entities. A record describing 0 objects has no content."";
     ]  ,
     [
         sh:path rdfs:comment;
@@ -79,7 +118,16 @@ rec:RecordShape
         sh:maxCount 1;
         sh:message ""A record can have at most one label"";
         sh:severity sh:Warning;
+    ] ,
+    [ 
+        sh:path ([ sh:zeroOrMorePath rec:isSubRecordOf ]  rec:isInScope ) ;
+        sh:minCount 1;
+        sh:deactivated true;
+        sh:name ""SuperRecordScope"";
+        sh:message ""All records must have at least one scope, potentially reachable via subRecordOf relations"";
     ] .
+    
+    
     ");
         _processor = new ShapesGraph(shapes);
     }
