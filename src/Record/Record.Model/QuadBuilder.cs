@@ -112,7 +112,7 @@ public record QuadBuilder
     {
         try
         {
-            if (subject.StartsWith("_:")) return new BlankNode(subject);;
+            if (subject.StartsWith("_:")) return new BlankNode(subject); ;
             return new UriNode(UriFactory.Create(subject));
         }
         catch

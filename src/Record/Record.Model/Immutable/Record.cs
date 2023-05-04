@@ -30,7 +30,7 @@ public class Record : IEquatable<Record>
     private void LoadFromString(string rdfString)
     {
         if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null) throw new RecordException("Record is already loaded.");
-        
+
         try { _store.LoadFromString(rdfString); }
         catch { _store.LoadFromString(rdfString, new JsonLdParser()); }
 
