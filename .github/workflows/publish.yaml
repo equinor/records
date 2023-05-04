@@ -3,9 +3,9 @@ name: Publish
 on:
   push:
     branches:
-      - "main"
+      - main
     paths:
-      - '.*src/Record/Record.Model/.*'
+      - 'src/Record/Record.Model'
       
   workflow_call:
     secrets:  
