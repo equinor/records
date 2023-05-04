@@ -5,6 +5,7 @@ using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
+using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 
 namespace Records.Immutable;
@@ -29,14 +30,14 @@ public class Record : IEquatable<Record>
     private void LoadFromString(string rdfString)
     {
         if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null) throw new RecordException("Record is already loaded.");
-
-        try { _store.LoadFromString(rdfString); }
+        
+        try { _store.LoadFromString(rdfString, new NQuadsParser()); }
         catch { _store.LoadFromString(rdfString, new JsonLdParser()); }
 
         if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
         _graph = _store.Graphs.First();
 
-        Id = _graph.BaseUri.ToString();
+        Id = _graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id);
         if (!Provenance.Any(p => p.Object.Equals(Namespaces.Record.RecordType))) throw new RecordException("A record must have exactly one provenance object.");
@@ -53,7 +54,7 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        _nQuadsString = ToString<NQuadsRecordWriter>();
+        _nQuadsString = ToString<NQuadsWriter>();
     }
 
     /// <summary>
@@ -122,11 +123,11 @@ public class Record : IEquatable<Record>
         return _nQuadsString;
     }
 
-    public string ToString<T>() where T : IRdfWriter, new()
+    public string ToString<T>() where T : IStoreWriter, new()
     {
         var writer = new T();
         var stringWriter = new StringWriter();
-        writer.Save(_graph, stringWriter);
+        writer.Save(_store, stringWriter);
         return stringWriter.ToString();
     }
 
@@ -184,7 +185,7 @@ public class Record : IEquatable<Record>
 
     private object GetResult(string queryString)
     {
-        var ds = new InMemoryDataset(_store, new Uri(Id ?? throw new UnloadedRecordException()));
+        var ds = new InMemoryQuadDataset(_store, new Uri(Id ?? throw new UnloadedRecordException()));
 
         var processor = new LeviathanQueryProcessor(ds);
         var parser = new SparqlQueryParser();

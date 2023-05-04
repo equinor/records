@@ -5,13 +5,14 @@ using VDS.RDF.Shacl;
 using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
+using VDS.RDF.Writing;
 
 namespace Records;
 
 public record RecordBuilder
 {
     private Storage _storage = new();
-    private IGraph _graph = new Graph();
+    private IGraph _graph;
     private ShapesGraph _processor;
 
     public RecordBuilder()
@@ -281,6 +282,7 @@ rec:RecordShape
     public Record Build()
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
+        _graph = new Graph(_storage.Id);
         _graph.BaseUri = _storage.Id;
 
         var recordQuads = new List<SafeQuad>();
@@ -313,9 +315,11 @@ rec:RecordShape
         var report = _processor.Validate(_graph);
         if (!report.Conforms) throw ShaclException(report);
 
-        var writer = new NQuadsRecordWriter();
-        var sw = new StringWriter();
-        writer.Save(_graph, sw);
+        var writer = new NQuadsWriter();
+        var sw = new System.IO.StringWriter();
+        var ts = new TripleStore();
+        ts.Add(_graph);
+        writer.Save(ts, sw);
 
         return new(sw.ToString());
     }
@@ -329,7 +333,7 @@ rec:RecordShape
 
         var errorMessages = validationStore
             .GetTriplesWithPredicate(messageNode)
-            .Select(t => t.Object.ToString())
+            .Select(t => t.Object.ToSafeString().Split("^^http").First())
             .ToList();
 
         return new RecordException(string.Join('\n', errorMessages));

@@ -4,6 +4,7 @@ using AngleSharp.Common;
 using HtmlAgilityPack;
 using Records.Exceptions;
 using VDS.RDF;
+using VDS.RDF.Writing;
 using Record = Records.Immutable.Record;
 
 namespace Records;
@@ -99,7 +100,7 @@ public class RecordRepository<T> : IEnumerable<Record> where T : IRdfWriter, new
         foreach (var graph in _store.Graphs)
         {
             var writer = new T();
-            var stringWriter = new StringWriter();
+            var stringWriter = new System.IO.StringWriter();
             writer.Save(graph, stringWriter);
             r += stringWriter.ToString();
         }
@@ -116,7 +117,7 @@ public static class RecordStoreExtensions
 {
     public static void AddRecord(this TripleStore store, Record record)
     {
-        store.LoadFromString(record.ToString<NQuadsRecordWriter>());
+        store.LoadFromString(record.ToString<NQuadsWriter>());
     }
 
     public static IEnumerable<Record> Records(this TripleStore store)
@@ -138,7 +139,7 @@ public static class RecordStoreExtensions
     public static string Stringify(this IGraph graph)
     {
         var writer = new NQuadsRecordWriter();
-        var sw = new StringWriter();
+        var sw = new System.IO.StringWriter();
         writer.Save(graph, sw);
         return sw.ToString();
     }

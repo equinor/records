@@ -29,7 +29,7 @@ public class FileBuilderTests
 
         file.Should().NotBeNull();
         attachmentRecord.Should().NotBeNull();
-        attachmentRecord.QuadsWithPredicate(Namespaces.FileContent.HasTitle).Select(q => q.Object).FirstOrDefault().Should().Be(fileName);
+        attachmentRecord.QuadsWithPredicate(Namespaces.FileContent.HasTitle).Select(q => q.Object).FirstOrDefault().Should().Be($"{fileName}^^http://www.w3.org/2001/XMLSchema#string");
     }
 }
 

@@ -3,6 +3,7 @@ using Records.Exceptions;
 using Record = Records.Immutable.Record;
 using VDS.RDF;
 using Newtonsoft.Json.Linq;
+using VDS.RDF.Writing;
 
 namespace Records.Tests;
 public class RecordBuilderTests
@@ -332,7 +333,7 @@ public class RecordBuilderTests
 
         record.Id.Should().Be(graph.BaseUri.ToString());
 
-        var jsonLd = record.ToString<JsonLdRecordWriter>();
+        var jsonLd = record.ToString<JsonLdWriter>();
         JArray.Parse(jsonLd)?
             .Single()
             .Value<JArray>("@graph")?
