@@ -1,4 +1,5 @@
 ﻿using VDS.RDF;
+using VDS.RDF.Writing;
 
 namespace Records.Tests;
 public static class TestData
@@ -33,11 +34,11 @@ public static class TestData
     }
 
     public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
-        => ValidRecordString<JsonLdRecordWriter>(id, numberScopes, numberDescribes, numberQuads);
+        => ValidRecordString<JsonLdWriter>(id, numberScopes, numberDescribes, numberQuads);
     public static string ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
-        => ValidRecordString<NQuadsRecordWriter>(id, numberScopes, numberDescribes, numberQuads);
+        => ValidRecordString<NQuadsWriter>(id, numberScopes, numberDescribes, numberQuads);
 
-    public static string ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IRdfWriter, new()
+    public static string ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
     {
         var record = ValidRecord(id, numberScopes, numberDescribes, numberQuads);
         return record.ToString<T>();

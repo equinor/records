@@ -12,7 +12,7 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>1.1.1$(ReleaseType)</VersionPrefix>
+		<VersionPrefix>2.0.0$(ReleaseType)</VersionPrefix>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -27,7 +27,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="dotNetRDF" Version="2.7.5" />
+		<PackageReference Include="dotNetRDF" Version="3.0.0" />
 	</ItemGroup>
 
 </Project>

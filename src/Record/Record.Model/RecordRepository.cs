@@ -4,11 +4,12 @@ using AngleSharp.Common;
 using HtmlAgilityPack;
 using Records.Exceptions;
 using VDS.RDF;
+using VDS.RDF.Writing;
 using Record = Records.Immutable.Record;
 
 namespace Records;
 
-public sealed class RecordRepository : RecordRepository<NQuadsRecordWriter>
+public sealed class RecordRepository : RecordRepository<NQuadsWriter>
 {
     public RecordRepository() : base() { }
 
@@ -19,7 +20,7 @@ public sealed class RecordRepository : RecordRepository<NQuadsRecordWriter>
     public RecordRepository(IEnumerable<Record> records) : base(records) { }
 }
 
-public class RecordRepository<T> : IEnumerable<Record> where T : IRdfWriter, new()
+public class RecordRepository<T> : IEnumerable<Record> where T : IStoreWriter, new()
 {
     public TripleStore _store = new();
     public int Count => _store.Graphs.Count;
@@ -99,8 +100,10 @@ public class RecordRepository<T> : IEnumerable<Record> where T : IRdfWriter, new
         foreach (var graph in _store.Graphs)
         {
             var writer = new T();
-            var stringWriter = new StringWriter();
-            writer.Save(graph, stringWriter);
+            var stringWriter = new System.IO.StringWriter();
+            var ts = new TripleStore();
+            ts.Add(graph);
+            writer.Save(ts, stringWriter);
             r += stringWriter.ToString();
         }
         return r;
@@ -116,7 +119,7 @@ public static class RecordStoreExtensions
 {
     public static void AddRecord(this TripleStore store, Record record)
     {
-        store.LoadFromString(record.ToString<NQuadsRecordWriter>());
+        store.LoadFromString(record.ToString<NQuadsWriter>());
     }
 
     public static IEnumerable<Record> Records(this TripleStore store)
@@ -137,9 +140,11 @@ public static class RecordStoreExtensions
 
     public static string Stringify(this IGraph graph)
     {
-        var writer = new NQuadsRecordWriter();
-        var sw = new StringWriter();
-        writer.Save(graph, sw);
+        var writer = new NQuadsWriter();
+        var sw = new System.IO.StringWriter();
+        var ts = new TripleStore();
+        ts.Add(graph);
+        writer.Save(ts, sw);
         return sw.ToString();
     }
 }

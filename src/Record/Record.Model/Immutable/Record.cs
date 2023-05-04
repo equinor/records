@@ -5,6 +5,7 @@ using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
+using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 
 namespace Records.Immutable;
@@ -16,10 +17,10 @@ public class Record : IEquatable<Record>
     private IGraph _graph = new Graph();
     private TripleStore? _store = new();
 
-    public IEnumerable<Quad>? Provenance { get; private set; }
+    public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
-    public IEnumerable<string>? Replaces { get; private set; }
+    public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
 
     public Record(string rdfString) => LoadFromString(rdfString);
@@ -36,16 +37,16 @@ public class Record : IEquatable<Record>
         if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
         _graph = _store.Graphs.First();
 
-        Id = _graph.BaseUri.ToString();
+        Id = _graph.Name.ToSafeString();
 
-        Provenance = QuadsWithSubject(Id);
+        Provenance = QuadsWithSubject(Id).ToList();
         if (!Provenance.Any(p => p.Object.Equals(Namespaces.Record.RecordType))) throw new RecordException("A record must have exactly one provenance object.");
 
         Scopes = QuadsWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object).OrderBy(s => s).ToHashSet();
         Describes = QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).OrderBy(d => d).ToHashSet();
 
         var replaces = QuadsWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object).ToArray();
-        Replaces = replaces;
+        Replaces = replaces.ToList();
 
         var subRecordOf = QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).ToArray();
         if (subRecordOf.Length > 1)
@@ -53,7 +54,7 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        _nQuadsString = ToString<NQuadsRecordWriter>();
+        _nQuadsString = ToString<NQuadsWriter>();
     }
 
     /// <summary>
@@ -122,11 +123,11 @@ public class Record : IEquatable<Record>
         return _nQuadsString;
     }
 
-    public string ToString<T>() where T : IRdfWriter, new()
+    public string ToString<T>() where T : IStoreWriter, new()
     {
         var writer = new T();
         var stringWriter = new StringWriter();
-        writer.Save(_graph, stringWriter);
+        writer.Save(_store, stringWriter);
         return stringWriter.ToString();
     }
 
@@ -184,7 +185,7 @@ public class Record : IEquatable<Record>
 
     private object GetResult(string queryString)
     {
-        var ds = new InMemoryDataset(_store, new Uri(Id ?? throw new UnloadedRecordException()));
+        var ds = new InMemoryQuadDataset(_store, new Uri(Id ?? throw new UnloadedRecordException()));
 
         var processor = new LeviathanQueryProcessor(ds);
         var parser = new SparqlQueryParser();
