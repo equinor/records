@@ -17,10 +17,10 @@ public class Record : IEquatable<Record>
     private IGraph _graph = new Graph();
     private TripleStore? _store = new();
 
-    public IEnumerable<Quad>? Provenance { get; private set; }
+    public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
-    public IEnumerable<string>? Replaces { get; private set; }
+    public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
 
     public Record(string rdfString) => LoadFromString(rdfString);
@@ -39,14 +39,14 @@ public class Record : IEquatable<Record>
 
         Id = _graph.Name.ToSafeString();
 
-        Provenance = QuadsWithSubject(Id);
+        Provenance = QuadsWithSubject(Id).ToList();
         if (!Provenance.Any(p => p.Object.Equals(Namespaces.Record.RecordType))) throw new RecordException("A record must have exactly one provenance object.");
 
         Scopes = QuadsWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object).OrderBy(s => s).ToHashSet();
         Describes = QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).OrderBy(d => d).ToHashSet();
 
         var replaces = QuadsWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object).ToArray();
-        Replaces = replaces;
+        Replaces = replaces.ToList();
 
         var subRecordOf = QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).ToArray();
         if (subRecordOf.Length > 1)
