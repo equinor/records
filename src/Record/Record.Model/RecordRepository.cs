@@ -9,7 +9,7 @@ using Record = Records.Immutable.Record;
 
 namespace Records;
 
-public sealed class RecordRepository : RecordRepository<NQuadsRecordWriter>
+public sealed class RecordRepository : RecordRepository<NQuadsWriter>
 {
     public RecordRepository() : base() { }
 
@@ -20,7 +20,7 @@ public sealed class RecordRepository : RecordRepository<NQuadsRecordWriter>
     public RecordRepository(IEnumerable<Record> records) : base(records) { }
 }
 
-public class RecordRepository<T> : IEnumerable<Record> where T : IRdfWriter, new()
+public class RecordRepository<T> : IEnumerable<Record> where T : IStoreWriter, new()
 {
     public TripleStore _store = new();
     public int Count => _store.Graphs.Count;
@@ -101,7 +101,9 @@ public class RecordRepository<T> : IEnumerable<Record> where T : IRdfWriter, new
         {
             var writer = new T();
             var stringWriter = new System.IO.StringWriter();
-            writer.Save(graph, stringWriter);
+            var ts = new TripleStore();
+            ts.Add(graph);
+            writer.Save(ts, stringWriter);
             r += stringWriter.ToString();
         }
         return r;
@@ -138,9 +140,11 @@ public static class RecordStoreExtensions
 
     public static string Stringify(this IGraph graph)
     {
-        var writer = new NQuadsRecordWriter();
+        var writer = new NQuadsWriter();
         var sw = new System.IO.StringWriter();
-        writer.Save(graph, sw);
+        var ts = new TripleStore();
+        ts.Add(graph);
+        writer.Save(ts, sw);
         return sw.ToString();
     }
 }
