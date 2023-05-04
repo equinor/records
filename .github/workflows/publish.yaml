@@ -1,0 +1,35 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - '.*src/Record/Record.Model/.*'
+      
+  workflow_call:
+    secrets:  
+        NUGET_API_KEY:
+            required: true
+            description: "Key for publishing to nuget.org"
+   
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore ./src/Record/Record.Model
+    - name: Build
+      run: dotnet build ./src/Record/Record.Model -c release --no-restore  /p:'ReleaseType="";description="A library for using records."'
+    - name: Publish
+      run: dotnet nuget push ./src/Record/Record.Model/bin/release/Record*.nupkg --api-key ${{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json

@@ -307,7 +307,8 @@ rec:RecordShape
         recordQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
         recordQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
 
-        foreach (var quad in recordQuads) _graph.LoadFromString(quad.ToTripleString());
+        var tripleString = string.Join("\n", recordQuads.Select(q => q.ToTripleString()));
+        _graph.LoadFromString(tripleString);
 
         var report = _processor.Validate(_graph);
         if (!report.Conforms) throw ShaclException(report);

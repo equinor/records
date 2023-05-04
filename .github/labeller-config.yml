@@ -1,8 +1,11 @@
 version: 1
 labels:
-  - label: "C# Library"
+  - label: "Tests - C# Library"
     files:
-      - "src/Record/.*"
+      - "src/Record/Record.Test/.*"
+  - label: "Nuget publish - C# Library"
+    files:
+      - "src/Record/Record.Model/.*"
   - label: "Workflows"
     files:
       - ".*yml"

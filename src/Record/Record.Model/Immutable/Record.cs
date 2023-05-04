@@ -1,4 +1,5 @@
 ﻿using Records.Exceptions;
+using System;
 using System.Diagnostics;
 using VDS.RDF;
 using VDS.RDF.Parsing;
