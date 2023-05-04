@@ -31,7 +31,7 @@ public class Record : IEquatable<Record>
     {
         if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null) throw new RecordException("Record is already loaded.");
         
-        try { _store.LoadFromString(rdfString, new NQuadsParser()); }
+        try { _store.LoadFromString(rdfString); }
         catch { _store.LoadFromString(rdfString, new JsonLdParser()); }
 
         if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
