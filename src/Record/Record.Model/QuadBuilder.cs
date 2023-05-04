@@ -1,6 +1,7 @@
 ﻿using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 
 namespace Records;
@@ -75,10 +76,14 @@ public record QuadBuilder
         var triple = tempGraph.Triples.First();
 
         var formatter = new NQuadsFormatter();
-        var tripleString = triple.ToString(new NTriples11Formatter());
+        var ts = new TripleStore();
+        ts.Add(tempGraph);
+        var sw = new System.IO.StringWriter();
+        var writer = new NQuadsWriter();
+        writer.Save(ts, sw);
+        var quadString = sw.ToString().Trim();
 
         var graphLabel = $"<{tempGraph.Name}>";
-        var quadString = $"{tripleString[..(tripleString.Length - 2)]} {graphLabel} .";
 
 
         return new SafeQuad
