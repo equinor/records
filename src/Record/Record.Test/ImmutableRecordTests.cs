@@ -194,5 +194,6 @@ public class ImmutableRecordTests
 
         record.Should().BeNull();
     }
+
 }
 
