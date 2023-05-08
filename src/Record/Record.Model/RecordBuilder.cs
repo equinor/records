@@ -30,7 +30,7 @@ rec:RecordShape
     a sh:NodeShape ;
     sh:targetClass rec:Record ;
     sh:property [ 
-        sh:path [ sh:alternativePath (rec:isSubrecordOf  rec:isInScope) ];
+        sh:path [ sh:alternativePath (rec:isSubRecordOf  rec:isInScope) ];
         sh:minCount 1;
         sh:name ""Scope"";
         sh:message ""A record must either be a subrecord or have at least one scope"";
@@ -43,7 +43,7 @@ rec:RecordShape
         sh:message ""A record can have any number of scopes set directly"";
     ] ,
     [
-        sh:path rec:isSubrecordOf;
+        sh:path rec:isSubRecordOf;
         sh:class rec:Record;
         sh:minCount 0;
         sh:maxCount 1;
