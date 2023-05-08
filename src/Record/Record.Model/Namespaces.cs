@@ -14,7 +14,7 @@ public struct Namespaces
     public struct FileContent
     {
         public const string Type = "https://rdf.equinor.com/ontology/attachment/File";
-
+        public const string generatedAtTime = "http://www.w3.org/ns/prov#generatedAtTime";
         public const string Xsd = "http://www.w3.org/2001/XMLSchema#";
 
         public const string Dcat = "http://www.w3.org/ns/dcat#";
