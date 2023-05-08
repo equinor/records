@@ -44,8 +44,8 @@ public class FileRecordBuilderTests
         };
 
         fileRecordBuilder.Should()
-            .Throw<RecordException>()
-            .WithMessage("Failure in record. A record must either be a subrecord or have at least one scope");
+            .Throw<FileRecordException>()
+            .WithMessage("Failure in building file record. File record needs to have a subrecord relation.");
 
         fileRecord.Should().BeNull();
 
