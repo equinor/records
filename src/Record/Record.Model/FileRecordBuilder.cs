@@ -14,7 +14,6 @@ public record FileRecordBuilder
         internal string? Id { get; set; }
         internal string? IsSubRecordOf { get; set; }
         internal byte[]? Content { get; set; }
-        internal string? IssuedDate { get; set; }
         internal string? FileName { get; set; }
         internal string? MediaType { get; set; }
         internal string? ByteSize { get; set; }
