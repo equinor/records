@@ -2,7 +2,7 @@
 
 public class FileRecordException : Exception
 {
-    private static string _messageTemplate => "Failure in building file content. {0}";
+    private static string _messageTemplate => "Failure in building file record. {0}";
 
     public FileRecordException() : base(string.Format(_messageTemplate, string.Empty)) { }
     public FileRecordException(string message) : base(string.Format(_messageTemplate, message)) { }

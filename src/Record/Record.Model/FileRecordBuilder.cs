@@ -13,7 +13,6 @@ public record FileRecordBuilder
     {
         internal string? Id { get; set; }
         internal string? IsSubRecordOf { get; set; }
-        internal List<string>? Scopes {get; set;}
         internal byte[]? Content { get; set; }
         internal string? IssuedDate { get; set; }
         internal string? FileName { get; set; }
@@ -42,16 +41,6 @@ public record FileRecordBuilder
         }
     };
     public FileRecordBuilder WithIsSubRecordOf(Uri id) => WithIsSubRecordOf(id.ToString());
-    public FileRecordBuilder WithScopes(params string[] scopes) =>
-    this with
-    {
-        _storage = _storage with
-        {
-            Scopes = scopes.ToList()
-        }
-    };
-    public FileRecordBuilder WithScopes(IEnumerable<string> scopes)
-        => WithScopes(scopes.ToArray()); 
     public FileRecordBuilder WithFileContent(byte[] content) =>
     this with
     {
@@ -104,9 +93,9 @@ public record FileRecordBuilder
 
     private SafeQuad? CreateMediaTypeQuad(string? mediaType) => NullOrDo(mediaType, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasMediaType, $"{Namespaces.FileContent.MediaType}{mediaType}"));
 
-    private SafeQuad? CreateByteSizeQuad(string? byteSize) => NullOrDo(byteSize, () => CreateQuadWithPredicateAndObject( Namespaces.FileContent.HasByteSize, $"{byteSize}^^{Namespaces.FileContent.Xsd}decimal"));
+    private SafeQuad? CreateByteSizeQuad(string? byteSize) => NullOrDo(byteSize, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasByteSize, $"{byteSize}^^{Namespaces.FileContent.Xsd}decimal"));
 
-    private SafeQuad? CreateFileNameQuad(string? fileName) => NullOrDo(fileName, () => CreateQuadWithPredicateAndObject( Namespaces.FileContent.HasTitle, fileName));
+    private SafeQuad? CreateFileNameQuad(string? fileName) => NullOrDo(fileName, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasTitle, fileName));
 
     private SafeQuad? CreateLanguageQuad(string? language) => NullOrDo(language, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasLanguage, $"{language}^^{Namespaces.FileContent.Xsd}language"));
 
@@ -117,9 +106,9 @@ public record FileRecordBuilder
 
     public Record Build()
     {
-        if (_storage.Content == null) throw new FileRecordException("File record needs content");
-        if (_storage.FileName == null) throw new FileRecordException("File record needs the name of the file.");
-        if (_storage.MediaType == null) throw new FileRecordException("File record needs the mediatype of the file");
+        if (_storage.Content == null) throw new FileRecordException("File record needs content.");
+        if (_storage.FileName == null) throw new FileRecordException("File record needs a file name.");
+        if (_storage.MediaType == null) throw new FileRecordException("File record needs the mediatype of the file.");
 
         var fileRecordQuads = new List<Quad?>
         {
