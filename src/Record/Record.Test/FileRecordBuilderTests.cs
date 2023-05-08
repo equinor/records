@@ -117,7 +117,7 @@ public class FileRecordBuilderTests
 
         fileRecordBuilder.Should()
             .Throw<FileRecordException>()
-            .WithMessage("Failure in building file record. File record needs the mediatype of the file.");
+            .WithMessage("Failure in building file record. File record needs the media type of the file.");
 
         fileRecord.Should().BeNull();
     }
