@@ -3,6 +3,7 @@ using Records.Exceptions;
 using Record = Records.Immutable.Record;
 using VDS.RDF;
 using Newtonsoft.Json.Linq;
+using VDS.RDF.Writing;
 
 namespace Records.Tests;
 public class RecordBuilderTests
@@ -332,7 +333,7 @@ public class RecordBuilderTests
 
         record.Id.Should().Be(graph.BaseUri.ToString());
 
-        var jsonLd = record.ToString<JsonLdRecordWriter>();
+        var jsonLd = record.ToString<JsonLdWriter>();
         JArray.Parse(jsonLd)?
             .Single()
             .Value<JArray>("@graph")?
@@ -342,5 +343,32 @@ public class RecordBuilderTests
             .Value<string>("@type")
             .Should()
             .Be(dateTypeUri.ToString());
+    }
+
+
+
+    [Fact]
+    public void RecordBuilder_Builds_Record_With_At_Most_One_SuperRecord()
+    {
+        var recordId = TestData.CreateRecordId("recordId");
+        var superRecord = TestData.CreateRecordId("superRecordId");
+        var superDuperRecord = TestData.CreateRecordId("superDuperRecordId");
+
+        var record = default(Record);
+
+        var recordBuilder = () =>
+        {
+            record = new RecordBuilder()
+              .WithId(recordId)
+              .WithIsSubRecordOf(superRecord)
+              .WithContent(Quad.CreateSafe(recordId, Namespaces.Record.IsSubRecordOf, superDuperRecord, recordId))
+              .Build();
+        };
+
+        recordBuilder.Should()
+            .Throw<RecordException>()
+            .WithMessage("Failure in record. A record can be the subrecord of at most one record");
+
+        record.Should().BeNull();
     }
 }

@@ -4,6 +4,7 @@
 @prefix lis: <http://standards.iso.org/iso/15926/part14/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 rec:ReplacedRecordShape
     a sh:NodeShape ;
@@ -23,7 +24,7 @@ rec:NewestRecordShape
 
 rec:RecordShape
     a sh:NodeShape ;
-    rdfs:comment "This shape is for the actual transmission format of records. It will not validate after record-rules.ttl is applied." ;
+    rdfs:comment "This shape is for the actual transmission format of records. It should validate a single record, meaning it does not need the other records like the super record to validate. It will not validate after record-rules.ttl is applied." ;
     sh:targetClass rec:Record ;
     sh:property [ 
         sh:path [ sh:alternativePath (rec:isSubRecordOf  rec:isInScope) ];
@@ -58,7 +59,6 @@ rec:RecordShape
     ] ,
     [
         sh:path rec:isSubRecordOf;
-        sh:class rec:Record;
         sh:minCount 0;
         sh:maxCount 1;
         sh:name "SubRecord";
@@ -67,7 +67,6 @@ rec:RecordShape
     ] ,
     [
         sh:path rec:replaces;
-        sh:class rec:Record;
         sh:minCount 0;
         sh:name "Replaces";
         sh:message "A record replaces any number of other records. If there are none, that means the history is unknown or new. If there are more than one, this represents a merge.";
@@ -75,7 +74,6 @@ rec:RecordShape
     ] ,
     [ 
         sh:path [ sh:inversePath rec:replaces ];
-        sh:class rec:Record;
         sh:minCount 0;
         sh:name "Replaced by";
         sh:message "A record can be replaced by at most one other record";

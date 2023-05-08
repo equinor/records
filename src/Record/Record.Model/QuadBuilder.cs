@@ -1,18 +1,19 @@
 ﻿using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 
 namespace Records;
 
 public record QuadBuilder
 {
-    private static readonly IGraph _graph = new Graph();
+    private static readonly IGraph _graph;
 
     public INode? Subject { get; private set; }
     public INode? Predicate { get; private set; }
     public INode? Object { get; private set; }
-    public INode? GraphLabel { get; private set; }
+    public Uri? GraphLabel { get; private set; }
 
     public IGraph Graph => _graph;
 
@@ -66,11 +67,7 @@ public record QuadBuilder
         if (GraphLabel == null) throw new QuadException("Missing graph label.");
         if (Subject == null || Predicate == null || Object == null) throw new QuadException("Missing one or more properties.");
 
-        var tempGraph = new Graph();
-        tempGraph.BaseUri = new Uri(GraphLabel.ToString());
-        Subject = Subject.CopyNode(tempGraph);
-        Predicate = Predicate.CopyNode(tempGraph);
-        Object = Object.CopyNode(tempGraph);
+        var tempGraph = new Graph(GraphLabel) { BaseUri = GraphLabel };
 
         var asserted = tempGraph.Assert(new Triple(Subject, Predicate, Object));
         if (!asserted) throw new QuadException("Failed to assert quad.");
@@ -79,7 +76,14 @@ public record QuadBuilder
         var triple = tempGraph.Triples.First();
 
         var formatter = new NQuadsFormatter();
-        var quadString = triple.ToString(formatter);
+        var ts = new TripleStore();
+        ts.Add(tempGraph);
+        var sw = new System.IO.StringWriter();
+        var writer = new NQuadsWriter();
+        writer.Save(ts, sw);
+        var quadString = sw.ToString().Trim();
+
+        var graphLabel = $"<{tempGraph.Name}>";
 
 
         return new SafeQuad
@@ -87,17 +91,16 @@ public record QuadBuilder
             Subject = triple.Subject.ToString(formatter),
             Predicate = triple.Predicate.ToString(formatter),
             Object = triple.Object.ToString(formatter),
-            GraphLabel = quadString.Split(" ").Last(x => !x.Equals(".")),
+            GraphLabel = graphLabel,
             String = quadString
         };
     }
 
-    private INode CreateGraphLabel(string graphLabel)
+    private Uri CreateGraphLabel(string graphLabel)
     {
         try
         {
-            if (graphLabel.StartsWith("_:")) return _graph.CreateBlankNode(graphLabel);
-            return _graph.CreateUriNode(new Uri(graphLabel));
+            return UriFactory.Create(graphLabel);
         }
         catch
         {
@@ -109,8 +112,8 @@ public record QuadBuilder
     {
         try
         {
-            if (subject.StartsWith("_:")) return _graph.CreateBlankNode(subject);
-            return _graph.CreateUriNode(new Uri(subject));
+            if (subject.StartsWith("_:")) return new BlankNode(subject); ;
+            return new UriNode(UriFactory.Create(subject));
         }
         catch
         {
@@ -122,7 +125,7 @@ public record QuadBuilder
     {
         try
         {
-            return _graph.CreateUriNode(new Uri(predicate));
+            return new UriNode(UriFactory.Create(predicate));
         }
         catch
         {
@@ -134,14 +137,14 @@ public record QuadBuilder
     {
         try
         {
-            if (@object.StartsWith("_:")) return _graph.CreateBlankNode(@object);
+            if (@object.StartsWith("_:")) return new BlankNode(@object);
             try
             {
-                return _graph.CreateUriNode(new Uri(@object));
+                return new UriNode(UriFactory.Create(@object));
             }
             catch
             {
-                return _graph.CreateLiteralNode(@object);
+                return new LiteralNode(@object);
             }
         }
         catch
@@ -154,7 +157,7 @@ public record QuadBuilder
     {
         try
         {
-            return _graph.CreateLiteralNode(objectLiteral);
+            return new LiteralNode(objectLiteral);
         }
         catch
         {
