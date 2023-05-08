@@ -51,7 +51,6 @@ public class FileRecordBuilderTests
 
     }
 
-
     [Fact]
     public void FileRecordBuilder__ShouldThrowException__WhenContentIsNotProvided()
     {
