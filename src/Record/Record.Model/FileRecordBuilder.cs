@@ -110,7 +110,7 @@ public record FileRecordBuilder
         if (_storage.MediaType == null) throw new FileRecordException("File record needs the media type of the file.");
         if (_storage.Id == null) throw new FileRecordException("File record needs ID.");
         if (_storage.IsSubRecordOf == null) throw new FileRecordException("File record needs to have a subrecord relation.");
-        
+
         var fileRecordQuads = new List<Quad?>
         {
             CreateMediaTypeQuad(_storage.MediaType),
