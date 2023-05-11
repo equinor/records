@@ -11,7 +11,7 @@ public class FileRecordBuilderTests
     {
         var superRecord = new Record(TestData.ValidJsonLdRecordString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
-        var scopes = new List<string> {"scope1", "scope2", "scope3"};
+        var scopes = new List<string> { "scope1", "scope2", "scope3" };
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithIsSubRecordOf(superRecord.Id)
@@ -110,7 +110,7 @@ public class FileRecordBuilderTests
     public void FileRecordBuilder__ShouldThrowException__WhenMediaTypeIsMissing()
     {
         var fileRecord = default(Record);
-        var scopes = new List<string> { "scope1", "scope2", "scope3" }; 
+        var scopes = new List<string> { "scope1", "scope2", "scope3" };
 
         var fileRecordBuilder = () =>
         {
@@ -129,8 +129,8 @@ public class FileRecordBuilderTests
             .WithMessage("Failure in building file record. File record needs the media type of the file.");
 
         fileRecord.Should().BeNull();
-    }  
-    
+    }
+
     [Fact]
     public void FileRecordBuilder__ShouldThrowException__WhenScopesIsMissing()
     {
