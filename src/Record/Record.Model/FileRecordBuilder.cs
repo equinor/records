@@ -19,6 +19,7 @@ public record FileRecordBuilder
         internal string? ByteSize { get; set; }
         internal string? Checksum { get; set; }
         internal string? Language { get; set; }
+        internal List<string> Scopes = new();
     }
 
     #region With-Methods
@@ -76,6 +77,16 @@ public record FileRecordBuilder
              Language = language
          }
      };
+    public FileRecordBuilder WithScopes(params string[] scopes) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            Scopes = scopes.ToList()
+        }
+    };
+    public FileRecordBuilder WithScopes(IEnumerable<string> scopes) => WithScopes(scopes.ToArray());
+    public FileRecordBuilder WithScopes(params Uri[] scopes) => WithScopes(scopes.Select(s => s.ToString()));
 
     #endregion
 
@@ -103,13 +114,11 @@ public record FileRecordBuilder
 
     #endregion
 
+
+
     public Record Build()
     {
-        if (_storage.Content == null) throw new FileRecordException("File record needs content.");
-        if (_storage.FileName == null) throw new FileRecordException("File record needs a file name.");
-        if (_storage.MediaType == null) throw new FileRecordException("File record needs the media type of the file.");
-        if (_storage.Id == null) throw new FileRecordException("File record needs ID.");
-        if (_storage.IsSubRecordOf == null) throw new FileRecordException("File record needs to have a subrecord relation.");
+        VerifyBuild();
 
         var fileRecordQuads = new List<Quad?>
         {
@@ -126,12 +135,30 @@ public record FileRecordBuilder
         fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!)!)!;
 
         var fileRecord = new RecordBuilder()
-                             .WithId(_storage.Id!)
-                             .WithDescribes(_storage.Id!)
-                             .WithIsSubRecordOf(_storage.IsSubRecordOf!)
+                             .WithId(_storage.Id)
+                             .WithDescribes(_storage.Id)
+                             .WithScopes(_storage.Scopes)
+                             .WithIsSubRecordOf(_storage.IsSubRecordOf)
                              .WithContent(fileRecordTriples)
                              .Build();
         return fileRecord;
+    }
+
+    private void VerifyBuild()
+    {
+        var exceptions = new List<Exception>();
+
+        if (_storage.Content == null) exceptions.Add(new FileRecordException("File record needs content."));
+        if (_storage.FileName == null) exceptions.Add(new FileRecordException("File record needs a file name."));
+        if (_storage.MediaType == null) exceptions.Add(new FileRecordException("File record needs the media type of the file."));
+        if (_storage.Id == null) exceptions.Add(new FileRecordException("File record needs ID."));
+        if (_storage.IsSubRecordOf == null) exceptions.Add(new FileRecordException("File record needs to have a subrecord relation."));
+        if (!_storage.Scopes.Any()) exceptions.Add(new FileRecordException("File record needs scopes."));
+
+        if (exceptions.Any())
+        {
+            throw exceptions.Count > 1 ? new AggregateException(exceptions) : exceptions.Single();
+        }
     }
 
     private static byte[] ToByteArray(Stream content)
