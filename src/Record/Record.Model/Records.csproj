@@ -12,7 +12,7 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>4.0.0$(ReleaseType)</VersionPrefix>
+		<VersionPrefix>4.0.1$(ReleaseType)</VersionPrefix>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<IncludeSymbols>true</IncludeSymbols>
