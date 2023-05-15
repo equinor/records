@@ -7,7 +7,8 @@ using System.Collections;
 namespace RecordGenerator;
 public class Program
 {
-    public enum RDFFormat {
+    public enum RDFFormat
+    {
         NQuads,
         Trig,
         JsonLd,
@@ -15,7 +16,8 @@ public class Program
     }
 
     public static RDFFormat parseRDFFormat(string formatString) =>
-        formatString switch {
+        formatString switch
+        {
             "n4" => RDFFormat.NQuads,
             "jsonld" => RDFFormat.JsonLd,
             "trig" => RDFFormat.Trig,
@@ -24,7 +26,7 @@ public class Program
         };
 
     public static void Main(string[] args)
-{
+    {
         if (args.Length != 5)
             throw new InvalidDataException("Usage: dotnet run <nobject> <nscopes> <nrecords> n4|trig|jsonld|csv <outfile>");
         RDFFormat outFormat = parseRDFFormat(args.Reverse().Skip(1).First());
@@ -44,15 +46,18 @@ public class Program
         // var isoPrefix = "http://standards.iso.org/8000#";
         // var dcPrefix = "http://purl.org/dc/terms/";
         var dataPrefix = "http://example.com/data/";
-        
-        var store = new TripleStore();
-        var objects = Enumerable.Range(1,nObjects).Select(i => $"{dataPrefix}Object{i}");
-        var scopes = Enumerable.Range(0,(int) Math.Ceiling(Math.Log2(nScopes))).Select(i => (i, $"{dataPrefix}Scope{i}"));
 
-        for(int scopeNo = 1; scopeNo <= nScopes; scopeNo++){
-            var scopeMap = new BitArray(new int[]{scopeNo});
-            foreach(var obj in objects){
-                for(int i = 0; i < nRecords; i++){
+        var store = new TripleStore();
+        var objects = Enumerable.Range(1, nObjects).Select(i => $"{dataPrefix}Object{i}");
+        var scopes = Enumerable.Range(0, (int)Math.Ceiling(Math.Log2(nScopes))).Select(i => (i, $"{dataPrefix}Scope{i}"));
+
+        for (int scopeNo = 1; scopeNo <= nScopes; scopeNo++)
+        {
+            var scopeMap = new BitArray(new int[] { scopeNo });
+            foreach (var obj in objects)
+            {
+                for (int i = 0; i < nRecords; i++)
+                {
                     var graph = new Graph();
                     graph.NamespaceMap.AddNamespace("data:", new Uri(dataPrefix));
                     graph.NamespaceMap.AddNamespace("rdl:", new Uri(pcaPrefix));
@@ -80,10 +85,10 @@ public class Program
                         .Where(i => scopeMap[i.Item1])
                         .Select(i => new Triple(recordNode, scopesRel, graph.CreateUriNode(UriFactory.Create(i.Item2))))
                     );
-                    
-                    if(i > 0)
-                        triples.Add(new Triple(recordNode, replacesRel, graph.CreateUriNode(UriFactory.Create($"{obj}-{scopeNo}-Record{i-1}"))));
-                    
+
+                    if (i > 0)
+                        triples.Add(new Triple(recordNode, replacesRel, graph.CreateUriNode(UriFactory.Create($"{obj}-{scopeNo}-Record{i - 1}"))));
+
                     triples.Add(new Triple(objectNode, rdfType, melSystemType));
                     var iNode = graph.CreateLiteralNode($"{i}");
                     triples.Add(new Triple(objectNode, lengthType, iNode));
@@ -94,17 +99,18 @@ public class Program
                 }
             }
 
-        IStoreWriter writer = outFormat switch {
-            RDFFormat.JsonLd =>     new JsonLdWriter(),
-            RDFFormat.NQuads =>     new NQuadsWriter(),
-            RDFFormat.Trig =>       new TriGWriter(),
-            RDFFormat.CSV =>        new CsvStoreWriter(),
-            _ => throw new Exception("Invalid RDF Format")
-        };
+            IStoreWriter writer = outFormat switch
+            {
+                RDFFormat.JsonLd => new JsonLdWriter(),
+                RDFFormat.NQuads => new NQuadsWriter(),
+                RDFFormat.Trig => new TriGWriter(),
+                RDFFormat.CSV => new CsvStoreWriter(),
+                _ => throw new Exception("Invalid RDF Format")
+            };
 
-        writer.Save(store, outfile);
+            writer.Save(store, outfile);
 
         }
     }
 }
-        
+
