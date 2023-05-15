@@ -1,10 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Text.Json.Nodes;
-using System;
-using System.Collections.Generic;
 using VDS.RDF;
-using VDS.RDF.Parsing;
 using VDS.RDF.Writing;
 using System.Collections;
 
