@@ -36,7 +36,8 @@ xsd:date rdf:type rdfs:Datatype .
 
 ###  https://rdf.equinor.com/ontology/revision/describes
 :describes rdf:type owl:ObjectProperty ;
-           rdfs:domain :Revision .
+           rdfs:domain :Revision ;
+           rdfs:comment "Relates a revision to a document or object it is a revision of or describes." .
 
 
 ###  https://rdf.equinor.com/ontology/revision/isNewRevisionOf
@@ -77,6 +78,11 @@ prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
                 rdfs:range xsd:string ;
                 rdfs:comment "This name or number identifies the Revision in a series of Revisions." .
 
+###  https://rdf.equinor.com/ontology/revision/hasSequenceNumber
+:hasSequenceNumber rdf:type owl:DatatypeProperty ;
+                   rdfs:range xsd:int ;
+                   rdfs:comment "The position of this revision in a natural number sequence." ;
+                   rdfs:label "Revision Sequence Number" .
 
 #################################################################
 #    Classes
