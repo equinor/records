@@ -143,7 +143,7 @@ public record FileRecordBuilder
     public Record Build()
     {
         VerifyBuild();
-        
+
         var fileRecordTriples = new List<Triple?>
         {
             CreateLanguageTriple(_storage.Language),
@@ -195,7 +195,7 @@ public record FileRecordBuilder
     }
 
     private Triple CreateTripleWithPredicateAndObject(string predicate, string @object, string literalNodeDataType = "")
-        => new (new UriNode(_storage.Id),
+        => new(new UriNode(_storage.Id),
                 new UriNode(new Uri(predicate)),
                 string.IsNullOrEmpty(literalNodeDataType) ?
                     new UriNode(new Uri(@object)) :

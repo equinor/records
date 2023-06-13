@@ -88,7 +88,7 @@ public class FileRecordBuilderTests
             fileRecord.Should().BeNull();
         }
     }
-        [Fact]
+    [Fact]
     public void FileRecordBuilder__ShouldThrowException__WhenDocumentTypeIsMissing()
     {
         {
