@@ -175,7 +175,7 @@ public record FileRecordBuilder
         if (_storage.ModelType == null) exceptions.Add(new FileRecordException("File record needs model type."));
         if (_storage.Content == null) exceptions.Add(new FileRecordException("File record needs content."));
         if (_storage.FileName == null) exceptions.Add(new FileRecordException("File record needs a file name."));
-        if (_storage.FileType == null) exceptions.Add(new FileRecordException("File record needs the media type of the file."));
+        if (_storage.FileType == null) exceptions.Add(new FileRecordException("File record needs the file type."));
         if (_storage.DocumentType == null) exceptions.Add(new FileRecordException("File record needs the document type of the file."));
         if (_storage.Id == null) exceptions.Add(new FileRecordException("File record needs ID."));
         if (_storage.IsSubRecordOf == null) exceptions.Add(new FileRecordException("File record needs to have a subrecord relation."));
