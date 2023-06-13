@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using FluentAssertions;
 using Records.Exceptions;
+using VDS.RDF;
 using Record = Records.Immutable.Record;
 namespace Records.Tests;
 
@@ -11,13 +12,15 @@ public class FileRecordBuilderTests
     {
         var superRecord = new Record(TestData.ValidJsonLdRecordString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
-        var scopes = new List<string> { "scope1", "scope2", "scope3" };
+        var scopes = TestData.CreateObjectList(3, "scope");
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithIsSubRecordOf(superRecord.Id)
-            .WithMediaType("xslx")
-            .WithFileName("B123-EX-W-LA-XLSX")
+            .WithFileExtension("xslx")
+            .WithFileName("filename")
             .WithScopes(scopes)
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
             .WithLanguage("en-US")
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
@@ -33,13 +36,15 @@ public class FileRecordBuilderTests
     public void FileRecordBuilder__SHouldThrowException__WhenSuperRecordIsMissing()
     {
         var fileRecord = default(Record);
-        var scopes = new List<string> { "scope1", "scope2", "scope3" };
+        var scopes = TestData.CreateObjectList(3, "scope");
         var fileRecordBuilder = () =>
         {
             fileRecord = new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
-            .WithMediaType("xslx")
-            .WithFileName("B123-EX-W-LA-XLSX")
+            .WithFileExtension("xslx")
+            .WithFileName("filename")
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
             .WithLanguage("en-US")
             .WithScopes(scopes)
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
@@ -51,24 +56,86 @@ public class FileRecordBuilderTests
             .WithMessage("Failure in building file record. File record needs to have a subrecord relation.");
 
         fileRecord.Should().BeNull();
-
     }
+
+
+    [Fact]
+    public void FileRecordBuilder__ShouldThrowException__WhenModelTypeIsMissing()
+    {
+        {
+            var fileRecord = default(Record);
+            var scopes = TestData.CreateObjectList(3, "scope");
+
+
+            var fileRecordBuilder = () =>
+            {
+                fileRecord = new FileRecordBuilder()
+                .WithId(TestData.CreateRecordId("fileRecordId"))
+                .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
+                .WithScopes(scopes)
+                .WithFileName("fileName")
+                .WithDocumentType("doctype")
+                .WithFileExtension("xslx")
+                .WithLanguage("en-US")
+                .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
+                .Build();
+            };
+
+            fileRecordBuilder.Should()
+                .Throw<FileRecordException>()
+                .WithMessage("Failure in building file record. File record needs model type.");
+
+            fileRecord.Should().BeNull();
+        }
+    }
+    [Fact]
+    public void FileRecordBuilder__ShouldThrowException__WhenDocumentTypeIsMissing()
+    {
+        {
+            var fileRecord = default(Record);
+            var scopes = TestData.CreateObjectList(3, "scope");
+
+
+            var fileRecordBuilder = () =>
+            {
+                fileRecord = new FileRecordBuilder()
+                .WithId(TestData.CreateRecordId("fileRecordId"))
+                .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
+                .WithScopes(scopes)
+                .WithFileName("fileName")
+                .WithFileExtension("xslx")
+                .WithModelType("modeltype")
+                .WithLanguage("en-US")
+                .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
+                .Build();
+            };
+
+            fileRecordBuilder.Should()
+                .Throw<FileRecordException>()
+                .WithMessage("Failure in building file record. File record needs the document type of the file.");
+
+            fileRecord.Should().BeNull();
+        }
+    }
+
 
     [Fact]
     public void FileRecordBuilder__ShouldThrowException__WhenContentIsMissing()
     {
         var fileRecord = default(Record);
-        var scopes = new List<string> { "scope1", "scope2", "scope3" };
+        var scopes = TestData.CreateObjectList(3, "scope");
 
         var fileRecordBuilder = () =>
         {
             fileRecord = new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
-            .WithMediaType("xslx")
+            .WithFileExtension("xslx")
             .WithScopes(scopes)
-            .WithFileName("B123-EX-W-LA-XLSX")
+            .WithFileName("filename")
             .WithLanguage("en-US")
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
             .Build();
         };
 
@@ -84,7 +151,7 @@ public class FileRecordBuilderTests
     public void FileRecordBuilder__ShouldThrowException__WhenFileNameIsMissing()
     {
         var fileRecord = default(Record);
-        var scopes = new List<string> { "scope1", "scope2", "scope3" };
+        var scopes = TestData.CreateObjectList(3, "scope");
 
         var fileRecordBuilder = () =>
         {
@@ -92,7 +159,9 @@ public class FileRecordBuilderTests
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
             .WithScopes(scopes)
-            .WithMediaType("xslx")
+            .WithFileExtension("xslx")
+             .WithDocumentType("doctype")
+            .WithModelType("modeltype")
             .WithLanguage("en-US")
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
@@ -107,10 +176,10 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenMediaTypeIsMissing()
+    public void FileRecordBuilder__ShouldThrowException__WhenFileExtensionIsMissing()
     {
         var fileRecord = default(Record);
-        var scopes = new List<string> { "scope1", "scope2", "scope3" };
+        var scopes = TestData.CreateObjectList(3, "scope");
 
         var fileRecordBuilder = () =>
         {
@@ -118,7 +187,9 @@ public class FileRecordBuilderTests
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
             .WithScopes(scopes)
-            .WithFileName("B123-EX-W-LA-XLSX")
+            .WithFileName("filename")
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
             .WithLanguage("en-US")
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
@@ -126,7 +197,7 @@ public class FileRecordBuilderTests
 
         fileRecordBuilder.Should()
             .Throw<FileRecordException>()
-            .WithMessage("Failure in building file record. File record needs the media type of the file.");
+            .WithMessage("Failure in building file record. File record needs the file extension.");
 
         fileRecord.Should().BeNull();
     }
@@ -141,8 +212,10 @@ public class FileRecordBuilderTests
             fileRecord = new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
-            .WithFileName("B123-EX-W-LA-XLSX")
-            .WithMediaType("xslx")
+            .WithFileName("fileName")
+            .WithFileExtension("xslx")
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
             .WithLanguage("en-US")
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
