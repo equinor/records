@@ -13,14 +13,16 @@ public struct Namespaces
     }
     public struct FileContent
     {
-        public const string Type = "https://rdf.equinor.com/ontology/attachment/File";
         public const string generatedAtTime = "http://www.w3.org/ns/prov#generatedAtTime";
-        public const string Xsd = "http://www.w3.org/2001/XMLSchema#";
+
+        public const string Att = "https://rdf.equinor.com/ontology/attachment/";
+        public const string Type = $"{Att}File";
+        public const string FileExtension = $"{Att}FileExtension";
+        public const string ModelType = $"{Att}ModelType";
+        public const string DocumentType = $"{Att}DocumentType";
 
         public const string Dcat = "http://www.w3.org/ns/dcat#";
         public const string HasByteSize = $"{Dcat}byteSize";
-        public const string HasMediaType = $"{Dcat}mediaType";
-        public const string MediaType = "https://www.iana.org/assignments/media-types/application/";
 
         public const string Dcterms = "http://purl.org/dc/terms/";
         public const string HasLanguage = $"{Dcterms}language";
@@ -30,6 +32,17 @@ public struct Namespaces
         public const string HasChecksum = $"{Spdx}checksum";
         public const string HasChecksumValue = $"{Spdx}checksumValue";
         public const string HasChecksumAlgorithm = $"{Spdx}algorithm";
+    }
+
+    public struct DataType
+    {
+        internal const string XsdPrefix = "http://www.w3.org/2001/XMLSchema#";
+        internal const string String = $"{XsdPrefix}string";
+        internal const string Decimal = $"{XsdPrefix}decimal";
+        internal const string Date = $"{XsdPrefix}date";
+        internal const string HexBinary = $"{XsdPrefix}hexBinary";
+        internal const string Language = $"{XsdPrefix}language";
+
     }
 
     public struct Rdf
