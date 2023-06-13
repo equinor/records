@@ -16,7 +16,7 @@ public record FileRecordBuilder
         internal string? IsSubRecordOf { get; set; }
         internal byte[]? Content { get; set; }
         internal string? FileName { get; set; }
-        internal string? FileType { get; set; }
+        internal string? FileExtension { get; set; }
         internal string? ByteSize { get; set; }
         internal string? Checksum { get; set; }
         internal string? Language { get; set; }
@@ -82,12 +82,12 @@ public record FileRecordBuilder
              FileName = name
          }
      };
-    public FileRecordBuilder WithFileType(string fileType) =>
+    public FileRecordBuilder WithFileExtension(string fileExtension) =>
      this with
      {
          _storage = _storage with
          {
-             FileType = fileType
+             FileExtension = fileExtension
          }
      };
     public FileRecordBuilder WithLanguage(string language) =>
@@ -125,7 +125,7 @@ public record FileRecordBuilder
     private Triple? CreateModelTypeTriple(string? modelType) => NullOrDo(modelType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.ModelType, modelType, Namespaces.DataType.String));
     private Triple? CreateDocumentTypeTriple(string? documentType) => NullOrDo(documentType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.DocumentType, documentType, Namespaces.DataType.String));
 
-    private Triple? CreateFileTypeTriple(string? fileType) => NullOrDo(fileType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.FileType, fileType, Namespaces.DataType.String));
+    private Triple? CreateFileExtensionTriple(string? fileExtension) => NullOrDo(fileExtension, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.FileExtension, fileExtension, Namespaces.DataType.String));
 
     private Triple? CreateByteSizeTriple(string? byteSize) => NullOrDo(byteSize, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasByteSize, byteSize, Namespaces.DataType.Decimal));
 
@@ -148,7 +148,7 @@ public record FileRecordBuilder
         {
             CreateLanguageTriple(_storage.Language),
             CreateByteSizeTriple(_storage.ByteSize),
-            CreateFileTypeTriple(_storage.FileType),
+            CreateFileExtensionTriple(_storage.FileExtension),
             CreateFileNameTriple(_storage.FileName),
             CreateModelTypeTriple(_storage.ModelType),
             CreateDocumentTypeTriple(_storage.DocumentType),
@@ -175,7 +175,7 @@ public record FileRecordBuilder
         if (_storage.ModelType == null) exceptions.Add(new FileRecordException("File record needs model type."));
         if (_storage.Content == null) exceptions.Add(new FileRecordException("File record needs content."));
         if (_storage.FileName == null) exceptions.Add(new FileRecordException("File record needs a file name."));
-        if (_storage.FileType == null) exceptions.Add(new FileRecordException("File record needs the file type."));
+        if (_storage.FileExtension == null) exceptions.Add(new FileRecordException("File record needs the file extension."));
         if (_storage.DocumentType == null) exceptions.Add(new FileRecordException("File record needs the document type of the file."));
         if (_storage.Id == null) exceptions.Add(new FileRecordException("File record needs ID."));
         if (_storage.IsSubRecordOf == null) exceptions.Add(new FileRecordException("File record needs to have a subrecord relation."));

@@ -17,7 +17,7 @@ public struct Namespaces
 
         public const string Att = "https://rdf.equinor.com/ontology/attachment/";
         public const string Type = $"{Att}File";
-        public const string FileType = $"{Att}FileType";
+        public const string FileExtension = $"{Att}FileExtension";
         public const string ModelType = $"{Att}ModelType";
         public const string DocumentType = $"{Att}DocumentType";
 
