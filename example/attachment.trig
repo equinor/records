@@ -1,6 +1,5 @@
 @prefix att: <https://rdf.equinor.com/ontology/Attachment/> .
 @prefix dcat:<http://www.w3.org/ns/dcat#>.
-@prefix mediatype: <https://www.iana.org/assignments/media-types/application/>.
 @prefix spdx:< http://spdx.org/rdf/terms#>.
 @prefix dc: <http://purl.org/dc/terms/>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
@@ -52,7 +51,9 @@
            
             exdata:RecordID123.A a att:File; 
                     spdx:fileName "B123-EX-W-LA-0001.xlsx";
-                    dcat:mediaType mediaType:vnd.openxmlformats-officedocument.spreadsheetml.sheet;
+                    att:ModelType "MEL";
+                    att:DocumentType "LA";
+                    att:FileType  "xlsx";
                     dcat:byteSize "23"^^xsd:decimal;
                     spdx:language "en-US"^^xsd:language;
                     spdx:checksum [
@@ -70,7 +71,8 @@
 
             exdata:RecordID123.B a att:File ;
                     spdx:fileName "B123-EX-W-LA-0001.pdf";
-                    dcat:mediaType mediaType:pdf;
+                    att:FileType  "xlsx";
+                    att:ModelType "MEL";
                     dcat:byteSize "512"^^xsd:decimal;
                     spdx:language "en-US"^^xsd:language;
                     spdx:checksum [
