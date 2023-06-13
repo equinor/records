@@ -136,7 +136,7 @@ public class ImmutableRecordTests
 
         var jsonObject = default(JsonObject);
 
-        var deserialisationFunc = () => jsonObject = JsonSerializer.Deserialize<JsonArray>(jsonLdString).First() as JsonObject;
+        var deserialisationFunc = () => jsonObject = JsonSerializer.Deserialize<JsonObject>(jsonLdString);
         deserialisationFunc.Should().NotThrow();
 
         jsonObject.Should().NotBeNull();
