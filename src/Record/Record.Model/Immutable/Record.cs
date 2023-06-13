@@ -132,7 +132,7 @@ public class Record : IEquatable<Record>
         var result = stringWriter.ToString();
 
         // JsonLdWriter writes a JsonArray, but we would like only the contained JsonNode
-        if(writer is JsonLdWriter) result = result[1..(result.Length - 1)];
+        if (writer is JsonLdWriter) result = result[1..(result.Length - 1)];
 
         return result;
     }
