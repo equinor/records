@@ -9,21 +9,25 @@ namespace Records;
 public record FileRecordBuilder
 {
     private Storage _storage = new();
+
     private record Storage
     {
-        internal string? Id { get; set; }
+        internal Uri? Id { get; set; }
         internal string? IsSubRecordOf { get; set; }
         internal byte[]? Content { get; set; }
         internal string? FileName { get; set; }
-        internal string? MediaType { get; set; }
+        internal string? FileExtension { get; set; }
         internal string? ByteSize { get; set; }
         internal string? Checksum { get; set; }
         internal string? Language { get; set; }
+        internal string? ModelType { get; set; }
+        internal string? DocumentType { get; set; }
+
         internal List<string> Scopes = new();
     }
 
     #region With-Methods
-    public FileRecordBuilder WithId(string id) =>
+    public FileRecordBuilder WithId(Uri id) =>
         this with
         {
             _storage = _storage with
@@ -31,7 +35,24 @@ public record FileRecordBuilder
                 Id = id
             }
         };
-    public FileRecordBuilder WithId(Uri id) => WithId(id.ToString());
+    public FileRecordBuilder WithId(string id) => WithId(new Uri(id));
+    public FileRecordBuilder WithModelType(string modelType) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ModelType = modelType
+            }
+        };
+
+    public FileRecordBuilder WithDocumentType(string documentType) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            DocumentType = documentType
+        }
+    };
     public FileRecordBuilder WithIsSubRecordOf(string superRecordId) =>
     this with
     {
@@ -61,12 +82,12 @@ public record FileRecordBuilder
              FileName = name
          }
      };
-    public FileRecordBuilder WithMediaType(string mediaType) =>
+    public FileRecordBuilder WithFileExtension(string fileExtension) =>
      this with
      {
          _storage = _storage with
          {
-             MediaType = mediaType
+             FileExtension = fileExtension
          }
      };
     public FileRecordBuilder WithLanguage(string language) =>
@@ -93,23 +114,26 @@ public record FileRecordBuilder
     #region Create-Quads
     private IEnumerable<Triple?> CreateChecksumTriples(string checksum)
     {
-        var checksumGraph = new Graph();
-        var checksumBlank = checksumGraph.CreateBlankNode();
-        checksumGraph.Assert(new Triple(checksumGraph.CreateUriNode(new Uri(_storage.Id!)), checksumGraph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
-        checksumGraph.Assert(new Triple(checksumBlank, checksumGraph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), checksumGraph.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
-        checksumGraph.Assert(new Triple(checksumBlank, checksumGraph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), checksumGraph.CreateLiteralNode(checksum, new Uri($"{Namespaces.FileContent.Xsd}hexBinary"))));
-        return checksumGraph.Triples;
+        var content = new Graph();
+        var checksumBlank = content.CreateBlankNode();
+        content.Assert(new Triple(content.CreateUriNode(_storage.Id!), content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
+        content.Assert(new Triple(checksumBlank, content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), content.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
+        content.Assert(new Triple(checksumBlank, content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), content.CreateLiteralNode(checksum, new Uri(Namespaces.DataType.HexBinary))));
+        return content.Triples;
     }
 
-    private SafeQuad? CreateMediaTypeQuad(string? mediaType) => NullOrDo(mediaType, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasMediaType, $"{Namespaces.FileContent.MediaType}{mediaType}"));
+    private Triple? CreateModelTypeTriple(string? modelType) => NullOrDo(modelType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.ModelType, modelType, Namespaces.DataType.String));
+    private Triple? CreateDocumentTypeTriple(string? documentType) => NullOrDo(documentType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.DocumentType, documentType, Namespaces.DataType.String));
 
-    private SafeQuad? CreateByteSizeQuad(string? byteSize) => NullOrDo(byteSize, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasByteSize, $"{byteSize}^^{Namespaces.FileContent.Xsd}decimal"));
+    private Triple? CreateFileExtensionTriple(string? fileExtension) => NullOrDo(fileExtension, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.FileExtension, fileExtension, Namespaces.DataType.String));
 
-    private SafeQuad? CreateFileNameQuad(string? fileName) => NullOrDo(fileName, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasTitle, fileName));
+    private Triple? CreateByteSizeTriple(string? byteSize) => NullOrDo(byteSize, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasByteSize, byteSize, Namespaces.DataType.Decimal));
 
-    private SafeQuad? CreateLanguageQuad(string? language) => NullOrDo(language, () => CreateQuadWithPredicateAndObject(Namespaces.FileContent.HasLanguage, $"{language}^^{Namespaces.FileContent.Xsd}language"));
+    private Triple? CreateFileNameTriple(string? fileName) => NullOrDo(fileName, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasTitle, fileName, Namespaces.DataType.String));
 
-    private static SafeQuad? NullOrDo(string? @object, Func<SafeQuad> function) => string.IsNullOrWhiteSpace(@object) ? null : function();
+    private Triple? CreateLanguageTriple(string? language) => NullOrDo(language, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasLanguage, language, Namespaces.DataType.Language));
+
+    private static Triple? NullOrDo(string? @object, Func<Triple> function) => string.IsNullOrWhiteSpace(@object) ? null : function();
 
 
     #endregion
@@ -120,26 +144,26 @@ public record FileRecordBuilder
     {
         VerifyBuild();
 
-        var fileRecordQuads = new List<Quad?>
+        var fileRecordTriples = new List<Triple?>
         {
-            CreateMediaTypeQuad(_storage.MediaType),
-            CreateByteSizeQuad(_storage.ByteSize),
-            CreateFileNameQuad(_storage.FileName),
-            CreateLanguageQuad(_storage.Language),
-            CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.FileContent.Type),
-            CreateQuadWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}^^{Namespaces.FileContent.Xsd}date"),
-        }.Where(q => q is not null).Cast<Quad>().ToList();
+            CreateLanguageTriple(_storage.Language),
+            CreateByteSizeTriple(_storage.ByteSize),
+            CreateFileExtensionTriple(_storage.FileExtension),
+            CreateFileNameTriple(_storage.FileName),
+            CreateModelTypeTriple(_storage.ModelType),
+            CreateDocumentTypeTriple(_storage.DocumentType),
+            CreateTripleWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.FileContent.Type, Namespaces.DataType.String),
+            CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date),
+        }.Where(q => q is not null);
 
-
-        var fileRecordTriples = fileRecordQuads.Select(quad => quad.ToTriple());
-        fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!)!)!;
+        fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!));
 
         var fileRecord = new RecordBuilder()
-                             .WithId(_storage.Id)
-                             .WithDescribes(_storage.Id)
+                             .WithId(_storage.Id!)
+                             .WithDescribes(_storage.Id!)
                              .WithScopes(_storage.Scopes)
-                             .WithIsSubRecordOf(_storage.IsSubRecordOf)
-                             .WithContent(fileRecordTriples)
+                             .WithIsSubRecordOf(_storage.IsSubRecordOf!)
+                             .WithContent(fileRecordTriples!)
                              .Build();
         return fileRecord;
     }
@@ -148,9 +172,11 @@ public record FileRecordBuilder
     {
         var exceptions = new List<Exception>();
 
+        if (_storage.ModelType == null) exceptions.Add(new FileRecordException("File record needs model type."));
         if (_storage.Content == null) exceptions.Add(new FileRecordException("File record needs content."));
         if (_storage.FileName == null) exceptions.Add(new FileRecordException("File record needs a file name."));
-        if (_storage.MediaType == null) exceptions.Add(new FileRecordException("File record needs the media type of the file."));
+        if (_storage.FileExtension == null) exceptions.Add(new FileRecordException("File record needs the file extension."));
+        if (_storage.DocumentType == null) exceptions.Add(new FileRecordException("File record needs the document type of the file."));
         if (_storage.Id == null) exceptions.Add(new FileRecordException("File record needs ID."));
         if (_storage.IsSubRecordOf == null) exceptions.Add(new FileRecordException("File record needs to have a subrecord relation."));
         if (!_storage.Scopes.Any()) exceptions.Add(new FileRecordException("File record needs scopes."));
@@ -168,10 +194,12 @@ public record FileRecordBuilder
         return contentAsByteArray;
     }
 
-    private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
-    {
-        if (_storage.Id == null) throw new RecordException("Record ID must be added first.");
-        return Quad.CreateSafe(_storage.Id, predicate, @object, _storage.Id);
-    }
+    private Triple CreateTripleWithPredicateAndObject(string predicate, string @object, string literalNodeDataType = "")
+        => new(new UriNode(_storage.Id),
+                new UriNode(new Uri(predicate)),
+                string.IsNullOrEmpty(literalNodeDataType) ?
+                    new UriNode(new Uri(@object)) :
+                    new LiteralNode(@object, new Uri(literalNodeDataType)));
 
 }
+
