@@ -72,6 +72,7 @@
             exdata:RecordID123.B a att:File ;
                     spdx:fileName "B123-EX-W-LA-0001.pdf";
                     att:FileType  "xlsx";
+                    att:DocumentType "LA";
                     att:ModelType "MEL";
                     dcat:byteSize "512"^^xsd:decimal;
                     spdx:language "en-US"^^xsd:language;
