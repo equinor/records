@@ -334,8 +334,7 @@ public class RecordBuilderTests
         record.Id.Should().Be(graph.BaseUri.ToString());
 
         var jsonLd = record.ToString<JsonLdWriter>();
-        JArray.Parse(jsonLd)?
-            .Single()
+        JObject.Parse(jsonLd)?
             .Value<JArray>("@graph")?
             .First()
             .Value<JArray>(p)?

@@ -12,7 +12,8 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>5.0.0$(ReleaseType)</VersionPrefix>
+		<VersionPrefix>6.0.0$(ReleaseType)</VersionPrefix>
+
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<IncludeSymbols>true</IncludeSymbols>
