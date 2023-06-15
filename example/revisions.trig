@@ -13,18 +13,17 @@
 @prefix famvocab: <https://rdf.equinor.com/ontology/fam/v1/>.
 @prefix tie: <https://rdf.equinor.com/ontology/TIE#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix rdl: <pca:http://rds.posccaesar.org/ontology/plm/rdl/>.
 
 
-exdata:RecordID123.0 {
-    exdata:RecordID123.0 a rec:Record;
-                        rdfs:comment "First MEL delivered on Example Facility"^^xsd:string;
-                        prov:generatedAtTime "2022-11-03"^^xsd:date;
-                        rec:describes document:B123-EX-W-LA-00001.
-    document:B123-EX-W-LA-00001 a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
-                                rdfs:label "B123-EX-W-LA-00001"^^xsd:string;
-                                famvocab:DocumentType "LA"^^xsd:string;
-                                famvocab:Facility facility:EXMPL;
-                                famvocab:Title "MASTER EQUIPMENT LIST - MEL"^^xsd:string.
+exdata:RecordID123.5 {
+    exdata:RecordID123.5 a rec:Record;
+                        rdfs:comment "Contains comment on revision in revisions.trig example"^^xsd:string;
+                        prov:generatedAtTime "2023-06-15"^^xsd:date;
+                        rec:describes exdata:12345.
+    exdata:12345 a rev:Comment;
+                                rdfs:label "Too heavy pump"^^xsd:string;
+                                
 }
 
 exdata:RecordID123.1 {
@@ -50,8 +49,16 @@ exdata:RecordID123.2 {
     exdata:tagNo20PG123N a <https://rdf.equinor.com/ontology/mel/System>;
                         rdfs:comment "4th Stage Separator Water Pump Y"^^xsd:string;
                         rdfs:label "20PG123N"^^xsd:string;
-                        famvocab:TOP_TAG "0"^^xsd:boolean;
+                        famvocab:TOP_TAG "0"^^xsd:boolean; 
+                        commonlib:weight_in_kgs "20000";
+                        pca:hasPhysicalQuantity exdata:tagNo20PG123NMass;                       
                         famvocab:TagNumber <https://stid.equinor.com/EXMPL/20PG002B>.
+    exdata:tagNo20PG123NMass a rdl:PCA_100003589;
+        pca:qualityQuantifiedAs [
+            a rdl:PCA_100003620;
+            pca:datumValue "12987";
+            pca:datumUOM rdl:PCA_100003684
+        ]
 }
 
 exdata:RecordID123.3 {
