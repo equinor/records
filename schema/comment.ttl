@@ -25,12 +25,6 @@ xsd:date rdf:type rdfs:Datatype .
 #################################################################
 
 
-###  http://www.w3.org/ns/prov#wasAssociatedWith
-prov:wasAssociatedWith rdf:type owl:ObjectProperty ;
-                                            rdfs:subPropertyOf owl:topObjectProperty ;
-                                            rdfs:comment "Attribution is the ascribing of an entity to an agent." ,
-                                                         "comment responsible" ;
-                                            rdfs:label "was associated with" .
 
 ###  https://rdf.equinor.com/ontology/revision#aboutRevision
 :aboutRevision rdf:type owl:ObjectProperty ;
@@ -58,13 +52,6 @@ prov:wasAssociatedWith rdf:type owl:ObjectProperty ;
           rdfs:range :Comment ;
           rdfs:comment "Relates a comment to a response to that comment." ;
           rdfs:label "has reply" .
-
-
-###  https://rdf.equinor.com/ontology/revision#hasRevisionCode
-:hasRevisionCode rdf:type owl:ObjectProperty ;
-                 rdfs:domain :Revision ;
-                 rdfs:range :RevisionState ;
-                 rdfs:comment "Relates revisions to codes 1,2,3 and 4 based on operator evaluation" .
 
 #################################################################
 #    Data properties
@@ -98,6 +85,3 @@ prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
           rdfs:label "Comment" .
 
 
-###  https://rdf.equinor.com/ontology/revision#RevisionState
-:RevisionState rdf:type owl:Class ;
-               rdfs:comment "Corresponds to the revision code 1-4" .

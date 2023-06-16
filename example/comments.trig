@@ -11,8 +11,24 @@
 @prefix project: <https://rdf.equinor.com/fam/Project/>.
 @prefix fsystem: <https://rdf.equinor.com/fam/FunctionalSystem/>.
 @prefix famvocab: <https://rdf.equinor.com/ontology/fam/v1/>.
+@prefix commonlib: <https://commonli.equinor.com/ontology#>.
 @prefix tie: <https://rdf.equinor.com/ontology/TIE#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
+
+exdata:RecordID123.6 {
+    exdata:RecordID123.6 a rec:Record;
+                        prov:generatedAtTime "2023-06-15"^^xsd:date;
+                        rec:describes document:B123-EX-W-LA-00001.F02.
+    document:B123-EX-W-LA-00001.F02 a rev:DocumentRevision, tie:OfficialProject;
+                                    rdfs:label "Reply to first delivered revision of MEL"^^xsd:string;
+                                    rev:revisionNumber "F02"^^xsd:string;
+                                    prov:generatedAtTime "2023-06-15"^^xsd:date;
+                                    rev:isNewRevisionOf document:B123-EX-W-LA-00001.F01;
+                                    famvocab:DisciplineApprovedBy "NM"^^xsd:string;
+                                    tie:wasIssuedForReason "Reply"^^xsd:string;
+                                    rev:describes document:B123-EX-W-LA-00001;
+                                    rev:containsRecord exdata:RecordID123.5 .
+}
 
 
 exdata:RecordID123.5 {
@@ -22,22 +38,24 @@ exdata:RecordID123.5 {
                         rec:describes exdata:12345, exdata:12346, exdata:12347.
     exdata:12345 a rev:Comment;
                                 rdfs:label "Too complicated pump, find smaller model"^^xsd:string;
-                                prov:wasAttributedTo "Kari Nordkvinne";
+                                rev:issuedBy "Kari Nordkvinne";
                                 prov:generatedAtTime "2023-06-15"^^xsd:date;
                                 rev:aboutRevision document:B123-EX-W-LA-00001.F01;
                                 rev:aboutObject exdata:tagNo20PG123N.
     exdata:12346 a rev:Comment;
                                 rdfs:label "This is too heavy, please find a smaller version"^^xsd:string;
-                                prov:wasAttributedTo "Ola Nordmann";
+                                rev:issuedBy "Ola Nordmann";
                                 prov:generatedAtTime "2023-06-15"^^xsd:date;
                                 rev:aboutRevision document:B123-EX-W-LA-00001.F01;
                                 rev:aboutObject exdata:tagNo20PG123NMass.
     exdata:12347 a rev:Comment;
-                                rdfs:label "Strange number, perhaps wrong commonlib property is used?"^^xsd:string;
-                                prov:wasAttributedTo "Kari Nordkvinne";
+                                rdfs:label "This number seems too round, is it reaally exactly 2000?"^^xsd:string;
+                                rev:issuedBy "Kari Nordkvinne";
                                 prov:generatedAtTime "2023-06-15"^^xsd:date;
                                 rev:aboutRevision document:B123-EX-W-LA-00001.F01;
                                 rev:aboutObject exdata:tagNo20PG123N;
                                 rev:aboutProperty commonlib:weight_in_kgs.
+                                # Dette hadde vært kult, men det ser ut som bl.a. protege protesterer, så tror ikke det er verdt bryet
+                                # rev:aboutQuery "SELECT ?w {{exdata:tagNo20PG123N commonlib:weight_in_kgs ?w}}"^^xsd:string.
                                 
 }
