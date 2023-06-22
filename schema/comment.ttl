@@ -84,7 +84,7 @@ prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
 #################################################################
 
 
-###  https://rdf.equinor.com/ontology/revision/Comment
+###  https://rdf.equinor.com/ontology/revision/Reply
 :Reply rdf:type owl:Class ;
           rdfs:subClassOf prov:Entity ;
           rdfs:comment "A reply to a revision." ;

@@ -1,0 +1,40 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rev: <https://rdf.equinor.com/ontology/revision/>.
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
+@prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+rev:ReplyShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for a reply to a revision." ;
+    sh:targetClass rev:Reply ;
+    sh:property [ 
+        sh:path rev:issuedBy;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "CommentResponsible";
+        sh:message "A reply has exactly one comment responsible";
+        sh:severity sh:Violation;
+    ] , 
+    [ 
+        sh:path rev:containsRecord;
+        sh:minCount 1;
+        sh:name "RevisionContent";
+        sh:message "A revision must contain at least one record";
+        sh:severity sh:Violation;
+    ] .
+
+
+rev:RevisionReplyShape
+    a sh:NodeShape ;
+    sh:targetClass rev:Revision ;
+    sh:property 
+    [ 
+        sh:path (sh:inverseOf rev:aboutRevision);
+        sh:class rev:Reply;
+        sh:maxCount 1;
+        sh:severity sh:Violation;
+    ] .
+    
