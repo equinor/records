@@ -128,24 +128,28 @@ prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
 ###  https://rdf.equinor.com/ontology/revision#Code1
 :Code1 rdf:type owl:NamedIndividual ,
                 :RevisionState ;
+      rdfs:label "Reviewed" ;
        rdfs:comment "Revision code 1 means accepted" .
 
 
 ###  https://rdf.equinor.com/ontology/revision#Code2
 :Code2 rdf:type owl:NamedIndividual ,
                 :RevisionState ;
+       rdfs:label "Reviewed with comments" ;
        rdfs:comment "Revision code 2 is a conditional acceptance with minor changes are needed" .
 
 
 ###  https://rdf.equinor.com/ontology/revision#Code3
 :Code3 rdf:type owl:NamedIndividual ,
                 :RevisionState ;
+      rdfs:label "Resubmit" ;
        rdfs:comment "Revision code 3 means revise and resubmit: major changes are needed" .
 
 
 ###  https://rdf.equinor.com/ontology/revision#Code4
 :Code4 rdf:type owl:NamedIndividual ,
                 :RevisionState ;
+      rdfs:label "Out of scope" ;
        rdfs:comment "Revision code 4 means the design is completely off and must be redone" .
 
 
