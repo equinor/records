@@ -44,6 +44,13 @@ xsd:date rdf:type rdfs:Datatype .
             rdfs:comment "Relates any object to a revision comment about it." ;
             rdfs:label "has comment" .
 
+###  https://rdf.equinor.com/ontology/revision#hasComment
+:hasStatus rdf:type owl:ObjectProperty ;
+            rdfs:range :RevisionState ;
+            rdfs:domain :Reply ;
+            rdfs:comment "Relates a reply to a tag status update in it." ;
+            rdfs:label "has status" .
+
 
 ###  https://rdf.equinor.com/ontology/revision#hasReply
 :hasReply rdf:type owl:ObjectProperty ,
@@ -77,11 +84,52 @@ prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
 #################################################################
 
 
+###  https://rdf.equinor.com/ontology/revision/Comment
+:Reply rdf:type owl:Class ;
+          rdfs:subClassOf prov:Entity ;
+          rdfs:comment "A reply to a revision." ;
+          rdfs:label "Reply" .
+
 
 ###  https://rdf.equinor.com/ontology/revision/Comment
 :Comment rdf:type owl:Class ;
           rdfs:subClassOf prov:Entity ;
-          rdfs:comment "A comment is a bout some information in a revision." ;
+          rdfs:comment "A comment is about some information in a revision." ;
           rdfs:label "Comment" .
+
+###  https://rdf.equinor.com/ontology/revision#RevisionState
+:RevisionState rdf:type owl:Class ;
+               rdfs:comment "Corresponds to the revision code 1-4" .
+
+
+
+###  https://rdf.equinor.com/ontology/revision#Code1
+:Code1 rdf:type owl:Class ;
+        rdfs:subClassOf :RevisionState ;
+      rdfs:label "Reviewed" ;
+       rdfs:comment "Revision code 1 means accepted" .
+
+
+###  https://rdf.equinor.com/ontology/revision#Code2
+:Code2 rdf:type owl:Class ;
+        rdfs:subClassOf :RevisionState ;
+       rdfs:label "Reviewed with omments" ;
+       rdfs:comment "Revision code 2 is a conditional acceptance with minor changes are needed" .
+
+
+###  https://rdf.equinor.com/ontology/revision#Code3
+:Code3 rdf:type owl:Class ;
+        rdfs:subClassOf :RevisionState ;
+      rdfs:label "Resubmit" ;
+       rdfs:comment "Revision code 3 means revise and resubmit: major changes are needed" .
+
+
+###  https://rdf.equinor.com/ontology/revision#Code4
+:Code4 rdf:type owl:Class ;
+        rdfs:subClassOf :RevisionState ;
+      rdfs:label "Out of scope" ;
+       rdfs:comment "Revision code 4 means the design is completely off and must be redone" .
+
+
 
 

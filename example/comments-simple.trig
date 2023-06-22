@@ -21,21 +21,14 @@ exdata:RecordID123.5 {
                         prov:generatedAtTime "2023-06-15"^^xsd:date;
                         rec:isInScope rev:Reply, document:B123-EX-W-LA-00001.F02, document:B123-EX-W-LA-00001 ;
                         rec:describes document:B123-EX-W-LA-00001.F02.
-
-    document:reply-B123-EX-W-LA-00001.F02 a rev:Reply;
-                                rev:aboutRevision document:B123-EX-W-LA-00001.F02;
-                                rev:issuedBy "Turi Skogen";
+    document:B123-EX-W-LA-00001.F02  rev:commentResponsible "Turi Skogen";
                                 rdf:type rev:Code1;
-                                rev:hasComment exdata:12345, exdata:12346, exdata:12347;
-                                rev:hasStatus exdata:12348, exdata:12349.
+                                rev:hasComments exdata:12345, exdata:12346, exdata:12347.
 
-    exdata:12348 rdf:type rev:Code4 ;
-        prov:generatedAtTime "2023-06-09"^^xsd:date;
-        rev:issuedBy "Trude Luth";
-        rev:aboutObject exdata:tagNo20PG123N .
+    exdata:tagNo20PG123N rdf:type rev:Code4 .
 
-    exdata:12349 rdf:type rev:Code3 ;
-        rev:aboutObject exdata:tagNo20PG123O, exdata:tagNo20PG123P .
+    exdata:tagNo20PG123N rdf:type rev:Code3 . 
+    exdata:tagNo20PG123N rdf:type rev:Code 1 .
     
     exdata:12345 a rev:Comment;
                                 rdfs:label "Too complicated pump, find smaller model"^^xsd:string;
@@ -51,7 +44,7 @@ exdata:RecordID123.5 {
                                 rdfs:label "This number seems too round, is it reaally exactly 2000?"^^xsd:string;
                                 rev:issuedBy "Kari Nordkvinne";
                                 prov:generatedAtTime "2023-06-15"^^xsd:date;
-                                rev:aboutObject exdata:tagNo20PG123O, exdata:tagNo20PG124O;
+                                rev:aboutObject exdata:tagNo20PG123N, exdata:tagNo20PG124O;
                                 rev:aboutProperty commonlib:weight_in_kgs, commonlib:weight_in_tons.
                                 
 }
