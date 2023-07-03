@@ -116,7 +116,7 @@ prov:wasAttributedTo rdf:type owl:DatatypeProperty ;
 ###  https://rdf.equinor.com/ontology/revision#Code2
 :Code2 rdf:type owl:Class ;
         rdfs:subClassOf :RevisionState ;
-       rdfs:label "Reviewed with omments" ;
+       rdfs:label "Reviewed with comments" ;
        rdfs:comment "Revision code 2 is a conditional acceptance with minor changes are needed" .
 
 

@@ -32,7 +32,8 @@ exdata:RecordID123.5 {
     exdata:12348 rdf:type rev:Code4 ;
         prov:generatedAtTime "2023-06-09"^^xsd:date;
         rev:issuedBy "Trude Luth";
-        rev:aboutObject exdata:tagNo20PG123N .
+        rev:aboutObject exdata:tagNo20PG123N ;
+        rev:hasComment exdata:12345 .
 
     exdata:12349 rdf:type rev:Code3 ;
         rev:aboutObject exdata:tagNo20PG123O, exdata:tagNo20PG123P .
