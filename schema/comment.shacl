@@ -44,6 +44,32 @@ rev:ReplyShape
         sh:severity sh:Violation;
     ] .
 
+rev:ReviewedStateReply
+    a sh:NodeShape ;
+    sh:targetClass rev:RevisionState ;
+    sh:property [
+        sh:path [ sh:inversePath rev:hasStatus ];
+        sh:class rev:Reply;
+        sh:maxCount 1;
+        sh:minCount 1;
+        sh:name "RevisionStateRevision";
+        sh:message "A revision state belongs to exactly one reply";
+        sh:severity sh:Violation
+    ].
+
+rev:ReviewedWithCommentsShape
+    a sh:NodeShape ;
+    sh:targetClass rev:Code2 ;
+    sh:property [
+        sh:path [ sh:inversePath rev:hasStatus ] / rev:hasComment;
+        sh:class rev:Reply;
+        sh:maxCount 1;
+        sh:minCount 1;
+        sh:name "RevisionStateRevision";
+        sh:message "A revision state belongs to exactly one reply";
+        sh:severity sh:Violation
+    ].
+
 rev:RevisionReplyShape
     a sh:NodeShape ;
     sh:targetClass rev:Revision ;

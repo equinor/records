@@ -60,6 +60,9 @@ xsd:date rdf:type rdfs:Datatype .
           rdfs:comment "Relates a comment to a response to that comment." ;
           rdfs:label "has reply" .
 
+
+:statusUpdateComments rdf:type owl:ObjectProperty.
+
 #################################################################
 #    Data properties
 #################################################################
