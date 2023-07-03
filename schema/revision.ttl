@@ -55,12 +55,6 @@ prov:wasAssociatedWith rdf:type owl:ObjectProperty ;
                  rdfs:range :Revision .
 
 
-###  https://rdf.equinor.com/ontology/revision#hasRevisionCode
-:hasRevisionCode rdf:type owl:ObjectProperty ;
-                 rdfs:domain :Revision ;
-                 rdfs:range :RevisionState ;
-                 rdfs:comment "Relates revisions to codes 1,2,3 and 4 based on operator evaluation" .
-
 #################################################################
 #    Data properties
 #################################################################
