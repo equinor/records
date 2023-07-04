@@ -25,6 +25,22 @@ xsd:date rdf:type rdfs:Datatype .
 #################################################################
 
 
+###  https://rdf.equinor.com/ontology/revision#aboutObject
+:aboutObject rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf prov:wasAssociatedWith ;
+                rdf:type owl:AsymmetricProperty ,
+                         owl:IrreflexiveProperty ;
+                rdfs:domain :Comment ;
+                rdfs:comment "Relates a comment to the object it is about." .
+
+###  https://rdf.equinor.com/ontology/revision#aboutProperty
+:aboutProperty rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf prov:wasAssociatedWith ;
+                rdf:type owl:AsymmetricProperty ,
+                         owl:IrreflexiveProperty ;
+                rdfs:domain :Comment ;
+                rdfs:range owl:DatatypeProperty ;
+                rdfs:comment "Relates a comment to the object it is about." .
 
 ###  https://rdf.equinor.com/ontology/revision#aboutRevision
 :aboutRevision rdf:type owl:ObjectProperty ;
@@ -44,7 +60,7 @@ xsd:date rdf:type rdfs:Datatype .
             rdfs:comment "Relates any object to a revision comment about it." ;
             rdfs:label "has comment" .
 
-###  https://rdf.equinor.com/ontology/revision#hasComment
+###  https://rdf.equinor.com/ontology/revision#hasStatus
 :hasStatus rdf:type owl:ObjectProperty ;
             rdfs:range :RevisionState ;
             rdfs:domain :Reply ;
