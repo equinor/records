@@ -4,23 +4,22 @@
 @prefix exdata: <https://example.com/data/>.
 @prefix rec: <https://rdf.equinor.com/ontology/record/>.
 @prefix rev: <https://rdf.equinor.com/ontology/revision/>.
-@prefix famdata: <https://rdf.equinor.com/fam/>.
-@prefix contract: <https://rdf.equinor.com/fam/Contract/>.
-@prefix document: <https://rdf.equinor.com/fam/Document/>.
-@prefix facility: <https://rdf.equinor.com/fam/Facility/>.
-@prefix project: <https://rdf.equinor.com/fam/Project/>.
-@prefix fsystem: <https://rdf.equinor.com/fam/FunctionalSystem/>.
+@prefix exdata: <https://example.com/data/>.
+@prefix exdoc: <https://example.com/doc/>.
+@prefix facility: <https://example.com/facility/>.
 @prefix famvocab: <https://rdf.equinor.com/ontology/fam/v1/>.
 @prefix tie: <https://rdf.equinor.com/ontology/TIE#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix rdl: <http://example.com/rdl/>.
+@prefix pca: <http://rds.posccaesar.org/ontology/lis14/rdl/>.
 
 
 exdata:RecordID123.0 {
     exdata:RecordID123.0 a rec:Record;
                         rdfs:comment "First MEL delivered on Example Facility"^^xsd:string;
                         prov:generatedAtTime "2022-11-03"^^xsd:date;
-                        rec:describes document:B123-EX-W-LA-00001.
-    document:B123-EX-W-LA-00001 a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
+                        rec:describes exdoc:B123-EX-W-LA-00001.
+    exdoc:B123-EX-W-LA-00001 a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
                                 rdfs:label "B123-EX-W-LA-00001"^^xsd:string;
                                 famvocab:DocumentType "LA"^^xsd:string;
                                 famvocab:Facility facility:EXMPL;
@@ -30,16 +29,16 @@ exdata:RecordID123.0 {
 exdata:RecordID123.1 {
     exdata:RecordID123.1 a rec:Record;
                         prov:generatedAtTime "2022-11-03"^^xsd:date;
-                        rec:describes document:B123-EX-W-LA-00001.F01;
+                        rec:describes exdoc:B123-EX-W-LA-00001.F01;
                         rec:isSubRecordOf exdata:RecordID123.0.
-    document:B123-EX-W-LA-00001.F01 a rev:DocumentRevision, tie:OfficialProject, tie:RevisionForReview;
+    exdoc:B123-EX-W-LA-00001.F01 a rev:Revision, tie:OfficialProject, tie:RevisionForReview;
                                     rdfs:label "First delivered revision of MEL"^^xsd:string;
                                     rev:revisionNumber "F01"^^xsd:string;
                                     prov:generatedAtTime "2022-11-03"^^xsd:date;
-                                    rev:isNewRevisionOf document:B123-EX-W-LA-00001.A01;
+                                    rev:isNewRevisionOf exdoc:B123-EX-W-LA-00001.A01;
                                     famvocab:DisciplineApprovedBy "NM"^^xsd:string;
                                     tie:wasIssuedForReason "Revision text"^^xsd:string;
-                                    rev:describes document:B123-EX-W-LA-00001;
+                                    rev:describes exdoc:B123-EX-W-LA-00001;
                                     rev:containsRecord exdata:RecordID123.2, exdata:RecordID123.3, exdata:RecordID123.0 .
 }
 
@@ -51,7 +50,7 @@ exdata:RecordID123.2 {
                         rdfs:comment "4th Stage Separator Water Pump Y"^^xsd:string;
                         rdfs:label "20PG123N"^^xsd:string;
                         famvocab:TOP_TAG "0"^^xsd:boolean; 
-                        commonlib:weight_in_kgs "20000";
+                        rdl:weight_in_kgs "20000";
                         pca:hasPhysicalQuantity exdata:tagNo20PG123NMass;                       
                         famvocab:TagNumber <https://stid.equinor.com/EXMPL/20PG002B>.
     exdata:tagNo20PG123NMass a rdl:PCA_100003589;
