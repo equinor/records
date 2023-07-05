@@ -122,3 +122,34 @@ SELECT distinct ?document ?newest_revision_name ?status_name ?reply_name ?reply_
 <td> exdoc:B123-EX-W-LA-00001</td>	<td>First delivered revision of MEL</td>	<td>Reviewed</td>	<td>Reply to revision F02</td>	<td>2023-06-15</td>	<td>Turi Skogen</td>
 </tr>
 </table>
+
+
+## Query 4
+This query gets all comments on an object (from any revisions and replies). Here we again assume all relevant data is materialized to the unnamed graph. 
+
+```sparql
+prefix rec: <https://rdf.equinor.com/ontology/record/>
+prefix rev: <https://rdf.equinor.com/ontology/revision/>
+
+SELECT distinct ?document ?revision ?comment_text ?author ?comment_responsible ?date WHERE {
+    ?reply a rev:Reply;
+        rev:issuedBy ?comment_responsible;
+        rev:describes ?revision;
+        rev:hasComment ?comment.
+    ?comment a rev:Comment;
+        rdfs:label ?comment_text;
+        rev:issuedBy ?author;
+        prov:generatedAtTime ?date;
+        rev:describes exdata:tagNo20PG123N.
+    ?revision rev:describes ?document.
+}
+```
+### Example answers
+<table>
+<tr>
+<td>document</td>	<td>revision</td> 	<td>comment_text</td>	<td>author</td>	<td>comment_responsible</td><td>date</td>
+</tr>
+<tr>
+<td> exdoc:B123-EX-W-LA-00001</td>	<td>exdoc:B123-EX-W-LA-00001.F01</td>	<td>Too complicated pump, find smaller model</td>	<td>Trude Luth</td>		<td>Turi Skogen</td> <td>2023-06-15</td>
+</tr>
+</table>
