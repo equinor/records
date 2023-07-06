@@ -40,7 +40,7 @@ SELECT ?status_name ?comment_text ?author WHERE {
 ## Query 2
  Get all comments on a specific revision
 
-```
+```sparql
 prefix rec: <https://rdf.equinor.com/ontology/record/>
 prefix rev: <https://rdf.equinor.com/ontology/revision/>
 
