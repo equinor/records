@@ -1,0 +1,96 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rev: <https://rdf.equinor.com/ontology/revision/>.
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
+@prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+rev:ReplyShape
+    a sh:NodeShape ;
+    rdf:comment "This shape is for a reply to a revision." ;
+    sh:targetClass rev:Reply ;
+    sh:property [ 
+        sh:path rev:issuedBy;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:name "CommentResponsible";
+        sh:message "A reply has exactly one comment responsible";
+        sh:severity sh:Violation;
+    ] , 
+    [ 
+        sh:path rev:hasComment;
+        sh:minCount 1;
+        sh:class rev:Comment;
+        sh:name "ReplyComment";
+        sh:message "A reply must have at least one comment";
+        sh:severity sh:Violation;
+    ] , 
+    [ 
+        sh:path rev:hasStatus;
+        sh:minCount 1;
+        sh:class rev:RevisionState;
+        sh:name "ReplyRevisionState";
+        sh:message "A reply must have at least one revision status update";
+        sh:severity sh:Violation;
+    ] , 
+    [ 
+        sh:path rev:aboutRevision;
+        sh:minCount 1;
+        sh:maxCount 1;
+        sh:class rev:Revision;
+        sh:name "ReplyRevision";
+        sh:message "A reply is about exactly one revision";
+        sh:severity sh:Violation;
+    ] .
+
+rev:ReviewedStateReply
+    a sh:NodeShape ;
+    sh:targetClass rev:RevisionState ;
+    sh:property [
+        sh:path [ sh:inversePath rev:hasStatus ];
+        sh:class rev:Reply;
+        sh:maxCount 1;
+        sh:minCount 1;
+        sh:name "RevisionStateRevision";
+        sh:message "A revision state belongs to exactly one reply";
+        sh:severity sh:Violation
+    ].
+
+rev:ReviewedWithCommentsShape
+    a sh:NodeShape ;
+    sh:targetClass rev:Code2 ;
+    sh:property [
+        sh:path [ sh:inversePath rev:hasStatus ] / rev:hasComment;
+        sh:class rev:Reply;
+        sh:maxCount 1;
+        sh:minCount 1;
+        sh:name "RevisionStateRevision";
+        sh:message "A revision state belongs to exactly one reply";
+        sh:severity sh:Violation
+    ].
+
+rev:RevisionReplyShape
+    a sh:NodeShape ;
+    sh:targetClass rev:Revision ;
+    sh:property 
+    [ 
+        sh:path [ sh:inversePath rev:aboutRevision ];
+        sh:class rev:Reply;
+        sh:maxCount 1;
+        sh:name "RevisionReplyPath";
+        sh:message "A revision has at most one reply";
+        sh:severity sh:Violation;
+    ] .
+    
+rev:RevisionStatusShape
+    a sh:NodeShape ;
+    sh:targetClass rev:RevisionState ;
+    sh:property 
+    [ 
+        sh:path rev:aboutObject;
+        sh:minCount 1;
+        sh:name "RevisionStatusObject";
+        sh:message "A revision status is about at least one object";
+        sh:severity sh:Violation;
+    ] .
