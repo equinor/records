@@ -53,7 +53,7 @@ public class FileRecordBuilderTests
 
         var fileTypeNode = fileRecord.QuadsWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
         fileTypeNode.Should().NotBeNull();
-        
+
     }
 
 
