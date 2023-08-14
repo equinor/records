@@ -1,0 +1,53 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix exdata: <https://example.com/data/>.
+@prefix exdoc: <https://example.com/doc/>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rev: <https://rdf.equinor.com/ontology/revision/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix rdl: <http://example.com/rdl/>.
+
+exdata:RecordID123.5 {
+    exdata:RecordID123.5 a rec:Record;
+                        rdfs:comment "Contains example reply to revision in revisions.trig example"^^xsd:string;
+                        prov:generatedAtTime "2023-06-15"^^xsd:date;
+                        rec:isInScope rev:Reply, exdoc:B123-EX-W-LA-00001.F01, exdoc:B123-EX-W-LA-00001 ;
+                        rec:describes exdoc:B123-EX-W-LA-00001.F01.
+
+    exdoc:reply-B123-EX-W-LA-00001.F01 a rev:Reply;
+                                rev:describes exdoc:B123-EX-W-LA-00001.F01;
+                                rev:issuedBy "Turi Skogen";
+                                prov:generatedAtTime "2023-06-15"^^xsd:date;
+                                rdf:type rev:Code1;
+                                rdfs:label "Reply to revision F02";
+                                rev:hasComment exdata:12345, exdata:12346, exdata:12347;
+                                rev:hasStatus exdata:12348, exdata:12349.
+
+    exdata:12348 rdf:type rev:Code4 ;
+        prov:generatedAtTime "2023-06-09"^^xsd:date;
+        rev:issuedBy "Trude Luth";
+        rev:describes exdata:tagNo20PG123N ;
+        rev:hasComment exdata:12345 .
+
+    exdata:12349 rdf:type rev:Code3 ;
+        rev:describes exdata:tagNo20PG123O, exdata:tagNo20PG123P .
+    
+    exdata:12345 a rev:Comment;
+                                rdfs:label "Too complicated pump, find smaller model"^^xsd:string;
+                                rev:issuedBy "Trude Luth";
+                                prov:generatedAtTime "2023-06-15"^^xsd:date;
+                                rev:describes exdata:tagNo20PG123N.
+    exdata:12346 a rev:Comment;
+                                rdfs:label "This is too heavy, please find a smaller version"^^xsd:string;
+                                rev:issuedBy "Ola Nordmann";
+                                prov:generatedAtTime "2023-06-15"^^xsd:date;
+                                rev:describes exdata:tagNo20PG123NMass.
+    exdata:12347 a rev:Comment;
+                                rdfs:label "This number seems too round, is it really exactly 2000?"^^xsd:string;
+                                rev:issuedBy "Kari Nordkvinne";
+                                prov:generatedAtTime "2023-06-15"^^xsd:date;
+                                rev:describes exdata:tagNo20PG123O, exdata:tagNo20PG124O;
+                                rev:aboutProperty rdl:weight_in_kgs, rdl:weight_in_tons.
+                                
+}
