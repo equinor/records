@@ -52,7 +52,7 @@ public class FileRecordBuilderTests
             .Build();
 
         var fileTypeNode = fileRecord.QuadsWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
-        fileTypeNode.Should().NotBeNull();
+        fileTypeNode.Should().NotBeNull("The variable fileTypeNode is null which means that it is not an uri node.");
 
     }
 
