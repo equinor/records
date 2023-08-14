@@ -32,6 +32,31 @@ public class FileRecordBuilderTests
         fileRecord.QuadsWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(2);
     }
 
+
+    [Fact]
+    public void FileRecordBuilder__ShouldCreateUriNode__WhenObjectIsFileType()
+    {
+        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+        var fileRecordId = TestData.CreateRecordId("fileRecordId");
+        var scopes = TestData.CreateObjectList(3, "scope");
+        var fileRecord = new FileRecordBuilder()
+            .WithId(fileRecordId)
+            .WithIsSubRecordOf(superRecord.Id)
+            .WithFileExtension("xslx")
+            .WithFileName("filename")
+            .WithScopes(scopes)
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
+            .WithLanguage("en-US")
+            .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
+            .Build();
+
+        var fileTypeNode = fileRecord.QuadsWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
+        fileTypeNode.Should().NotBeNull("The variable fileTypeNode is null which means that it is not an uri node.");
+
+    }
+
+
     [Fact]
     public void FileRecordBuilder__SHouldThrowException__WhenSuperRecordIsMissing()
     {
