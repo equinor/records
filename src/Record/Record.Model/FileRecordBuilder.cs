@@ -152,7 +152,7 @@ public record FileRecordBuilder
             CreateFileNameTriple(_storage.FileName),
             CreateModelTypeTriple(_storage.ModelType),
             CreateDocumentTypeTriple(_storage.DocumentType),
-            CreateTripleWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.FileContent.Type, Namespaces.DataType.String),
+            CreateTripleWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.FileContent.Type),
             CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date),
         }.Where(q => q is not null);
 
