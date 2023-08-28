@@ -1,5 +1,17 @@
-@prefix rec:   
-@prefix prov:   
+
+
+
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rev: <https://rdf.equinor.com/ontology/revision/>.
+@prefix exdata: <https://example.com/data/>.
+@prefix exdoc: <https://example.com/doc/>.
+@prefix facility: <https://example.com/facility/>.
+@prefix famvocab: <https://rdf.equinor.com/ontology/fam/v1/>.
+@prefix tie: <https://rdf.equinor.com/ontology/TIE#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+
+
+### Templates
 
 ex:Quad[
   ottr:IRI ?s,
@@ -27,3 +39,31 @@ ex:Record [
   zipMin | ex:Quad(++?s, ++?p, ++?o, ?recordID)
 }
 .
+
+#### Instans
+
+
+ex:Record(exdata:RecordID123.0, "First MEL delivered on Example
+Facility", "2022-11-03"^^xsd:date, exdoc:B123-EX-W-LA-00001,
+(
+ exdoc:B123-EX-W-LA-00001,
+ exdoc:B123-EX-W-LA-00001,
+ exdoc:B123-EX-W-LA-00001,
+ exdoc:B123-EX-W-LA-00001,
+ exdoc:B123-EX-W-LA-00001
+),
+(
+  rdf:type,
+  rdfs:label,
+  famvocab:DocumentType,
+  famvocab:Facility,
+  famvocab:Title
+),
+(
+  ,
+  "B123-EX-W-LA-00001"^^xsd:string,
+  "LA"^^xsd:string,
+  facility:EXMPL,
+  "MASTER EQUIPMENT LIST - MEL"^^xsd:string
+)
+) .

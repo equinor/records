@@ -1,13 +1,22 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rec: <https://rdf.equinor.com/ontology/record/> .
 
 [?rec, a, rec:Record] ?rec,
 [?rec, rec:describes, ?describes] ?rec,
 [?rec, rec:isInScopes, ?scope] ?rec|,
 [?rec, prov:generatedAtTime, ?timestamp] ?rec,
-[?rec, rec:replaces, ?old] ?rec,
 [?s, ?p, ?o] ?rec
  :-    
-    Record (?rec, ?old, ?describes, ?scope, ?timestamp, ?graph),
+    FirstRecord (?rec, ?describes, ?scope, ?timestamp, ?graph),
     [?s, ?p, ?o] ?graph .
 
+FirstRecord (?rec, ?describes, ?scope, ?timestamp, ?graph),
+[?rec, rec:replaces, ?old] ?rec :-
+    NewRecord(?rec, ?old, ?describes, ?scope, ?timestamp, ?graph).
 
+Record (?rec, ?s, rev:Document, ?timestamp, ?graph),
+[?s, ?p, ?o] ?graph :-
+    [?s, a, rev:Document],
+    [?s, ?p, ?o],
+    BIND(NOW() AS ?timestamp).
 
