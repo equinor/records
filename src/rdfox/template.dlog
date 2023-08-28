@@ -1,0 +1,13 @@
+
+[?rec, a, rec:Record] ?rec,
+[?rec, rec:describes, ?describes] ?rec,
+[?rec, rec:isInScopes, ?scope] ?rec|,
+[?rec, prov:generatedAtTime, ?timestamp] ?rec,
+[?rec, rec:replaces, ?old] ?rec,
+[?s, ?p, ?o] ?rec
+ :-    
+    Record (?rec, ?old, ?describes, ?scope, ?timestamp, ?graph),
+    [?s, ?p, ?o] ?graph .
+
+
+
