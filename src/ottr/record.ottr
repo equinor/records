@@ -1,0 +1,29 @@
+@prefix rec:   
+@prefix prov:   
+
+ex:Quad[
+  ottr:IRI ?s,
+  ottr:IRI ?p,
+           ?o,
+  ottr:IRI ?c
+] ::
+  #{ ottr:Triple(?s,?p,?o) } .
+   BASE.
+
+ex:Record [
+  ottr:IRI ?recordID,
+  ?comment,
+  ?timeStamp,
+  ?describes,
+  List<ottr:IRI> ?s,
+  List<ottr:IRI> ?p,
+  List<ottr:IRI> ?o
+] :: {
+  ex:Quad(?recordID, rdf:type, rec:Record, ?recordID),
+  ex:Quad(?recordID, rdfs:comment, ?comment, ?recordID),
+  ex:Quad(?recordID, prov:generatedAtTime, ?timeStamp, ?recordID),
+  ex:Quad(?recordID, rec:describes, ?describes, ?recordID),
+
+  zipMin | ex:Quad(++?s, ++?p, ++?o, ?recordID)
+}
+.
