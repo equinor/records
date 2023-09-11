@@ -4,6 +4,7 @@ using FluentAssertions;
 using Record = Records.Immutable.Record;
 using Records.Exceptions;
 using VDS.RDF.Writing;
+using VDS.RDF.JsonLd;
 
 namespace Records.Tests;
 
@@ -46,6 +47,27 @@ public class ImmutableRecordTests
 
         result.Should().Throw<RecordException>().WithMessage("Failure in record. A record must have exactly one provenance object.");
     }
+
+
+    [Fact]
+    public void Creating_Record_From_Invalid_JsonLD_Throws()
+    {
+        var invalidJsonLdString = TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
+        var result = () => new Record(invalidJsonLdString);
+        result.Should().Throw<RecordException>();
+    }
+
+
+    [Fact]
+    public void Creating_Record_With_More_Than_One_Named_Graph_Throws()
+    {
+        var jsonArray = $"[{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(1))}," +
+                        $"{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(2))}]";
+
+        var result = () => new Record(jsonArray);
+        result.Should().Throw<RecordException>();
+    }
+
 
     [Fact]
     public void Record_Can_Be_Serialised_Nquad()
