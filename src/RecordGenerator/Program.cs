@@ -76,7 +76,7 @@ public class Program
 
                     var objectNode = graph.CreateUriNode(UriFactory.Create(obj));
                     graph.BaseUri = new Uri($"{obj}-{scopeNo}-Record{i}");
-                    
+
                     var recordNode = graph.CreateUriNode(graph.BaseUri);
 
                     triples.Add(new Triple(recordNode, rdfType, recordType));
