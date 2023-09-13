@@ -1,5 +1,4 @@
 ﻿using Records.Exceptions;
-using System;
 using System.Diagnostics;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -7,6 +6,7 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
+using Newtonsoft.Json;
 
 namespace Records.Immutable;
 
@@ -32,7 +32,7 @@ public class Record : IEquatable<Record>
         if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null) throw new RecordException("Record is already loaded.");
 
         try { _store.LoadFromString(rdfString); }
-        catch { _store.LoadFromString(rdfString, new JsonLdParser()); }
+        catch { ValidateJsonLd(rdfString); _store.LoadFromString(rdfString, new JsonLdParser()); }
 
         if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
         _graph = _store.Graphs.First();
@@ -55,6 +55,16 @@ public class Record : IEquatable<Record>
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
         _nQuadsString = ToString<NQuadsWriter>();
+    }
+
+    private static void ValidateJsonLd(string rdfString)
+    {
+        try { JsonConvert.DeserializeObject(rdfString); }
+        catch (JsonReaderException ex)
+        {
+            var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
+            throw recordException;
+        }
     }
 
     /// <summary>
