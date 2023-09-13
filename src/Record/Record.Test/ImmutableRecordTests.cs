@@ -45,7 +45,7 @@ public class ImmutableRecordTests
 
         var result = () => new Record(rdf);
 
-        result.Should().Throw<RecordException>().WithMessage("Failure in record. A record must have exactly one provenance object.");
+        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one provenance object.");
     }
 
 
@@ -65,7 +65,7 @@ public class ImmutableRecordTests
                         $"{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(2))}]";
 
         var result = () => new Record(jsonArray);
-        result.Should().Throw<RecordException>().WithMessage("Failure in record. A record must contain exactly one named graph.");
+        result.Should().Throw<RecordException>().WithMessage("A record must contain exactly one named graph.");
     }
 
 
@@ -212,7 +212,7 @@ public class ImmutableRecordTests
         };
         loadResult.Should()
             .Throw<RecordException>()
-            .WithMessage("Failure in record. A record can at most be the subrecord of one other record.");
+            .WithMessage("A record can at most be the subrecord of one other record.");
 
         record.Should().BeNull();
     }

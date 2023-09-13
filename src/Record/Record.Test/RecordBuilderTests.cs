@@ -113,7 +113,7 @@ public class RecordBuilderTests
 
         var result = () => builder.Build();
 
-        result.Should().ThrowExactly<RecordException>().WithMessage("Failure in record. A record must either be a subrecord or have at least one scope");
+        result.Should().ThrowExactly<RecordException>().WithMessage("A record must either be a subrecord or have at least one scope");
     }
 
     [Fact]
@@ -366,7 +366,7 @@ public class RecordBuilderTests
 
         recordBuilder.Should()
             .Throw<RecordException>()
-            .WithMessage("Failure in record. A record can be the subrecord of at most one record");
+            .WithMessage("A record can be the subrecord of at most one record");
 
         record.Should().BeNull();
     }
