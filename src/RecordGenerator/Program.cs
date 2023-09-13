@@ -58,7 +58,7 @@ public class Program
             {
                 for (int i = 0; i < nRecords; i++)
                 {
-                    var graph = new Graph();
+                    var graph = new Graph(new UriNode(new Uri($"{obj}-{scopeNo}-Record{i}")));
                     graph.NamespaceMap.AddNamespace("data:", new Uri(dataPrefix));
                     graph.NamespaceMap.AddNamespace("rdl:", new Uri(pcaPrefix));
 
@@ -75,7 +75,8 @@ public class Program
                     var triples = new List<Triple>();
 
                     var objectNode = graph.CreateUriNode(UriFactory.Create(obj));
-                    graph.BaseUri = UriFactory.Create($"{obj}-{scopeNo}-Record{i}");
+                    graph.BaseUri = new Uri($"{obj}-{scopeNo}-Record{i}");
+
                     var recordNode = graph.CreateUriNode(graph.BaseUri);
 
                     triples.Add(new Triple(recordNode, rdfType, recordType));
