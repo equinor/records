@@ -4,7 +4,7 @@ using FluentAssertions;
 using Record = Records.Immutable.Record;
 using Records.Exceptions;
 using VDS.RDF.Writing;
-using VDS.RDF.JsonLd;
+using Newtonsoft.Json;
 
 namespace Records.Tests;
 
@@ -54,7 +54,7 @@ public class ImmutableRecordTests
     {
         var invalidJsonLdString = TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
         var result = () => new Record(invalidJsonLdString);
-        result.Should().Throw<RecordException>();
+        result.Should().Throw<RecordException>().WithInnerException<JsonReaderException>();
     }
 
 
@@ -65,7 +65,7 @@ public class ImmutableRecordTests
                         $"{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(2))}]";
 
         var result = () => new Record(jsonArray);
-        result.Should().Throw<RecordException>();
+        result.Should().Throw<RecordException>().WithMessage("Failure in record. A record must contain exactly one named graph.");
     }
 
 
@@ -158,7 +158,7 @@ public class ImmutableRecordTests
 
         var jsonObject = default(JsonObject);
 
-        var deserialisationFunc = () => jsonObject = JsonSerializer.Deserialize<JsonObject>(jsonLdString);
+        var deserialisationFunc = () => jsonObject = System.Text.Json.JsonSerializer.Deserialize<JsonObject>(jsonLdString);
         deserialisationFunc.Should().NotThrow();
 
         jsonObject.Should().NotBeNull();

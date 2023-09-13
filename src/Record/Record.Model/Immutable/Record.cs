@@ -1,5 +1,4 @@
 ﻿using Records.Exceptions;
-using System;
 using System.Diagnostics;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -7,9 +6,6 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
-using JsonLD.Core;
-using Newtonsoft.Json.Linq;
-using VDS.RDF.JsonLd;
 using Newtonsoft.Json;
 
 namespace Records.Immutable;
@@ -64,7 +60,11 @@ public class Record : IEquatable<Record>
     private static void ValidateJsonLd(string rdfString)
     {
         try { JsonConvert.DeserializeObject(rdfString); }
-        catch (JsonReaderException ex) { throw new RecordException($"Invalid Json-LD : {ex.Message}"); }
+        catch (JsonReaderException ex) 
+        { 
+            var recordException =  new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
+            throw recordException;
+        }
     }
 
     /// <summary>
