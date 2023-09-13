@@ -60,9 +60,9 @@ public class Record : IEquatable<Record>
     private static void ValidateJsonLd(string rdfString)
     {
         try { JsonConvert.DeserializeObject(rdfString); }
-        catch (JsonReaderException ex) 
-        { 
-            var recordException =  new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
+        catch (JsonReaderException ex)
+        {
+            var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
             throw recordException;
         }
     }
