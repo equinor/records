@@ -34,7 +34,8 @@ public class Record : IEquatable<Record>
         try { _store.LoadFromString(rdfString); }
         catch { ValidateJsonLd(rdfString); _store.LoadFromString(rdfString, new JsonLdParser()); }
 
-        if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
+        if (_store?.Graphs.Count != 1) 
+            throw new RecordException("A record must contain exactly one named graph.", rdfString);
         _graph = _store.Graphs.First();
 
         Id = _graph.Name.ToSafeString();
