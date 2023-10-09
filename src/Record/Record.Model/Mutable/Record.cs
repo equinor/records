@@ -18,9 +18,8 @@ public record Record(string Id)
 
     public Immutable.Record ToImmutable()
     {
-        var rdf = QuadStrings
-            .Where(quad => !string.IsNullOrEmpty(quad))
-            .Aggregate("", (current, quad) => current + quad);
+        var rdf = String.Join("", QuadStrings
+            .Where(quad => !string.IsNullOrEmpty(quad)));
         return new Immutable.Record(rdf);
     }
 
