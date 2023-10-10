@@ -25,19 +25,32 @@ public class Record : IEquatable<Record>
 
     public Record(string rdfString) => LoadFromString(rdfString);
 
+    public Record(IGraph graph) => LoadFromGraph(graph);
+
     private string _nQuadsString;
 
     private void LoadFromString(string rdfString)
     {
-        if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null) throw new RecordException("Record is already loaded.");
+        if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null)
+            throw new RecordException("Record is already loaded.");
 
-        try { _store.LoadFromString(rdfString); }
-        catch { ValidateJsonLd(rdfString); _store.LoadFromString(rdfString, new JsonLdParser()); }
-
+        try
+        {
+            _store.LoadFromString(rdfString);
+        }
+        catch
+        {
+            ValidateJsonLd(rdfString);
+            _store.LoadFromString(rdfString, new JsonLdParser());
+        }
         if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
         _graph = _store.Graphs.First();
+        LoadFromGraph(_graph);
+    }
+    private void LoadFromGraph(IGraph graph)
+    {
 
-        Id = _graph.Name.ToSafeString();
+        Id = graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();
         if (!Provenance.Any(p => p.Object.Equals(Namespaces.Record.RecordType))) throw new RecordException("A record must have exactly one provenance object.");
