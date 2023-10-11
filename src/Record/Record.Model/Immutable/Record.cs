@@ -44,12 +44,12 @@ public class Record : IEquatable<Record>
             _store.LoadFromString(rdfString, new JsonLdParser());
         }
         if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
-        _graph = _store.Graphs.First();
-        LoadFromGraph(_graph);
+        var graph = _store.Graphs.First();
+        LoadFromGraph(graph);
     }
     private void LoadFromGraph(IGraph graph)
     {
-
+        _graph = graph;
         Id = graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();

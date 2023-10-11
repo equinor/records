@@ -5,6 +5,8 @@ using Record = Records.Immutable.Record;
 using Records.Exceptions;
 using VDS.RDF.Writing;
 using Newtonsoft.Json;
+using VDS.RDF;
+using VDS.RDF.Parsing;
 
 namespace Records.Tests;
 
@@ -28,6 +30,18 @@ public class ImmutableRecordTests
         result.Should().Be("https://ssi.example.com/record/1");
     }
 
+    [Fact]
+    public void Record_CanBeCreated_FromGraph()
+    {
+        ITripleStore store = new TripleStore();
+        store.LoadFromString(TestData.ValidJsonLdRecordString(), new JsonLdParser());
+
+        var record = new Record(store.Graphs.First());
+        var result = record.Id;
+
+        result.Should().Be("https://ssi.example.com/record/1");
+    }
+    
     [Fact]
     public void Record_Can_Do_Queries()
     {
