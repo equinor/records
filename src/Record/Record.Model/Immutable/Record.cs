@@ -15,7 +15,7 @@ public class Record : IEquatable<Record>
 {
     public string Id { get; private set; } = null!;
     private IGraph _graph = new Graph();
-    private TripleStore? _store = new();
+    private readonly TripleStore _store = new();
 
     public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
@@ -31,24 +31,27 @@ public class Record : IEquatable<Record>
 
     private void LoadFromString(string rdfString)
     {
+        var store = new TripleStore();
         if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null)
             throw new RecordException("Record is already loaded.");
 
         try
         {
-            _store.LoadFromString(rdfString);
+            store.LoadFromString(rdfString);
         }
         catch
         {
             ValidateJsonLd(rdfString);
-            _store.LoadFromString(rdfString, new JsonLdParser());
+            store.LoadFromString(rdfString, new JsonLdParser());
         }
-        if (_store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
-        _graph = _store.Graphs.First();
-        LoadFromGraph(_graph);
+        if (store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
+        var graph = store.Graphs.First();
+        LoadFromGraph(graph);
     }
     private void LoadFromGraph(IGraph graph)
     {
+        _graph = graph;
+        _store.Add(_graph);
 
         Id = graph.Name.ToSafeString();
 
