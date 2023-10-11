@@ -52,7 +52,7 @@ public class Record : IEquatable<Record>
     {
         _graph = graph;
         _store.Add(_graph);
-        
+
         Id = graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();

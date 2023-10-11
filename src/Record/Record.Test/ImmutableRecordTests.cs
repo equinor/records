@@ -41,7 +41,7 @@ public class ImmutableRecordTests
 
         result.Should().Be("https://ssi.example.com/record/1");
     }
-    
+
     [Fact]
     public void Record_Can_Do_Queries()
     {
