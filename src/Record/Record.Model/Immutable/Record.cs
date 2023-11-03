@@ -16,7 +16,9 @@ public class Record : IEquatable<Record>
     public string Id { get; private set; } = null!;
     private IGraph _graph = new Graph();
     private readonly TripleStore _store = new();
-
+    private InMemoryDataset _dataset;
+    private LeviathanQueryProcessor _queryProcessor;
+    
     public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
@@ -52,7 +54,9 @@ public class Record : IEquatable<Record>
     {
         _graph = graph;
         _store.Add(_graph);
-
+        _dataset = new InMemoryDataset(graph);
+        _queryProcessor = new LeviathanQueryProcessor(_dataset);
+        
         Id = graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();
@@ -112,6 +116,50 @@ public class Record : IEquatable<Record>
         };
     }
 
+    /// <summary>
+    /// This method allows you to do select and ask SPARQL queries on your record.
+    /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
+    /// <example>
+    /// Examples:
+    /// <code>
+    /// record.query(new SparqlQueryParser().ParseFromString("select ?s where { ?s a &lt;Thing&gt; . }"));
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="query">Query to be evaluated over the triples in the record graph</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if query is not "ask" or "select".
+    /// </exception>
+    public SparqlResultSet Query(SparqlQuery query) =>
+        _queryProcessor.ProcessQuery(query) switch
+        {
+            SparqlResultSet res => res,
+            _ => throw new ArgumentException(
+                "DotNetRdf did not return SparqlResultSet. Probably the Sparql query was not a select or ask query")
+        };
+
+    
+    /// <summary>
+    /// This method allows you to do select and ask SPARQL queries on your record.
+    /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
+    /// <example>
+    /// Examples:
+    /// <code>
+    /// record.Sparql(new SparqlQueryParser().ParseFromString("construct { ?s ?p ?o . } where { ?s ?p ?o . ?s a &lt;Thing&gt; . }"));
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="query">Query to be evaluated over the triples in the record graph</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if query is not "construct".
+    /// </exception>
+    public IGraph ConstructQuery(SparqlQuery query) =>
+        _queryProcessor.ProcessQuery(query) switch
+        {
+            IGraph res => res,
+            _ => throw new ArgumentException(
+                "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
+        };
     public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
@@ -226,4 +274,5 @@ public class Record : IEquatable<Record>
         return processor.ProcessQuery(query);
     }
     #endregion
+
 }
