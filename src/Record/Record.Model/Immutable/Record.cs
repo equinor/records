@@ -16,6 +16,8 @@ public class Record : IEquatable<Record>
     public string Id { get; private set; } = null!;
     private IGraph _graph = new Graph();
     private readonly TripleStore _store = new();
+    private InMemoryDataset _dataset;
+    private LeviathanQueryProcessor _queryProcessor;
 
     public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
@@ -52,6 +54,8 @@ public class Record : IEquatable<Record>
     {
         _graph = graph;
         _store.Add(_graph);
+        _dataset = new InMemoryDataset(graph);
+        _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
         Id = graph.Name.ToSafeString();
 
@@ -103,15 +107,61 @@ public class Record : IEquatable<Record>
     public IEnumerable<string> Sparql(string queryString)
     {
         var command = queryString.Split().First();
+        var parser = new SparqlQueryParser();
+        var query = parser.ParseFromString(queryString);
 
         return command.ToLower() switch
         {
-            "construct" => Construct(queryString),
-            "select" => Select(queryString),
+            "construct" => Construct(query),
+            "select" => Select(query),
             _ => throw new ArgumentException("Unsupported command in SPARQL query.")
         };
     }
 
+    /// <summary>
+    /// This method allows you to do select and ask SPARQL queries on your record.
+    /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
+    /// <example>
+    /// Examples:
+    /// <code>
+    /// record.query(new SparqlQueryParser().ParseFromString("select ?s where { ?s a &lt;Thing&gt; . }"));
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="query">Query to be evaluated over the triples in the record graph</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if query is not "ask" or "select".
+    /// </exception>
+    public SparqlResultSet Query(SparqlQuery query) =>
+        _queryProcessor.ProcessQuery(query) switch
+        {
+            SparqlResultSet res => res,
+            _ => throw new ArgumentException(
+                "DotNetRdf did not return SparqlResultSet. Probably the Sparql query was not a select or ask query")
+        };
+
+
+    /// <summary>
+    /// This method allows you to do select and ask SPARQL queries on your record.
+    /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
+    /// <example>
+    /// Examples:
+    /// <code>
+    /// record.Sparql(new SparqlQueryParser().ParseFromString("construct { ?s ?p ?o . } where { ?s ?p ?o . ?s a &lt;Thing&gt; . }"));
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="query">Query to be evaluated over the triples in the record graph</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if query is not "construct".
+    /// </exception>
+    public IGraph ConstructQuery(SparqlQuery query) =>
+        _queryProcessor.ProcessQuery(query) switch
+        {
+            IGraph res => res,
+            _ => throw new ArgumentException(
+                "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
+        };
     public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
@@ -185,45 +235,22 @@ public class Record : IEquatable<Record>
     }
 
     #region Private
-    private IEnumerable<string> Construct(string queryString)
+    private IEnumerable<string> Construct(SparqlQuery query)
     {
-        var results = GetResult(queryString);
+        var resultGraph = ConstructQuery(query);
+        return resultGraph.Triples.Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()).ToString());
+    }
 
-        if (results is IGraph resultGraph)
+    private IEnumerable<string> Select(SparqlQuery query)
+    {
+        var rset = Query(query);
+        foreach (var result in rset)
         {
-            return resultGraph.Triples.Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()).ToString());
-        }
-        else
-        {
-            throw new Exception("Construct failed.");
+            yield return result.ToString();
         }
     }
 
-    private IEnumerable<string> Select(string queryString)
-    {
-        var results = GetResult(queryString);
-        if (results is SparqlResultSet rset)
-        {
-            foreach (var result in rset)
-            {
-                yield return result.ToString();
-            }
-        }
-        else
-        {
-            throw new Exception("Select failed.");
-        }
-    }
 
-    private object GetResult(string queryString)
-    {
-        var ds = new InMemoryQuadDataset(_store, new Uri(Id ?? throw new UnloadedRecordException()));
-
-        var processor = new LeviathanQueryProcessor(ds);
-        var parser = new SparqlQueryParser();
-        var query = parser.ParseFromString(queryString);
-
-        return processor.ProcessQuery(query);
-    }
     #endregion
+
 }
