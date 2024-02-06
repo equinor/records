@@ -1,7 +1,7 @@
 name: 🔍 IntroducedBy Checker 🔍
 on:
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * 1' # Every monday
   workflow_dispatch:
 
 jobs: 
