@@ -163,7 +163,6 @@ public class Record : IEquatable<Record>
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
 
-
     public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
