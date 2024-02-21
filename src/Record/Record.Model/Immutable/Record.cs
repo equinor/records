@@ -7,7 +7,6 @@ using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 using Newtonsoft.Json;
-using Microsoft.AspNetCore.Http;
 
 namespace Records.Immutable;
 
