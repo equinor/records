@@ -195,7 +195,9 @@ public class Record : IEquatable<Record>
         var parser = new SparqlQueryParser();
         var provenance = ProvenanceAsTriples();
 
-        var contentQueryString = $"CONSTRUCT {{?s ?p ?o}} WHERE {{ GRAPH <{Id}> {{ ?s ?p ?o FILTER(?s != <{Id}>)}} }}";
+        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
+        parameterizedQuery.SetUri("Id",new Uri(Id));
+        var contentQueryString = parameterizedQuery.ToString(); 
         var contentQuery = parser.ParseFromString(contentQueryString);
         var content = ConstructQuery(contentQuery);
         return content.Triples.Except(provenance);
@@ -204,7 +206,10 @@ public class Record : IEquatable<Record>
     public IEnumerable<Triple> ProvenanceAsTriples()
     {
         var parser = new SparqlQueryParser();
-        var provenanceQueryString = $"CONSTRUCT {{<{Id}> ?p ?o}} WHERE {{ GRAPH <{Id}> {{ <{Id}> ?p ?o }} }}";
+        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {@Id ?p ?o} WHERE { GRAPH @Id { @Id ?p ?o} }");
+        parameterizedQuery.SetUri("Id",new Uri(Id));
+        var provenanceQueryString = parameterizedQuery.ToString(); 
+        
         var provenanceQuery = parser.ParseFromString(provenanceQueryString);
         var provenance = ConstructQuery(provenanceQuery);
         return provenance.Triples;
