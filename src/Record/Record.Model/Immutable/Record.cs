@@ -196,7 +196,7 @@ public class Record : IEquatable<Record>
     {
         var parser = new SparqlQueryParser();
         var provenance = ProvenanceAsTriples();
-        
+
         var contentQueryString = $"CONSTRUCT {{?s ?p ?o}} WHERE {{ GRAPH <{Id}> {{ ?s ?p ?o FILTER(?s != <{Id}>)}} }}";
         var contentQuery = parser.ParseFromString(contentQueryString);
         var content = ConstructQuery(contentQuery);
