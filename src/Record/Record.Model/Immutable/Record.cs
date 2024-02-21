@@ -162,6 +162,7 @@ public class Record : IEquatable<Record>
             _ => throw new ArgumentException(
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
+
     public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
@@ -189,6 +190,30 @@ public class Record : IEquatable<Record>
     }
 
     public IEnumerable<Triple> Triples() => _graph.Triples ?? throw new UnloadedRecordException();
+    public IEnumerable<Triple> ContentAsTriples()
+    {
+        var parser = new SparqlQueryParser();
+        var provenance = ProvenanceAsTriples();
+
+        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
+        parameterizedQuery.SetUri("Id", new Uri(Id));
+        var contentQueryString = parameterizedQuery.ToString();
+        var contentQuery = parser.ParseFromString(contentQueryString);
+        var content = ConstructQuery(contentQuery);
+        return content.Triples.Except(provenance);
+    }
+
+    public IEnumerable<Triple> ProvenanceAsTriples()
+    {
+        var parser = new SparqlQueryParser();
+        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {@Id ?p ?o} WHERE { GRAPH @Id { @Id ?p ?o} }");
+        parameterizedQuery.SetUri("Id", new Uri(Id));
+        var provenanceQueryString = parameterizedQuery.ToString();
+
+        var provenanceQuery = parser.ParseFromString(provenanceQueryString);
+        var provenance = ConstructQuery(provenanceQuery);
+        return provenance.Triples;
+    }
 
     public bool ContainsTriple(Triple triple) => _graph.ContainsTriple(triple);
 
