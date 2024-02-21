@@ -30,6 +30,35 @@ The intention of 'describes' is an inventory of what the content of the record i
 ### Example in trig
 For example, this is a valid record with exactly one triple in the content:
 ```ttl
+ex:Object1/Content0 {
+    ex:Object1 a ex:System.
+}
+ex:Object1/Record0 {
+    ex:Object1/Record0 a rec:Record;
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project;
+        rec:hasContent ex:Object/Content0.
+}
+ ```
+and after the record above is sent, this is a new valid record
+ ```ttl
+ex:Object1/Content1 {
+    ex:Object1 a ex:System;
+                rdfs:label "System 1";
+                ex:hasSubSystem ex:Object2, ex:Object3.
+    ex:Object2 a ex:SubSystem.
+    ex:Object3 a ex:SubSystem.
+}
+ex:Object1/Record1 {
+    ex:Object1/Record1 a rec:Record;
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project.
+        rec:replaces ex:Object1/Record0;
+        rec:hasContent ex:Object1/Content1.
+}
+ ```
+ ex:Object1/Record0 can also be written this way
+```ttl
 ex:Object1/Record0 {
     ex:Object1 a ex:System.
     ex:Object1/Record0 a rec:Record;
@@ -37,20 +66,10 @@ ex:Object1/Record0 {
         rec:isInScope ex:Project.
 }
  ```
-and after the record above is sent, this is a new valid record
- ```ttl
-ex:Object1/Record1 {
-    ex:Object1 a ex:System;
-                rdfs:label "System 1";
-                ex:hasSubSystem ex:Object2, ex:Object3.
-    ex:Object2 a ex:SubSystem.
-    ex:Object3 a ex:SubSystem.
-    ex:Object1/Record1 a rec:Record;
-        rec:describes ex:Object1;
-        rec:isInScope ex:Project.
-        rec:replaces ex:Object1/Record0.
-}
- ```
+These two ways of writing the record are equivalent and there is no difference in the two. Therefor the IRI of the "content" named graph is ephemeral.
+When a record is written as two named graphs, the two named graphs must be be sent and stored together. 
+
+
 ## Subrecords
 Records can be related via the relation rec:isSubRecordOf. Scopes are inherited by subrecords. That is, if record 1 is a subrecord of record 2, then any member of rec:isInScope of record 2 is also the scope of record 1.
 
