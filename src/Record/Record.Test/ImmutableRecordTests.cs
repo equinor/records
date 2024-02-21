@@ -231,5 +231,24 @@ public class ImmutableRecordTests
         record.Should().BeNull();
     }
 
+    [Fact]
+    public void Record_Content_Does_Not_Include_Provenance()
+    {
+        var record = default(Record);
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+            .WithIsSubRecordOf(TestData.CreateRecordId(1))
+            .Build();
+        };
+        loadResult.Should().NotThrow();
+
+        var provenance = record.ProvenanceAsTriples();
+        var content = record.ContentAsTriples();
+        var contentSubjects = content.Select(t => t.Subject.ToString()).ToList();
+        contentSubjects.Should().NotContain(record.Id);
+        content.Should().NotContain(provenance);
+    }
+
 }
 

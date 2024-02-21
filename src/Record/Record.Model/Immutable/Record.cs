@@ -7,6 +7,7 @@ using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http;
 
 namespace Records.Immutable;
 
@@ -162,6 +163,8 @@ public class Record : IEquatable<Record>
             _ => throw new ArgumentException(
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
+
+
     public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
@@ -189,6 +192,25 @@ public class Record : IEquatable<Record>
     }
 
     public IEnumerable<Triple> Triples() => _graph.Triples ?? throw new UnloadedRecordException();
+    public IEnumerable<Triple> ContentAsTriples()
+    {
+        var parser = new SparqlQueryParser();
+        var provenance = ProvenanceAsTriples();
+        
+        var contentQueryString = $"CONSTRUCT {{?s ?p ?o}} WHERE {{ GRAPH <{Id}> {{ ?s ?p ?o FILTER(?s != <{Id}>)}} }}";
+        var contentQuery = parser.ParseFromString(contentQueryString);
+        var content = ConstructQuery(contentQuery);
+        return content.Triples.Except(provenance);
+    }
+
+    public IEnumerable<Triple> ProvenanceAsTriples()
+    {
+        var parser = new SparqlQueryParser();
+        var provenanceQueryString = $"CONSTRUCT {{<{Id}> ?p ?o}} WHERE {{ GRAPH <{Id}> {{ <{Id}> ?p ?o }} }}";
+        var provenanceQuery = parser.ParseFromString(provenanceQueryString);
+        var provenance = ConstructQuery(provenanceQuery);
+        return provenance.Triples;
+    }
 
     public bool ContainsTriple(Triple triple) => _graph.ContainsTriple(triple);
 
