@@ -19,7 +19,7 @@ jobs:
               uses: equinor/colt@main
               with:
                 from: schema/
-                to: schema/csharp
+                to: src/namespaces-generated
                 package_name: RecordIris
                 namespace: Records.Iris
               env:
