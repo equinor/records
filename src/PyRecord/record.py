@@ -64,9 +64,11 @@ class Record:
 
 def test():
     record = RecordBuilder().with_id("https://example.com/id/1").with_scope("https//example.com/scope/1").with_scope("https//example.com/scope/2").build()
-    print(str(record))
     print(record.id)
     print(record.provenance())
+    record.store.serialize(format="nquads")
+
+    print(str(record))
     
 
 if __name__ == "__main__":
