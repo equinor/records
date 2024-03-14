@@ -1,0 +1,26 @@
+name: Colt
+on:
+    workflow_dispatch:
+
+jobs:
+    ontology_transformer:
+        runs-on: ubuntu-latest
+        name: Colt
+        permissions:
+            pull-requests: write
+            contents: write
+        steps:
+            - name: Checkout repository
+              id: checkout
+              uses: actions/checkout@v4
+
+            - name: Colt
+              id: colt
+              uses: equinor/colt@main
+              with:
+                from: schema/
+                to: schema/csharp
+                package_name: RecordIris
+                namespace: Records.Iris
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
