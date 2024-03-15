@@ -1,0 +1,33 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+
+@prefix exdata: <https://example.com/data/>.
+
+
+exdata:RecordId1234 {
+    exdata:RecordId1234 a rec:Record;
+        rdfs:comment "This is a parsed, structured record";
+        rec:isInScope exdata:Scope1;
+        rec:describes exdata:object1;
+        prov:generatedAtTime "2024-03-13"^^xsd:date;
+        prov:wasGeneratedBy [
+            a prov:Activity;
+            prov:atLocation exdata:IriOfServerOrMachineRunning;
+            prov:wasAssociatedWith exdata:VersionOfSoftwareRunningTheTranslation;
+            prov:used exdata:RecordId4321
+        ] .
+    exdata:object1 a exdata:Object;
+        rdfs:comment "This is the content, the real data"
+}
+
+exdata:RecordId4321 {
+    exdata:RecordId4321 a rec:Record;
+        rdfs:comment "This is a record representing some source data. It has no proper rdf content";
+        rec:isInScope exdata:Scope1;
+        rec:describes exdata:RecordId4321;
+        prov:generatedAtTime "2024-01-12"^^xsd:date.
+    
+}
