@@ -24,6 +24,12 @@ public class Record : IEquatable<Record>
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
+    public IGraph Graph()
+    {
+        var tempGraph = new Graph();
+        tempGraph.Merge(_graph);
+        return tempGraph;
+    }
 
     public Record(string rdfString) => LoadFromString(rdfString);
 
