@@ -24,12 +24,7 @@ public class Record : IEquatable<Record>
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
-    public IGraph Graph()
-    {
-        var tempGraph = new Graph();
-        tempGraph.Merge(_graph);
-        return tempGraph;
-    }
+
 
     public Record(string rdfString) => LoadFromString(rdfString);
 
@@ -91,6 +86,13 @@ public class Record : IEquatable<Record>
             var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
             throw recordException;
         }
+    }
+
+    public IGraph Graph()
+    {
+        var tempGraph = new Graph();
+        tempGraph.Merge(_graph);
+        return tempGraph;
     }
 
     /// <summary>
@@ -171,29 +173,43 @@ public class Record : IEquatable<Record>
 
     public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
-    public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
+    public IEnumerable<Quad> QuadsWithType(string type) => QuadsWithType(new Uri(type));
+    public IEnumerable<Quad> QuadsWithType(Uri type)
+        => _graph
+        .GetTriplesWithPredicateObject(new UriNode(new Uri(Namespaces.Rdf.Type)), new UriNode(type))
+        .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
+    public IEnumerable<Quad> QuadsWithSubjectLabel(string subject) => QuadsWithSubjectLabel(new Uri(subject));
+    public IEnumerable<Quad> QuadsWithSubjectLabel(Uri subject)
+        => _graph
+        .GetTriplesWithPredicateObject(new UriNode(new Uri(Namespaces.Rdfs.Label)), new UriNode(subject))
+        .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+
+    public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
     public IEnumerable<Quad> QuadsWithSubject(Uri subject)
-    {
-        var s = _graph.CreateUriNode(subject);
-        return _graph.GetTriplesWithSubject(s).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
-    }
+        => _graph.GetTriplesWithSubject(new UriNode(subject)).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+    
 
     public IEnumerable<Quad> QuadsWithPredicate(string predicate) => QuadsWithPredicate(new Uri(predicate));
-
     public IEnumerable<Quad> QuadsWithPredicate(Uri predicate)
-    {
-        var p = _graph.CreateUriNode(predicate);
-        return _graph.GetTriplesWithPredicate(p).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
-    }
+      =>_graph.GetTriplesWithPredicate(new UriNode(predicate)).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithObject(string @object) => QuadsWithObject(new Uri(@object));
-
     public IEnumerable<Quad> QuadsWithObject(Uri @object)
-    {
-        var o = _graph.CreateUriNode(@object);
-        return _graph.GetTriplesWithObject(o).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
-    }
+        => _graph.GetTriplesWithObject(new UriNode(@object)).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));    
+
+    public IEnumerable<Quad> QuadsWithSubjectPredicate(string subject, string predicate) => QuadsWithSubjectPredicate(new Uri(subject), new Uri(predicate));
+    public IEnumerable<Quad> QuadsWithSubjectPredicate(Uri subject, Uri predicate)
+        => _graph.GetTriplesWithSubjectPredicate(new UriNode(subject), new UriNode(predicate)).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+
+    public IEnumerable<Quad> QuadsWithPredicateAndObject(string predicate, string @object) => QuadsWithPredicateAndObject(new Uri(predicate), new Uri(@object));
+    public IEnumerable<Quad> QuadsWithPredicateAndObject(Uri predicate, Uri @object)
+        => _graph.GetTriplesWithPredicateObject(new UriNode(predicate), new UriNode(@object)).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+
+    public IEnumerable<Quad> QuadsWithSubjectObject(string subject, string @object) => QuadsWithSubjectObject(new Uri(subject), new Uri(@object));
+    public IEnumerable<Quad> QuadsWithSubjectObject(Uri subject, Uri @object)
+        => _graph.GetTriplesWithSubjectObject(new UriNode(subject), new UriNode(@object)).Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+
 
     public IEnumerable<Triple> Triples() => _graph.Triples ?? throw new UnloadedRecordException();
     public IEnumerable<Triple> ContentAsTriples()
