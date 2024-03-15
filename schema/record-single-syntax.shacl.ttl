@@ -5,6 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#>.
 
 rec:ReplacedRecordShape
     a sh:NodeShape ;
@@ -22,7 +23,7 @@ rec:NewestRecordShape
     sh:name "NewestRecord" ;
     sh:message "The inferred newest record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces" .
 
-rec:RecordShape
+rec:RecordShapeshacl 
     a sh:NodeShape ;
     rdfs:comment "This shape is for the actual transmission format of records. It should validate a single record, meaning it does not need the other records like the super record to validate. It will not validate after record-rules.ttl is applied." ;
     sh:targetClass rec:Record ;
@@ -121,5 +122,28 @@ rec:RecordShape
         sh:deactivated true;
         sh:name "SuperRecordScope";
         sh:message "All records must have at least one scope, potentially reachable via subRecordOf relations";
-    ] .
+    ] ,
+    [
+        sh:path prov:wasGeneratedBy;
+        sh:name "GeneratedBy";
+        sh:maxCount 1;
+        sh:message "A record may link to at most one activity that generated it";
+        sh:severity sh:Warning
+    ],
+    [
+        sh:path  ( prov:wasGeneratedBy prov:atLocation ) ;
+        sh:name "GeneratedAtLocation";
+        sh:message "A record may include documentation about on what server it was generated"
+    ],
+    [
+        sh:path  ( prov:wasGeneratedBy prov:used) ;
+        sh:name "GeneratedFrom";
+        sh:message "A record may include documentation about from what source data it was generated"
+    ],
+    [
+        sh:path  ( prov:wasGeneratedBy prov:wasAssociatedWith ) ;
+        sh:name "GeneratedUsing";
+        sh:maxCount 1;
+        sh:message "A record may include documentation about what tools, software or users were involved in the generation of the record"
+    ].
     
