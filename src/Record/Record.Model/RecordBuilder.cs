@@ -447,6 +447,10 @@ public record RecordBuilder
         internal List<string> Scopes = new();
         internal List<string> Describes = new();
         internal List<string> RdfStrings = new();
+        internal List<string> ProvenanceActivityUses = new();
+        internal List<string> ProvenanceActivityAssociatedWith = new();
+        internal List<string> ProvenanceActivityLocatedAt = new();
+        
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
     }
