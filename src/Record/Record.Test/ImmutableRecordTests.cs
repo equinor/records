@@ -268,5 +268,123 @@ public class ImmutableRecordTests
         provenanceSubjectsHashSet.Count.Should().Be(1, "The only subject should be the record ID.");
         provenanceSubjectsHashSet.Single().Should().Be(record.Id, "The subject in the provenance should be the record ID.");
     }
+
+    [Fact]
+    public void Record_Can_Copy_Of_Internal_Graph()
+    {
+        var record = default(Record);
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+            .WithIsSubRecordOf(TestData.CreateRecordId(1))
+            .Build();
+        };
+
+        loadResult.Should().NotThrow();
+
+        var graph = record.Graph();
+
+        record.Triples().Should().Contain(graph.Triples);
+
+        graph.Clear();
+
+        graph.IsEmpty.Should().BeTrue();
+
+        record.Graph().IsEmpty.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Record_Can_Query_Subjects_With_Type()
+    {
+        var record = default(Record);
+
+        var typeExample = new UriNode(new Uri("https://example.com/type/Cool"));
+        var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
+        var content = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdf.Type)), typeExample);
+
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+            .WithIsSubRecordOf(TestData.CreateRecordId(1))
+            .WithAdditionalContent(content)
+            .Build();
+        };
+
+        loadResult.Should().NotThrow();
+
+        var subjects = record.SubjectWithType(typeExample);
+
+        subjects.Count().Should().Be(1);
+        subjects.Single().Should().Be(subjectExample);
+    }
+
+    [Fact]
+    public void Record_Can_Query_Subjects_With_Label()
+    {
+        var record = default(Record);
+
+        var labelExample = "This is an example label.";
+        var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
+        var content = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdfs.Label)), new LiteralNode(labelExample));
+
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+            .WithIsSubRecordOf(TestData.CreateRecordId(1))
+            .WithAdditionalContent(content)
+            .Build();
+        };
+
+        loadResult.Should().NotThrow();
+
+        var labels = record.LabelsOfSubject(subjectExample);
+
+        labels.Count().Should().Be(1);
+        labels.Single().Should().Be(labelExample);
+    }
+
+    [Fact]
+    public void Record_Can_Query_Graphs()
+    {
+        var record = default(Record);
+
+        var recordId = TestData.CreateRecordId(1);
+
+        var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
+
+        var labelExample = "This is an example label.";
+        var labelTriple = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdfs.Label)), new LiteralNode(labelExample));
+
+        var typeExample = new UriNode(new Uri("https://example.com/type/Example"));
+        var typeTriple = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdf.Type)), typeExample);
+
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete(recordId)
+            .WithIsSubRecordOf(TestData.CreateRecordId(1))
+            .WithAdditionalContent(labelTriple)
+            .WithAdditionalContent(typeTriple)
+            .Build();
+        };
+
+        loadResult.Should().NotThrow();
+
+        var labelTriples = record.QuadsWithPredicateAndObject(new UriNode(new Uri(Namespaces.Rdfs.Label)), new LiteralNode(labelExample));
+
+        labelTriples.Count().Should().Be(1);
+        labelTriples.Single().Should().Be(Quad.CreateUnsafe(labelTriple, recordId));
+
+
+        var typeTriples = record.QuadsWithSubjectPredicate(subjectExample, new UriNode(new Uri(Namespaces.Rdf.Type)));
+
+        typeTriples.Count().Should().Be(1);
+        typeTriples.Single().Should().Be(Quad.CreateUnsafe(typeTriple, recordId));
+
+
+        var recordTriples = record.QuadsWithSubjectObject(new UriNode(new Uri(recordId)), new UriNode(new Uri(Namespaces.Record.RecordType)));
+
+        recordTriples.Count().Should().Be(1);
+        recordTriples.Single().Should().Be(Quad.CreateUnsafe(recordId, Namespaces.Rdf.Type, Namespaces.Record.RecordType, recordId));
+    }
 }
 

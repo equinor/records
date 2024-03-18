@@ -50,7 +50,7 @@ public static class TestData
             .ToList();
 
     public static List<SafeQuad> CreateQuadList(int numberOfQuads, string graphLabel)
-        => Enumerable.Range(1, 10)
+        => Enumerable.Range(1, numberOfQuads)
             .Select(i =>
             {
                 var (s, p, o) = CreateRecordTripleStringTuple(i.ToString());
@@ -59,6 +59,9 @@ public static class TestData
             .ToList();
 
     public static string CreateRecordId(string id) => $"https://ssi.example.com/record/{id}";
+    public static Uri CreateRecordIdUri(string id) => new Uri(CreateRecordId(id));
+    public static UriNode CreateRecordIdUriNode(string id) => new UriNode(CreateRecordIdUri(id));
+
     public static string CreateRecordId(int id) => CreateRecordId(id.ToString());
     public static string CreateRecordSubject(string subject) => CreateRecordIri("subject", subject);
     public static string CreateRecordPredicate(string predicate) => CreateRecordIri("predicate", predicate);
