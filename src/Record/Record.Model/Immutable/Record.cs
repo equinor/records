@@ -194,12 +194,12 @@ public class Record : IEquatable<Record>
     public IEnumerable<Quad> QuadsWithSubject(INode subject)
         => _graph
         .GetTriplesWithSubject(subject)
-        .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));    
+        .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithPredicate(string predicate) => QuadsWithPredicate(new Uri(predicate));
     public IEnumerable<Quad> QuadsWithPredicate(Uri predicate) => QuadsWithPredicate(new UriNode(predicate));
     public IEnumerable<Quad> QuadsWithPredicate(INode predicate)
-      =>_graph
+      => _graph
         .GetTriplesWithPredicate(predicate)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
@@ -208,7 +208,7 @@ public class Record : IEquatable<Record>
     public IEnumerable<Quad> QuadsWithObject(INode @object)
         => _graph
         .GetTriplesWithObject(@object)
-        .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));    
+        .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubjectPredicate(string subject, string predicate) => QuadsWithSubjectPredicate(new Uri(subject), new Uri(predicate));
     public IEnumerable<Quad> QuadsWithSubjectPredicate(Uri subject, Uri predicate) => QuadsWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
