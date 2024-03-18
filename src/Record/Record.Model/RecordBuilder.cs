@@ -437,6 +437,12 @@ public record RecordBuilder
 
     private SafeQuad CreateReplacesQuad(string replaces) =>
         CreateQuadWithPredicateAndObject(Namespaces.Record.Replaces, replaces);
+
+    private (SafeQuad, INode) CreateProvenanceActivity(IGraph graph)
+    {
+        var activity = graph.CreateBlankNode();
+        CreateQuadWithPredicateAndObject(Namespaces.Provo, replaces);
+    }
     #endregion
 
     private record Storage
