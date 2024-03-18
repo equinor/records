@@ -2,6 +2,7 @@
 
 namespace Records.Mutable;
 
+[Obsolete("Mutable.Record will no longer be updated or maintained. We suggest you utilise IGraphs when you need to alter RDF content. You can collect a record's IGraph using Immutable.Record.Graph().")]
 [DebuggerDisplay($"{{{nameof(Id)}}}")]
 public record Record(string Id)
 {
