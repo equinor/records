@@ -15,9 +15,16 @@ exdata:RecordId1234 {
         prov:generatedAtTime "2024-03-13"^^xsd:date;
         prov:wasGeneratedBy [
             a prov:Activity;
+            rdfs:comment "This is the process that generated the record metadata/provenance"
+            prov:wasAssociatedWith exdata:VersionOfSoftwareCreatingProvenanceData;
+            prov:used exdata:messageMetadataX
+        ] .
+    exdata:object1 [
+            a prov:Activity;
+            rdfs:comment "This is the process that generated the record content. In later versions of the record library this will be on a separate content graph"
             prov:atLocation exdata:IriOfServerOrMachineRunning;
-            prov:wasAssociatedWith exdata:VersionOfSoftwareRunningTheTranslation;
-            prov:used exdata:RecordId4321
+            prov:wasAssociatedWith exdata:VersionOfSoftwareRunningTheContentTranslation;
+            prov:used exdata:exdata:RecordId4321
         ] .
     exdata:object1 a exdata:Object;
         rdfs:comment "This is the content, the real data"
@@ -25,7 +32,7 @@ exdata:RecordId1234 {
 
 exdata:RecordId4321 {
     exdata:RecordId4321 a rec:Record;
-        rdfs:comment "This is a record representing some source data. It has no proper rdf content";
+        rdfs:comment "This is a record representing some source content data. It has no proper rdf content";
         rec:isInScope exdata:Scope1;
         rec:describes exdata:RecordId4321;
         prov:generatedAtTime "2024-01-12"^^xsd:date.

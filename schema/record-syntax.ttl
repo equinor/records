@@ -1,3 +1,4 @@
+@prefix : <https://rdf.equinor.com/ontology/record-syntax/> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -7,10 +8,11 @@
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@base <https://rdf.equinor.com/ontology/record/> .
+@base <https://rdf.equinor.com/ontology/record-syntax/> .
 
 <https://rdf.equinor.com/ontology/record-syntax/> rdf:type owl:Ontology ;
-                                            owl:versionIRI <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> .
+                                                   owl:versionIRI <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> ;
+                                                   owl:imports <http://www.w3.org/TR/prov-dm/> .
 
 #################################################################
 #    Annotation properties
@@ -24,27 +26,13 @@ skos:relatedProperty rdf:type owl:AnnotationProperty .
 #    Object Properties
 #################################################################
 
-###  http://www.w3.org/ns/prov#hadMember
-prov:hadMember rdf:type owl:ObjectProperty ;
-               rdfs:domain prov:Collection ;
-               rdfs:comment "A collection is an entity that provides a structure to some constituents, which are themselves entities. These constituents are said to be member of the collections." .
-
-
-###  http://www.w3.org/ns/prov#wasDerivedFrom
-prov:wasDerivedFrom rdf:type owl:ObjectProperty .
-
-
-###  http://www.w3.org/ns/prov#wasRevisionOf
-prov:wasRevisionOf rdf:type owl:ObjectProperty ;
-                   rdfs:subPropertyOf prov:wasDerivedFrom .
-
-
 ###  https://rdf.equinor.com/ontology/record/describes
 rec:describes rdf:type owl:ObjectProperty ;
               rdfs:domain rec:Record ;
               rdfs:comment "This relates a record to all the objects described in it. All IRIs desribed must occur in the content, and for any IRI occurring in the content/dataset, there must be a path between that IRI and one of the describes IRIs using only triples occurring in the content/dataset." ;
               rdfs:label "describes" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000219> .
+
 
 ###  https://rdf.equinor.com/ontology/record/isInScope
 rec:isInScope rdf:type owl:ObjectProperty ;
@@ -53,14 +41,15 @@ rec:isInScope rdf:type owl:ObjectProperty ;
               rdfs:label "is in scope" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000142> .
 
+
 ###  https://rdf.equinor.com/ontology/record/isSubRecordOf
 rec:isSubRecordOf rdf:type owl:ObjectProperty ;
-                rdfs:subPropertyOf [
-                    owl:inverseOf prov:hadMember
-                ] ;
-               rdfs:domain rec:Record ;
-               rdfs:range rec:Record ;
-                rdfs:comment "A record can be a sub-record of another record. This does _not_ mean that the contents are related. Scopes are inherited from superrecord to subrecord, and subrecords are inherited via the replaces relation." .
+                  rdfs:subPropertyOf [ owl:inverseOf prov:hadMember
+                                     ] ;
+                  rdfs:domain rec:Record ;
+                  rdfs:range rec:Record ;
+                  rdfs:comment "A record can be a sub-record of another record. This does _not_ mean that the contents are related. Scopes are inherited from superrecord to subrecord, and subrecords are inherited via the replaces relation." .
+
 
 ###  https://rdf.equinor.com/ontology/record/replaces
 rec:replaces rdf:type owl:ObjectProperty ;
@@ -69,22 +58,10 @@ rec:replaces rdf:type owl:ObjectProperty ;
              rdfs:range rec:Record ;
              rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record. Note that subrecords are inherited from the replaced record" .
 
+
 #################################################################
 #    Classes
 #################################################################
-
-###  http://www.w3.org/ns/prov#Collection
-prov:Collection rdf:type owl:Class ;
-                rdfs:subClassOf prov:Entity ;
-                rdfs:comment "A collection is an entity that provides a structure to some constituents, which are themselves entities. These constituents are said to be member of the collections." ;
-                rdfs:label "Collection" .
-
-
-###  http://www.w3.org/ns/prov#Entity
-prov:Entity rdf:type owl:Class ;
-            rdfs:comment "An entity is a physical, digital, conceptual, or other kind of thing with some fixed aspects; entities may be real or imaginary." ;
-            rdfs:label "Entity" .
-
 
 ###  https://rdf.equinor.com/ontology/record/Record
 rec:Record rdf:type owl:Class ;
@@ -94,4 +71,4 @@ rec:Record rdf:type owl:Class ;
            rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000027> .
 
 
-###  Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi
+###  Generated by the OWL API (version 4.5.26.2023-07-17T20:34:13Z) https://github.com/owlcs/owlapi
