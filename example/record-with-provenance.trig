@@ -19,7 +19,7 @@ exdata:RecordId1234 {
             prov:wasAssociatedWith exdata:VersionOfSoftwareCreatingProvenanceData;
             prov:used exdata:messageMetadataX
         ] .
-    exdata:object1 [
+    exdata:object1 prov:wasGeneratedBy [
             a prov:Activity;
             rdfs:comment "This is the process that generated the record content. In later versions of the record library this will be on a separate content graph"
             prov:atLocation exdata:IriOfServerOrMachineRunning;
