@@ -126,8 +126,9 @@ rec:RecordShapeshacl
     [
         sh:path prov:wasGeneratedBy;
         sh:name "GeneratedBy";
+        sh:minCount 1;
         sh:maxCount 1;
-        sh:message "A record may link to at most one activity that generated it";
+        sh:message "A record may link to exactly one activity that generated it";
         sh:severity sh:Warning
     ],
     [
@@ -143,7 +144,7 @@ rec:RecordShapeshacl
     [
         sh:path  ( prov:wasGeneratedBy prov:wasAssociatedWith ) ;
         sh:name "GeneratedUsing";
-        sh:maxCount 1;
-        sh:message "A record may include documentation about what tools, software or users were involved in the generation of the record"
+        sh:minCount 1;
+        sh:message "A record may include documentation about what tools, software or users were involved in the generation of the record. At least one, the version of the records library, must be included"
     ].
     
