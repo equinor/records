@@ -1,4 +1,5 @@
-﻿using Records.Exceptions;
+﻿using System.Reflection;
+using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Shacl;
@@ -189,6 +190,7 @@ public record RecordBuilder
             }
         };
 
+
     public RecordBuilder WithReplaces(IEnumerable<string> replaces) => WithReplaces(replaces.ToArray());
 
     public RecordBuilder WithReplaces(params Uri[] replaces) => WithReplaces(replaces.Select(r => r.ToString()));
@@ -221,6 +223,32 @@ public record RecordBuilder
             _storage = _storage with
             {
                 Scopes = _storage.Scopes.Concat(scopes).ToList()
+            }
+        };
+
+    public RecordBuilder WithAdditionalUsed(params string[] used) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ProvenanceActivityUses = _storage.ProvenanceActivityUses.Concat(used).ToList()
+            }
+        };
+    public RecordBuilder WithAdditionalWasAssociatedWith(params string[] activities) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ProvenanceActivityAssociatedWith = _storage.ProvenanceActivityAssociatedWith.Concat(activities).ToList()
+            }
+        };
+
+    public RecordBuilder WithLocatedAt(params string[] locations) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ProvenanceActivityLocatedAt = _storage.ProvenanceActivityLocatedAt.Concat(locations).ToList()
             }
         };
 
@@ -346,6 +374,8 @@ public record RecordBuilder
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
         _graph = new Graph(_storage.Id);
         _graph.BaseUri = _storage.Id;
+        
+        _storage.ProvenanceActivityAssociatedWith.Add(CreateRecordVersionUri());
 
         var recordQuads = new List<SafeQuad>();
         recordQuads.AddRange(_storage.Quads.Select(quad =>
@@ -360,6 +390,7 @@ public record RecordBuilder
 
         recordQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
 
+
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
         recordQuads.Add(typeQuad);
 
@@ -373,7 +404,7 @@ public record RecordBuilder
 
         var tripleString = string.Join("\n", recordQuads.Select(q => q.ToTripleString()));
         _graph.LoadFromString(tripleString);
-
+        _graph.Assert(CreateProvenanceActivity(_graph));
         var report = _processor.Validate(_graph);
         if (!report.Conforms) throw ShaclException(report);
 
@@ -415,6 +446,11 @@ public record RecordBuilder
         return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _graph.BaseUri)).ToList();
     }
 
+    private string CreateRecordVersionUri() =>
+        $"https://www.nuget.org/packages/Record/{GetType().Assembly.GetName().Version}";
+
+
+
     private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
     {
         if (_graph.BaseUri == null) throw new RecordException("Record ID must be added first.");
@@ -438,10 +474,42 @@ public record RecordBuilder
     private SafeQuad CreateReplacesQuad(string replaces) =>
         CreateQuadWithPredicateAndObject(Namespaces.Record.Replaces, replaces);
 
-    private (SafeQuad, INode) CreateProvenanceActivity(IGraph graph)
+    private IEnumerable<Triple> CreateProvenanceTriples(INodeFactory graph, IRefNode activity, List<string> provenanceObjects,
+        Uri property) =>
+        provenanceObjects.Select(used =>
+            new Triple(
+                activity,
+                graph.CreateUriNode(property),
+                graph.CreateUriNode(new Uri(used))
+            ));
+
+    private List<Triple> CreateProvenanceActivity(IGraph graph)
     {
+        var provenanceTriples = new List<Triple>();
         var activity = graph.CreateBlankNode();
-        CreateQuadWithPredicateAndObject(Namespaces.Provo, replaces);
+        var recordNode = graph.Name;
+        provenanceTriples.Add(
+            new Triple(
+                recordNode,
+                graph.CreateUriNode(Namespaces.Prov.WasGeneratedBy),
+                activity)
+            );
+        foreach (var (objectList, property) in new (List<string>, Uri)[]
+                 {
+                     (_storage.ProvenanceActivityUses, new Uri(Namespaces.Prov.WasGeneratedBy)),
+                     (_storage.ProvenanceActivityAssociatedWith, new Uri(Namespaces.Prov.WasAssociatedWith)),
+                     (_storage.ProvenanceActivityLocatedAt, new Uri(Namespaces.Prov.AtLocation))
+                 })
+        {
+            provenanceTriples.AddRange(
+                CreateProvenanceTriples(
+                    graph,
+                    activity,
+                    objectList,
+                    property)
+            );
+        }
+        return provenanceTriples;
     }
     #endregion
 
@@ -456,7 +524,7 @@ public record RecordBuilder
         internal List<string> ProvenanceActivityUses = new();
         internal List<string> ProvenanceActivityAssociatedWith = new();
         internal List<string> ProvenanceActivityLocatedAt = new();
-        
+
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
     }

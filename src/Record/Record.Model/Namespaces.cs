@@ -66,16 +66,18 @@ public struct Namespaces
         public const string ResultMessage = $"{BaseUrl}resultMessage";
         public const string ResultSeverity = $"{BaseUrl}resultSeverity";
     }
-    
+
     public struct Prov
     {
         public const string BaseUrl = "http://www.w3.org/ns/prov#";
 
         public const string WasDerivedFrom = $"{BaseUrl}wasDerivedFrom";
+        public const string WasGeneratedBy = $"{BaseUrl}wasGeneratedBy";
         public const string AtLocation = $"{BaseUrl}atLocation";
         public const string GeneratedAtTime = $"{BaseUrl}generatedAtTime";
         public const string HadMember = $"{BaseUrl}hadMember";
         public const string WasAssociatedWith = $"{BaseUrl}wasAssociatedWith";
+        public const string Used = $"{BaseUrl}used";
     }
 }
 
