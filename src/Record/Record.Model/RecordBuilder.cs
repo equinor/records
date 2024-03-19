@@ -252,7 +252,7 @@ public record RecordBuilder
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
         _graph = new Graph(_storage.Id);
         _graph.BaseUri = _storage.Id;
-        
+
         _storage.ProvenanceActivityAssociatedWith.Add(CreateRecordVersionUri());
 
         var recordQuads = new List<SafeQuad>();
