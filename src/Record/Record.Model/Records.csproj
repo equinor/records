@@ -36,10 +36,12 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <Content Include="..\..\..\schema\record-single-syntax.shacl.ttl">
-	    <Link>Schema/record-single-syntax.shacl.ttl</Link>
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+	  <EmbeddedResource Include="..\..\..\schema\record-single-syntax.shacl.ttl">
+	    <Link>Schema\record-single-syntax.shacl.ttl</Link>
+	    <IncludeInPackage>true</IncludeInPackage>
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	    <PackageCopyToOutput>true</PackageCopyToOutput>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 </Project>

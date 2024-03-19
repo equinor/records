@@ -21,9 +21,10 @@ public record RecordBuilder
     public RecordBuilder()
     {
         var shapes = new Graph();
-        var outputFolderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ??
-                               throw new Exception("Cannot get absolute path");
-        shapes.LoadFromFile($"{outputFolderPath}/Schema/record-single-syntax.shacl.ttl");
+        var outputFolderPath = Assembly.GetExecutingAssembly().GetManifestResourceStream("Records.Schema.record-single-syntax.shacl.ttl") ??
+                               throw new Exception("Could not get assembly path.");
+        var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
+        shapes.LoadFromString(shapeString);
         _processor = new ShapesGraph(shapes);
     }
 
