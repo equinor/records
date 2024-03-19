@@ -106,6 +106,8 @@ public record RecordBuilder
             }
         };
 
+    public RecordBuilder ProvenanceGeneratedUsing(IEnumerable<string> used) =>
+        ProvenanceGeneratedUsing(used.ToArray());
     public RecordBuilder ProvenanceGeneratedUsing(params string[] used) =>
         this with
         {
@@ -117,18 +119,23 @@ public record RecordBuilder
                 }
             }
         };
-    public RecordBuilder ProvenanceGeneratedWith(params string[] activities) =>
+
+    public RecordBuilder ProvenanceGeneratedWith(IEnumerable<string> tools) =>
+        ProvenanceGeneratedWith(tools.ToArray());
+    public RecordBuilder ProvenanceGeneratedWith(params string[] tools) =>
         this with
         {
             _storage = _storage with
             {
                 ProvenanceGeneration = _storage.ProvenanceGeneration with
                 {
-                    With = _storage.ProvenanceGeneration.With.Concat(activities).ToList()
+                    With = _storage.ProvenanceGeneration.With.Concat(tools).ToList()
                 }
             }
         };
 
+    public RecordBuilder ProvenanceGeneratedAtLocation(IEnumerable<string> locations) =>
+        ProvenanceGeneratedAtLocation(locations.ToArray());
     public RecordBuilder ProvenanceGeneratedAtLocation(params string[] locations) =>
         this with
         {
@@ -141,6 +148,8 @@ public record RecordBuilder
             }
         };
 
+    public RecordBuilder ContentGeneratedUsing(IEnumerable<string> used) =>
+        ContentGeneratedUsing(used.ToArray());
     public RecordBuilder ContentGeneratedUsing(params string[] used) =>
         this with
         {
@@ -152,6 +161,9 @@ public record RecordBuilder
                 }
             }
         };
+
+    public RecordBuilder ContentGeneratedWith(IEnumerable<string> tools) =>
+        ContentGeneratedWith(tools.ToArray());
     public RecordBuilder ContentGeneratedWith(params string[] tools) =>
         this with
         {
@@ -164,6 +176,8 @@ public record RecordBuilder
             }
         };
 
+    public RecordBuilder ContentGeneratedAtLocation(IEnumerable<string> locations) =>
+        ContentGeneratedAtLocation(locations.ToArray());
     public RecordBuilder ContentGeneratedAtLocation(params string[] locations) =>
         this with
         {
