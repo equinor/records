@@ -33,6 +33,36 @@ public class RecordBuilderTests
     }
 
     [Fact]
+    public void Can_Add_Provenance()
+    {
+        var id = TestData.CreateRecordId("0");
+        var scopes = TestData.CreateObjectList(2, "scope");
+        var describes = TestData.CreateObjectList(2, "describes");
+        var used = TestData.CreateObjectList(2, "used");
+        var with = TestData.CreateObjectList(2, "with");
+        var locations = TestData.CreateObjectList(2, "location");
+
+        var record = new RecordBuilder()
+            .WithScopes(scopes)
+            .WithDescribes(describes)
+            .ProvenanceGeneratedUsing(used)
+            .ProvenanceGeneratedWith(with)
+            .ProvenanceGeneratedAtLocation(locations)
+            .WithId(id)
+            .Build();
+
+        record.Should().NotBeNull();
+
+        record.Scopes.Should().Contain(scopes.First());
+        record.Scopes.Should().Contain(scopes.Last());
+
+        record.Describes.Should().Contain(describes.First());
+        record.Describes.Should().Contain(describes.Last());
+
+        record.Id.Should().Be(id);
+    }
+
+    [Fact]
     public void RecordBuilder_With()
     {
         var id0 = TestData.CreateRecordId("0");
