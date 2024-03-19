@@ -127,8 +127,7 @@ rec:RecordShapeshacl
         sh:path prov:wasGeneratedBy;
         sh:name "GeneratedBy";
         sh:minCount 1;
-        sh:maxCount 1;
-        sh:message "A record may link to exactly one activity that generated it";
+        sh:message "A record must link to at least the one activity that generated it";
         sh:severity sh:Warning
     ],
     [

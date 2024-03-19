@@ -30,6 +30,7 @@ public static class TestData
             .WithId(id)
             .WithScopes(scopes)
             .WithDescribes(describes)
+            .ContentGeneratedWith("https://example.com/software/v1")
             .WithContent(content);
     }
 

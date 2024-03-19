@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using AngleSharp.Common;
 using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -104,29 +105,73 @@ public record RecordBuilder
             }
         };
 
-    public RecordBuilder WithAdditionalUsed(params string[] used) =>
+    public RecordBuilder ProvenanceGeneratedUsing(params string[] used) =>
         this with
         {
             _storage = _storage with
             {
-                ProvenanceActivityUses = _storage.ProvenanceActivityUses.Concat(used).ToList()
+                ProvenanceGeneration = _storage.ProvenanceGeneration with
+                {
+                    Using = _storage.ProvenanceGeneration.Using.Concat(used).ToList()
+                }
             }
         };
-    public RecordBuilder WithAdditionalWasAssociatedWith(params string[] activities) =>
+    public RecordBuilder ProvenanceGeneratedWith(params string[] activities) =>
         this with
         {
             _storage = _storage with
             {
-                ProvenanceActivityAssociatedWith = _storage.ProvenanceActivityAssociatedWith.Concat(activities).ToList()
+                ProvenanceGeneration = _storage.ProvenanceGeneration with
+                {
+                    With = _storage.ProvenanceGeneration.With.Concat(activities).ToList()
+                }
             }
         };
 
-    public RecordBuilder WithLocatedAt(params string[] locations) =>
+    public RecordBuilder ProvenanceGeneratedAtLocation(params string[] locations) =>
         this with
         {
             _storage = _storage with
             {
-                ProvenanceActivityLocatedAt = _storage.ProvenanceActivityLocatedAt.Concat(locations).ToList()
+                ProvenanceGeneration = _storage.ProvenanceGeneration with
+                {
+                    AtLocation = _storage.ProvenanceGeneration.AtLocation.Concat(locations).ToList()
+                }
+            }
+        };
+
+    public RecordBuilder ContentGeneratedUsing(params string[] used) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ContentGeneration = _storage.ContentGeneration with
+                {
+                    Using = _storage.ContentGeneration.Using.Concat(used).ToList()
+                }
+            }
+        };
+    public RecordBuilder ContentGeneratedWith(params string[] tools) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ContentGeneration = _storage.ContentGeneration with
+                {
+                    With = _storage.ContentGeneration.With.Concat(tools).ToList()
+                }
+            }
+        };
+
+    public RecordBuilder ContentGeneratedAtLocation(params string[] locations) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                ContentGeneration = _storage.ContentGeneration with
+                {
+                    AtLocation = _storage.ContentGeneration.AtLocation.Concat(locations).ToList()
+                }
             }
         };
 
@@ -253,7 +298,7 @@ public record RecordBuilder
         _graph = new Graph(_storage.Id);
         _graph.BaseUri = _storage.Id;
 
-        _storage.ProvenanceActivityAssociatedWith.Add(CreateRecordVersionUri());
+        _storage.ProvenanceGeneration.With.Add(CreateRecordVersionUri());
 
         var recordQuads = new List<SafeQuad>();
         recordQuads.AddRange(_storage.Quads.Select(quad =>
@@ -361,10 +406,17 @@ public record RecordBuilder
                 graph.CreateUriNode(new Uri(used))
             ));
 
-    private List<Triple> CreateProvenanceActivity(IGraph graph)
+    private IEnumerable<Triple> CreateProvenanceActivity(IGraph graph)
+    {
+        var provenanceActivity = graph.CreateBlankNode();
+        var contentActivity = graph.CreateBlankNode();
+        return CreateProvenanceActivity(graph, provenanceActivity, _storage.ProvenanceGeneration)
+            .Concat(CreateProvenanceActivity(graph, contentActivity, _storage.ContentGeneration));
+    }
+
+    private IEnumerable<Triple> CreateProvenanceActivity(IGraph graph, IRefNode activity, GenerationMetadata generationObjects)
     {
         var provenanceTriples = new List<Triple>();
-        var activity = graph.CreateBlankNode();
         var recordNode = graph.Name;
         provenanceTriples.Add(
             new Triple(
@@ -374,9 +426,9 @@ public record RecordBuilder
             );
         foreach (var (objectList, property) in new (List<string>, Uri)[]
                  {
-                     (_storage.ProvenanceActivityUses, new Uri(Namespaces.Prov.WasGeneratedBy)),
-                     (_storage.ProvenanceActivityAssociatedWith, new Uri(Namespaces.Prov.WasAssociatedWith)),
-                     (_storage.ProvenanceActivityLocatedAt, new Uri(Namespaces.Prov.AtLocation))
+                     (generationObjects.Using, new Uri(Namespaces.Prov.WasGeneratedBy)),
+                     (generationObjects.With, new Uri(Namespaces.Prov.WasAssociatedWith)),
+                     (generationObjects.AtLocation, new Uri(Namespaces.Prov.AtLocation))
                  })
         {
             provenanceTriples.AddRange(
@@ -391,6 +443,13 @@ public record RecordBuilder
     }
     #endregion
 
+    private record GenerationMetadata
+    {
+        internal List<string> Using = new();
+        internal List<string> With = new();
+        internal List<string> AtLocation = new();
+    };
+
     private record Storage
     {
         internal Uri? Id;
@@ -399,9 +458,9 @@ public record RecordBuilder
         internal List<string> Scopes = new();
         internal List<string> Describes = new();
         internal List<string> RdfStrings = new();
-        internal List<string> ProvenanceActivityUses = new();
-        internal List<string> ProvenanceActivityAssociatedWith = new();
-        internal List<string> ProvenanceActivityLocatedAt = new();
+
+        internal GenerationMetadata ProvenanceGeneration = new();
+        internal GenerationMetadata ContentGeneration = new();
 
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
