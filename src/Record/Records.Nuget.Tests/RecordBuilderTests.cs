@@ -36,7 +36,7 @@ public class RecordBuilderTests
 
         record.Id.Should().Be(id);
     }
-    
+
     public static string CreateRecordId(string id) => $"https://ssi.example.com/record/{id}";
     public static List<string> CreateObjectList(int numberOfObjects, string subset)
         => Enumerable.Range(1, numberOfObjects)
