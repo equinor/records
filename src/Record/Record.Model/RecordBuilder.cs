@@ -25,7 +25,7 @@ public record RecordBuilder
     public RecordBuilder()
     {
         _storage = new Storage();
-        _metadataProvenance = ProvenanceBuilder.WithTool(CreateRecordVersionUri())(new ProvenanceBuilder());
+        _metadataProvenance = ProvenanceBuilder.WithAdditionalTool(CreateRecordVersionUri())(new ProvenanceBuilder());
         _contentProvenance = new ProvenanceBuilder();
 
         var shapes = new Graph();
@@ -109,14 +109,14 @@ public record RecordBuilder
 
     #region ProvenanceBuilderWrappers
 
-    public RecordBuilder WithContentProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
+    public RecordBuilder WithAdditionalContentProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
         this with
         {
             _contentProvenance = provenanceBuilder(_contentProvenance)
         };
 
 
-    public RecordBuilder WithMetadataProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
+    public RecordBuilder WithAdditionalMetadataProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
         this with
         {
             _metadataProvenance = provenanceBuilder(_metadataProvenance)
@@ -284,8 +284,8 @@ public record RecordBuilder
 
         var tripleString = string.Join("\n", recordQuads.Select(q => q.ToTripleString()));
         _graph.LoadFromString(tripleString);
-        _graph.Assert(_metadataProvenance.Build(_graph));
-        _graph.Assert(_contentProvenance.Build(_graph));
+        _graph.Assert(_metadataProvenance.Build(_graph, _graph.Name));
+        _graph.Assert(_contentProvenance.Build(_graph, _graph.Name));
 
         var report = _processor.Validate(_graph);
         if (!report.Conforms) throw ShaclException(report);

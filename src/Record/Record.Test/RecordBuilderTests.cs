@@ -55,10 +55,10 @@ public class RecordBuilderTests
         var record = new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
-            .WithContentProvenance(ProvenanceBuilder.WithTool(with))
-            .WithContentProvenance(ProvenanceBuilder.WithLocation(locations))
-            .WithContentProvenance(ProvenanceBuilder.WithUsing(used[0], used[1]))
-            .WithMetadataProvenance(ProvenanceBuilder.WithUsing(used[3], used[2]))
+            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool(with))
+            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalLocation(locations))
+            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalUsing(used[0], used[1]))
+            .WithAdditionalMetadataProvenance(ProvenanceBuilder.WithAdditionalUsing(used[3], used[2]))
             .WithId(id)
             .Build();
 

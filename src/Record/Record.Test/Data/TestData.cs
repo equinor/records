@@ -30,7 +30,7 @@ public static class TestData
             .WithId(id)
             .WithScopes(scopes)
             .WithDescribes(describes)
-            .WithContentProvenance(ProvenanceBuilder.WithTool("https://example.com/software/v1"))
+            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool("https://example.com/software/v1"))
             .WithContent(content);
     }
 

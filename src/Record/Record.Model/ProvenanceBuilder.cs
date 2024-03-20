@@ -8,8 +8,8 @@ public record ProvenanceBuilder
 {
     private Storage _storage = new();
 
-    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithUsing(IEnumerable<string> used) => WithUsing(used.ToArray());
-    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithUsing(params string[] used) =>
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalUsing(IEnumerable<string> used) => WithAdditionalUsing(used.ToArray());
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalUsing(params string[] used) =>
         (builder) =>
             builder with
             {
@@ -18,8 +18,8 @@ public record ProvenanceBuilder
                     Using = builder._storage.Using.Concat(used).ToList()
                 }
             };
-    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithLocation(IEnumerable<string> locations) => WithLocation(locations.ToArray());
-    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithLocation(params string[] locations) =>
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalLocation(IEnumerable<string> locations) => WithAdditionalLocation(locations.ToArray());
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalLocation(params string[] locations) =>
         (builder) =>
             builder with
             {
@@ -29,8 +29,8 @@ public record ProvenanceBuilder
                 }
             };
 
-    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithTool(IEnumerable<string> tools) => WithTool(tools.ToArray());
-    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithTool(params string[] tools) =>
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalTool(IEnumerable<string> tools) => WithAdditionalTool(tools.ToArray());
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalTool(params string[] tools) =>
         (builder) =>
         builder with
         {
@@ -39,17 +39,15 @@ public record ProvenanceBuilder
                 With = builder._storage.With.Concat(tools).ToList()
             }
         };
-    public IEnumerable<Triple> Build(IGraph graph)
+    public IEnumerable<Triple> Build(INodeFactory graph, IRefNode rootObject)
     {
-
         IRefNode activity = graph.CreateBlankNode();
 
         var provenanceTriples = new List<Triple>();
-        var recordNode = graph.Name;
         provenanceTriples.Add(
             new Triple(
-                recordNode,
-                graph.CreateUriNode(new Uri(Namespaces.Prov.WasGeneratedBy)),
+                rootObject,
+                new UriNode(new Uri(Namespaces.Prov.WasGeneratedBy)),
                 activity)
         );
         foreach (var (objectList, property) in new (List<string>, Uri)[]
@@ -61,7 +59,6 @@ public record ProvenanceBuilder
         {
             provenanceTriples.AddRange(
                 CreateProvenanceTriples(
-                    graph,
                     activity,
                     objectList,
                     property)
@@ -70,13 +67,13 @@ public record ProvenanceBuilder
         return provenanceTriples;
     }
 
-    private IEnumerable<Triple> CreateProvenanceTriples(INodeFactory graph, IRefNode activity, List<string> provenanceObjects,
+    private IEnumerable<Triple> CreateProvenanceTriples(IRefNode activity, List<string> provenanceObjects,
         Uri property) =>
         provenanceObjects.Select(used =>
             new Triple(
                 activity,
-                graph.CreateUriNode(property),
-                graph.CreateUriNode(new Uri(used))
+                new UriNode(property),
+                new UriNode(new Uri(used))
             ));
 
     internal record Storage
