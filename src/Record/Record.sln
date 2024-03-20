@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Records", "Record.Model\Rec
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordGenerator", "..\RecordGenerator\RecordGenerator.csproj", "{C0DBE5B3-6F1F-40E3-8DA7-991F2A0F777E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Records.Nuget.Tests", "Records.Nuget.Tests\Records.Nuget.Tests.csproj", "{2A42EBCC-7856-4BCD-AD3F-947CFD674184}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{C0DBE5B3-6F1F-40E3-8DA7-991F2A0F777E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0DBE5B3-6F1F-40E3-8DA7-991F2A0F777E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0DBE5B3-6F1F-40E3-8DA7-991F2A0F777E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2A42EBCC-7856-4BCD-AD3F-947CFD674184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A42EBCC-7856-4BCD-AD3F-947CFD674184}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A42EBCC-7856-4BCD-AD3F-947CFD674184}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A42EBCC-7856-4BCD-AD3F-947CFD674184}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

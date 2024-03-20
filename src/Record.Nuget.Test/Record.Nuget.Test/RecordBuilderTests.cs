@@ -1,12 +1,8 @@
 using FluentAssertions;
-using Records.Exceptions;
+using Records;
 using Record = Records.Immutable.Record;
-using VDS.RDF;
-using Newtonsoft.Json.Linq;
-using VDS.RDF.Writing;
-using Xunit;
 
-namespace Records.Nuget.Tests;
+namespace Records.Nuget.Test;
 
 public class RecordBuilderTests
 {
