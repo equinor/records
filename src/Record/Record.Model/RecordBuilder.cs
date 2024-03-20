@@ -14,14 +14,23 @@ namespace Records;
 
 public record RecordBuilder
 {
-    private Storage _storage = new();
+    private Storage _storage;
+    private ProvenanceBuilder _metadataProvenance;
+    private ProvenanceBuilder _contentProvenance;
+
+
     private IGraph _graph;
     private ShapesGraph _processor;
 
     public RecordBuilder()
     {
+        _storage = new Storage();
+        _metadataProvenance = ProvenanceBuilder.WithTool(CreateRecordVersionUri())(new ProvenanceBuilder());
+        _contentProvenance = new ProvenanceBuilder();
+
         var shapes = new Graph();
-        var outputFolderPath = Assembly.GetExecutingAssembly().GetManifestResourceStream("Records.Schema.record-single-syntax.shacl.ttl") ??
+        var outputFolderPath = Assembly.GetExecutingAssembly()
+                                   .GetManifestResourceStream("Records.Schema.record-single-syntax.shacl.ttl") ??
                                throw new Exception("Could not get assembly path.");
         var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
         shapes.LoadFromString(shapeString);
@@ -31,6 +40,7 @@ public record RecordBuilder
     #region With-Methods
 
     #region Provenance-Methods
+
     #region With-Provenance-Methods
 
     public RecordBuilder WithScopes(params string[] scopes) =>
@@ -94,9 +104,28 @@ public record RecordBuilder
         };
 
     public RecordBuilder WithId(string id) => WithId(new Uri(id));
+
+    #endregion
+
+    #region ProvenanceBuilderWrappers
+
+    public RecordBuilder WithContentProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
+        this with
+        {
+            _contentProvenance = provenanceBuilder(_contentProvenance)
+        };
+
+
+    public RecordBuilder WithMetadataProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
+        this with
+        {
+            _metadataProvenance = provenanceBuilder(_metadataProvenance)
+        };
+
     #endregion
 
     #region With-Additional-Provenance-Methods
+
     public RecordBuilder WithAdditionalScopes(params string[] scopes) =>
         this with
         {
@@ -105,91 +134,6 @@ public record RecordBuilder
                 Scopes = _storage.Scopes.Concat(scopes).ToList()
             }
         };
-
-    public RecordBuilder ProvenanceGeneratedUsing(IEnumerable<string> used) =>
-        ProvenanceGeneratedUsing(used.ToArray());
-    public RecordBuilder ProvenanceGeneratedUsing(params string[] used) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                ProvenanceGeneration = _storage.ProvenanceGeneration with
-                {
-                    Using = _storage.ProvenanceGeneration.Using.Concat(used).ToList()
-                }
-            }
-        };
-
-    public RecordBuilder ProvenanceGeneratedWith(IEnumerable<string> tools) =>
-        ProvenanceGeneratedWith(tools.ToArray());
-    public RecordBuilder ProvenanceGeneratedWith(params string[] tools) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                ProvenanceGeneration = _storage.ProvenanceGeneration with
-                {
-                    With = _storage.ProvenanceGeneration.With.Concat(tools).ToList()
-                }
-            }
-        };
-
-    public RecordBuilder ProvenanceGeneratedAtLocation(IEnumerable<string> locations) =>
-        ProvenanceGeneratedAtLocation(locations.ToArray());
-    public RecordBuilder ProvenanceGeneratedAtLocation(params string[] locations) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                ProvenanceGeneration = _storage.ProvenanceGeneration with
-                {
-                    AtLocation = _storage.ProvenanceGeneration.AtLocation.Concat(locations).ToList()
-                }
-            }
-        };
-
-    public RecordBuilder ContentGeneratedUsing(IEnumerable<string> used) =>
-        ContentGeneratedUsing(used.ToArray());
-    public RecordBuilder ContentGeneratedUsing(params string[] used) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                ContentGeneration = _storage.ContentGeneration with
-                {
-                    Using = _storage.ContentGeneration.Using.Concat(used).ToList()
-                }
-            }
-        };
-
-    public RecordBuilder ContentGeneratedWith(IEnumerable<string> tools) =>
-        ContentGeneratedWith(tools.ToArray());
-    public RecordBuilder ContentGeneratedWith(params string[] tools) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                ContentGeneration = _storage.ContentGeneration with
-                {
-                    With = _storage.ContentGeneration.With.Concat(tools).ToList()
-                }
-            }
-        };
-
-    public RecordBuilder ContentGeneratedAtLocation(IEnumerable<string> locations) =>
-        ContentGeneratedAtLocation(locations.ToArray());
-    public RecordBuilder ContentGeneratedAtLocation(params string[] locations) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                ContentGeneration = _storage.ContentGeneration with
-                {
-                    AtLocation = _storage.ContentGeneration.AtLocation.Concat(locations).ToList()
-                }
-            }
-        };
-
     public RecordBuilder WithAdditionalScopes(IEnumerable<string> scopes)
         => WithAdditionalScopes(scopes.ToArray());
     public RecordBuilder WithAdditionalScopes(params Uri[] scopes) => WithAdditionalScopes(scopes.Select(s => s.ToString()));
@@ -313,8 +257,6 @@ public record RecordBuilder
         _graph = new Graph(_storage.Id);
         _graph.BaseUri = _storage.Id;
 
-        _storage.ProvenanceGeneration.With.Add(CreateRecordVersionUri());
-
         var recordQuads = new List<SafeQuad>();
         recordQuads.AddRange(_storage.Quads.Select(quad =>
         {
@@ -342,7 +284,9 @@ public record RecordBuilder
 
         var tripleString = string.Join("\n", recordQuads.Select(q => q.ToTripleString()));
         _graph.LoadFromString(tripleString);
-        _graph.Assert(CreateProvenanceActivity(_graph));
+        _graph.Assert(_metadataProvenance.Build(_graph));
+        _graph.Assert(_contentProvenance.Build(_graph));
+
         var report = _processor.Validate(_graph);
         if (!report.Conforms) throw ShaclException(report);
 
@@ -412,58 +356,9 @@ public record RecordBuilder
     private SafeQuad CreateReplacesQuad(string replaces) =>
         CreateQuadWithPredicateAndObject(Namespaces.Record.Replaces, replaces);
 
-    private IEnumerable<Triple> CreateProvenanceTriples(INodeFactory graph, IRefNode activity, List<string> provenanceObjects,
-        Uri property) =>
-        provenanceObjects.Select(used =>
-            new Triple(
-                activity,
-                graph.CreateUriNode(property),
-                graph.CreateUriNode(new Uri(used))
-            ));
 
-    private IEnumerable<Triple> CreateProvenanceActivity(IGraph graph)
-    {
-        var provenanceActivity = graph.CreateBlankNode();
-        var contentActivity = graph.CreateBlankNode();
-        return CreateProvenanceActivity(graph, provenanceActivity, _storage.ProvenanceGeneration)
-            .Concat(CreateProvenanceActivity(graph, contentActivity, _storage.ContentGeneration));
-    }
-
-    private IEnumerable<Triple> CreateProvenanceActivity(IGraph graph, IRefNode activity, GenerationMetadata generationObjects)
-    {
-        var provenanceTriples = new List<Triple>();
-        var recordNode = graph.Name;
-        provenanceTriples.Add(
-            new Triple(
-                recordNode,
-                graph.CreateUriNode(new Uri(Namespaces.Prov.WasGeneratedBy)),
-                activity)
-            );
-        foreach (var (objectList, property) in new (List<string>, Uri)[]
-                 {
-                     (generationObjects.Using, new Uri(Namespaces.Prov.WasGeneratedBy)),
-                     (generationObjects.With, new Uri(Namespaces.Prov.WasAssociatedWith)),
-                     (generationObjects.AtLocation, new Uri(Namespaces.Prov.AtLocation))
-                 })
-        {
-            provenanceTriples.AddRange(
-                CreateProvenanceTriples(
-                    graph,
-                    activity,
-                    objectList,
-                    property)
-            );
-        }
-        return provenanceTriples;
-    }
     #endregion
 
-    private record GenerationMetadata
-    {
-        internal List<string> Using = new();
-        internal List<string> With = new();
-        internal List<string> AtLocation = new();
-    };
 
     private record Storage
     {
@@ -474,8 +369,7 @@ public record RecordBuilder
         internal List<string> Describes = new();
         internal List<string> RdfStrings = new();
 
-        internal GenerationMetadata ProvenanceGeneration = new();
-        internal GenerationMetadata ContentGeneration = new();
+
 
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();

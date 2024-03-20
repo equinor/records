@@ -3,11 +3,21 @@ using Records.Exceptions;
 using Record = Records.Immutable.Record;
 using VDS.RDF;
 using Newtonsoft.Json.Linq;
+using VDS.RDF.Parsing;
+using VDS.RDF.Query;
+using VDS.RDF.Query.Datasets;
+using VDS.RDF.Shacl;
 using VDS.RDF.Writing;
+using Xunit.Abstractions;
 
 namespace Records.Tests;
 public class RecordBuilderTests
 {
+    private ITestOutputHelper _outputHelper;
+
+    public RecordBuilderTests(ITestOutputHelper outputHelper) =>
+        _outputHelper = outputHelper;
+
     [Fact]
     public void Can_Add_Scopes()
     {
@@ -38,16 +48,17 @@ public class RecordBuilderTests
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
         var describes = TestData.CreateObjectList(2, "describes");
-        var used = TestData.CreateObjectList(2, "used");
+        var used = TestData.CreateObjectList(4, "used");
         var with = TestData.CreateObjectList(2, "with");
         var locations = TestData.CreateObjectList(2, "location");
 
         var record = new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
-            .ProvenanceGeneratedUsing(used)
-            .ProvenanceGeneratedWith(with)
-            .ProvenanceGeneratedAtLocation(locations)
+            .WithContentProvenance(ProvenanceBuilder.WithTool(with))
+            .WithContentProvenance(ProvenanceBuilder.WithLocation(locations))
+            .WithContentProvenance(ProvenanceBuilder.WithUsing(used[0], used[1]))
+            .WithMetadataProvenance(ProvenanceBuilder.WithUsing(used[3], used[2]))
             .WithId(id)
             .Build();
 
@@ -58,8 +69,42 @@ public class RecordBuilderTests
 
         record.Describes.Should().Contain(describes.First());
         record.Describes.Should().Contain(describes.Last());
-
         record.Id.Should().Be(id);
+        CheckShaclFile(record.Graph(), "Data/record-unit-test.shacl.ttl");
+        var query = new SparqlQueryParser().ParseFromString(
+            $"SELECT * WHERE {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }}");
+        var ds = new InMemoryDataset(record.Graph());
+        var qProcessor = new LeviathanQueryProcessor(ds);
+        var qresults = qProcessor.ProcessQuery(query);
+        bool foundVersion = false;
+        if (qresults is SparqlResultSet qResultSet)
+        {
+            foreach (SparqlResult result in qResultSet.Results)
+            {
+                if (result["version"].ToString().StartsWith("https://www.nuget.org/packages/Record/"))
+                    foundVersion = true;
+            }
+        }
+
+        foundVersion.Should().BeTrue("There must be a version IRI on the record");
+
+
+    }
+
+    private void CheckShaclFile(IGraph _graph, string shacl_file)
+    {
+        var shapes = new Graph();
+        shapes.LoadFromFile(shacl_file);
+        var _processor = new ShapesGraph(shapes);
+
+        var report = _processor.Validate(_graph);
+        if (!report.Conforms)
+        {
+            foreach (var result in report.Results)
+                _outputHelper.WriteLine(result.Message.ToString());
+        }
+
+        report.Conforms.Should().BeTrue();
     }
 
     [Fact]

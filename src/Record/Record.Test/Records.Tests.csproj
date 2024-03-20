@@ -29,4 +29,12 @@
 		<ProjectReference Include="..\Record.Model\Records.csproj" />
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <None Remove="Data\record-unit-test.shacl.ttl" />
+	  <Content Include="Data\record-unit-test.shacl.ttl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
 </Project>
