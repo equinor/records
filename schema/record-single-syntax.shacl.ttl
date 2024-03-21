@@ -140,6 +140,12 @@ rec:RecordShapeshacl
         sh:name "GeneratedFrom";
         sh:message "A record may include documentation about from what source data it was generated"
     ],
+        [
+            sh:path  ( prov:wasGeneratedBy rdfs:comment) ;
+            sh:name "GeneratedFromComment";
+            sh:minCount 2;
+            sh:message "The two provenance activities must have at least one comment each"
+        ],
     [
         sh:path  ( prov:wasGeneratedBy prov:wasAssociatedWith ) ;
         sh:name "GeneratedUsing";

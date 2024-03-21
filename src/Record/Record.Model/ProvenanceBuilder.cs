@@ -29,6 +29,17 @@ public record ProvenanceBuilder
                 }
             };
 
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalComments(IEnumerable<string> comments) => WithAdditionalComments(comments.ToArray());
+    public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalComments(params string[] comments) =>
+        (builder) =>
+            builder with
+            {
+                _storage = builder._storage with
+                {
+                    Comments = builder._storage.Comments.Concat(comments).ToList()
+                }
+            };
+
     public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalTool(IEnumerable<string> tools) => WithAdditionalTool(tools.ToArray());
     public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalTool(params string[] tools) =>
         (builder) =>
@@ -39,6 +50,7 @@ public record ProvenanceBuilder
                 With = builder._storage.With.Concat(tools).ToList()
             }
         };
+
     public IEnumerable<Triple> Build(INodeFactory graph, IRefNode rootObject)
     {
         IRefNode activity = graph.CreateBlankNode();
@@ -64,6 +76,13 @@ public record ProvenanceBuilder
                     property)
             );
         }
+
+        provenanceTriples.AddRange(_storage.Comments.Select(comment =>
+            new Triple(
+                activity,
+                new UriNode(new Uri(Namespaces.Rdfs.Comment)),
+                new LiteralNode(comment))
+        ));
         return provenanceTriples;
     }
 
@@ -81,6 +100,7 @@ public record ProvenanceBuilder
         internal List<string> Using = new();
         internal List<string> With = new();
         internal List<string> AtLocation = new();
+        internal List<string> Comments = new();
     };
 }
 

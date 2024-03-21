@@ -8,6 +8,7 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Shacl;
 using VDS.RDF.Writing;
+using static Records.ProvenanceBuilder;
 using Xunit.Abstractions;
 
 namespace Records.Tests;
@@ -55,10 +56,11 @@ public class RecordBuilderTests
         var record = new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
-            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool(with))
-            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalLocation(locations))
-            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalUsing(used[0], used[1]))
-            .WithAdditionalMetadataProvenance(ProvenanceBuilder.WithAdditionalUsing(used[3], used[2]))
+            .WithAdditionalContentProvenance(
+                WithAdditionalTool(with),
+                WithAdditionalLocation(locations))
+            .WithAdditionalMetadataProvenance(WithAdditionalUsing(used[3], used[2]))
+            .WithAdditionalContentProvenance(WithAdditionalUsing(used[0], used[1]))
             .WithId(id)
             .Build();
 

@@ -8,6 +8,7 @@ using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
 using VDS.RDF.Writing;
+using static Records.ProvenanceBuilder;
 using Path = System.IO.Path;
 
 namespace Records;
@@ -25,9 +26,16 @@ public record RecordBuilder
     public RecordBuilder()
     {
         _storage = new Storage();
-        _metadataProvenance = ProvenanceBuilder.WithAdditionalTool(CreateRecordVersionUri())(new ProvenanceBuilder());
-        _contentProvenance = new ProvenanceBuilder();
+        _metadataProvenance =
+            WithAdditionalTool(CreateRecordVersionUri())
+            (WithAdditionalComments("This is the process that generated the record metadata/provenance")
+            (new ProvenanceBuilder())
+            );
 
+        _contentProvenance =
+            WithAdditionalComments(
+                "This is the process that generated the record content. In later versions of the record library this will be on a separate content graph")
+        (new ProvenanceBuilder());
         var shapes = new Graph();
         var outputFolderPath = Assembly.GetExecutingAssembly()
                                    .GetManifestResourceStream("Records.Schema.record-single-syntax.shacl.ttl") ??
@@ -109,17 +117,21 @@ public record RecordBuilder
 
     #region ProvenanceBuilderWrappers
 
-    public RecordBuilder WithAdditionalContentProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
+    public RecordBuilder WithAdditionalContentProvenance(params Func<ProvenanceBuilder, ProvenanceBuilder>[] provenanceBuilders) =>
         this with
         {
-            _contentProvenance = provenanceBuilder(_contentProvenance)
+            _contentProvenance = provenanceBuilders.Aggregate(
+                _contentProvenance,
+                (prov, provenanceBuilder) => provenanceBuilder(prov))
         };
 
 
-    public RecordBuilder WithAdditionalMetadataProvenance(Func<ProvenanceBuilder, ProvenanceBuilder> provenanceBuilder) =>
+    public RecordBuilder WithAdditionalMetadataProvenance(params Func<ProvenanceBuilder, ProvenanceBuilder>[] provenanceBuilders) =>
         this with
         {
-            _metadataProvenance = provenanceBuilder(_metadataProvenance)
+            _metadataProvenance = provenanceBuilders.Aggregate(
+                _metadataProvenance,
+                (prov, provenanceBuilder) => provenanceBuilder(prov))
         };
 
     #endregion
