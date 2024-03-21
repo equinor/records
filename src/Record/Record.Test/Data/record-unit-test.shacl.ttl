@@ -1,0 +1,81 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rec: <https://rdf.equinor.com/ontology/record/>.
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
+@prefix lis: <http://standards.iso.org/iso/15926/part14/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#>.
+
+rec:RecordShapeshacl 
+    a sh:NodeShape ;
+    rdfs:comment "This shape is used in the test  RecordBuilderTests.Can_Add_Provenance." ;
+    sh:targetClass rec:Record ;
+    sh:property 
+    [
+        sh:path rec:isInScope;
+        sh:minCount 2;
+        sh:maxCount 2;
+        sh:name "Scope";
+        sh:message "This test record should have exactly two scopes";
+    ] ,
+    [
+        sh:path rec:describes;
+        sh:minCount 2;
+        sh:maxCount 2;
+        sh:name "Describes";
+        sh:message "This test record should describe exactly two objects.";
+    ]  ,
+    [
+        sh:path rdfs:comment;
+        sh:name "Comment";
+        sh:datatype xsd:string ;
+        sh:maxCount 1;
+        sh:minCount 0 ;
+        sh:message "A record can have at most one comment";
+        sh:severity sh:Warning;
+    ] ,
+    [
+        sh:path rdfs:label;
+        sh:name "Label";
+        sh:maxCount 1;
+        sh:message "A record can have at most one label";
+        sh:severity sh:Warning;
+    ] ,
+    [
+        sh:path prov:wasGeneratedBy;
+        sh:name "GeneratedBy";
+        sh:minCount 2;
+        sh:maxCount 2;
+        sh:message "A record must link to at least the one activity that generated it";
+        sh:severity sh:Warning
+    ],
+    [
+        sh:path  ( prov:wasGeneratedBy prov:atLocation ) ;
+        sh:name "GeneratedAtLocation";
+        sh:minCount 2;
+        sh:maxCount 2;
+        sh:message "A record may include documentation about on what server it was generated"
+    ],
+    [
+        sh:path  ( prov:wasGeneratedBy prov:used) ;
+        sh:minCount 4;
+        sh:maxCount 4;
+        sh:name "GeneratedFrom";
+        sh:message "This record should have exactly four used on it"
+    ],
+    [
+        sh:path  ( prov:wasGeneratedBy prov:wasAssociatedWith ) ;
+        sh:name "GeneratedUsing";
+        sh:minCount 3;
+        sh:maxCount 3;
+        sh:message "This record should have exactly 3 tools associated with it. Two from the test, and one from records"
+    ],
+         [
+             sh:path  ( prov:wasGeneratedBy prov:wasAssociatedWith ) ;
+             sh:name "GeneratedUsingRecordsLibrary";
+             sh:minCount 3;
+             sh:maxCount 3;
+             sh:message "This record should have exactly 3 tools associated with it. Two from the test, and one from records"
+         ].
+    

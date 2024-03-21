@@ -11,10 +11,16 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
-    - name: Restore dependencies
-      run: dotnet restore ./src/Record/Record.sln
-    - name: Build
-      run: dotnet build ./src/Record/Record.sln --no-restore
+    - name: Restore Record.Model dependencies
+      run:  dotnet restore ./src/Record/Record.sln
+    - name: Build Record
+      run: dotnet build ./src/Record/Record.sln --no-restore 
+    - name: Restore Record Nuget test
+      run: |
+        dotnet restore ./src/Record.Nuget.Test
+    - name: Build Record Nuget test
+      run: dotnet build ./src/Record.Nuget.Test --no-restore
     - name: Test
-      run: dotnet test ./src/Record/Record.sln --no-build --verbosity normal
-    
+      run: |
+        dotnet test ./src/Record/Record.sln --no-build --verbosity normal
+        dotnet test ./src/Record.Nuget.Test --no-build --verbosity normal

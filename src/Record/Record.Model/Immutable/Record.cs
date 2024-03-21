@@ -23,6 +23,7 @@ public class Record : IEquatable<Record>
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
+
     public string? IsSubRecordOf { get; set; }
 
 

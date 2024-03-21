@@ -1,4 +1,6 @@
-﻿using Records.Exceptions;
+﻿using System.Reflection;
+using AngleSharp.Common;
+using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Shacl;
@@ -6,150 +8,47 @@ using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
 using VDS.RDF.Writing;
+using static Records.ProvenanceBuilder;
+using Path = System.IO.Path;
 
 namespace Records;
 
 public record RecordBuilder
 {
-    private Storage _storage = new();
+    private Storage _storage;
+    private ProvenanceBuilder _metadataProvenance;
+    private ProvenanceBuilder _contentProvenance;
+
+
     private IGraph _graph;
     private ShapesGraph _processor;
 
     public RecordBuilder()
     {
+        _storage = new Storage();
+        _metadataProvenance =
+            WithAdditionalTool(CreateRecordVersionUri())
+            (WithAdditionalComments("This is the process that generated the record metadata/provenance")
+            (new ProvenanceBuilder())
+            );
+
+        _contentProvenance =
+            WithAdditionalComments(
+                "This is the process that generated the record content. In later versions of the record library this will be on a separate content graph")
+        (new ProvenanceBuilder());
         var shapes = new Graph();
-        shapes.LoadFromString(@"
-        @prefix sh: <http://www.w3.org/ns/shacl#>.
-        @prefix rec: <https://rdf.equinor.com/ontology/record/>.
-        @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#>.
-        @prefix lis: <http://standards.iso.org/iso/15926/part14/>.
-        @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
-        rec:ReplacedRecordShape
-            a sh:NodeShape ;
-            rdfs:comment """" ;
-            sh:targetClass rec:ReplacedRecord ;
-            sh:maxExclusive 0 ;
-            sh:name ""ReplacedRecord"" ;
-            sh:message ""The inferred replaced record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces"" .
-
-        rec:NewestRecordShape
-            a sh:NodeShape ;
-            rdfs:comment """" ;
-            sh:targetClass rec:NewestRecord ;
-            sh:maxExclusive 0 ;
-            sh:name ""NewestRecord"" ;
-            sh:message ""The inferred newest record class cannot be set explicitly. Please use the rec:Record type along side rec:replaces"" .
-
-        rec:RecordShape
-            a sh:NodeShape ;
-            rdfs:comment ""This shape is for the actual transmission format of records. It should validate a single record, meaning it does not need the other records like the super record to validate. It will not validate after record-rules.ttl is applied."" ;
-            sh:targetClass rec:Record ;
-            sh:property [ 
-                sh:path [ sh:alternativePath (rec:isSubRecordOf  rec:isInScope) ];
-                sh:minCount 1;
-                sh:name ""Scope"";
-                sh:message ""A record must either be a subrecord or have at least one scope"";
-                sh:severity sh:Violation;
-            ] , 
-            [
-                sh:path rec:isInScope;
-                sh:minCount 0;
-                sh:name ""Scope"";
-                sh:message ""A record can have any number of scopes set directly"";
-            ] ,
-            [
-                sh:path rec:isInScopeInf;
-                sh:maxCount 0;
-                sh:name ""InfScope"";
-                sh:message ""The inferred scope relation cannot be set explicitly. Please use rec:isInScope"";
-            ] ,
-            [
-                sh:path rec:isInSubRecordTreeOf;
-                sh:maxCount 0;
-                sh:name ""SubRecordTree"";
-                sh:message ""The inferred subrecord relation cannot be set explicitly. Please use rec:isSubRecordOf"";
-            ] ,
-            [
-                sh:path rec:hasNewerSuperRecordInf;
-                sh:maxCount 0;
-                sh:name ""HasNewerSuperRecordInf"";
-                sh:message ""The inferred subrecord relation cannot be set explicitly. Please use rec:isSubRecordOf"";
-            ] ,
-            [
-                sh:path rec:isSubRecordOf;
-                sh:minCount 0;
-                sh:maxCount 1;
-                sh:name ""SubRecord"";
-                sh:message ""A record can be the subrecord of at most one record"";
-                sh:severity sh:Violation;
-            ] ,
-            [
-                sh:path rec:replaces;
-                sh:minCount 0;
-                sh:name ""Replaces"";
-                sh:message ""A record replaces any number of other records. If there are none, that means the history is unknown or new. If there are more than one, this represents a merge."";
-                sh:severity sh:Violation;
-            ] ,
-            [ 
-                sh:path [ sh:inversePath rec:replaces ];
-                sh:minCount 0;
-                sh:name ""Replaced by"";
-                sh:message ""A record can be replaced by at most one other record"";
-                sh:severity sh:Violation;
-            ] , 
-            [
-                sh:path rec:replacedBy ;
-                sh:maxCount 0;
-                sh:name ""Replaced by (explicit)"" ;
-                sh:message ""The inferred replaced by relation cannot be set explicitly. Please use rec:replaces"";
-            ],
-            [
-                sh:path rec:describes;
-                sh:minCount 0;
-                sh:name ""Describes"";
-                sh:message ""A record can describe any number of objects/entities. A record describing 0 objects has no content."";
-            ]  ,
-            [
-                sh:path rdfs:comment;
-                sh:name ""Comment"";
-                sh:datatype xsd:string ;
-                sh:maxCount 1;
-                sh:minCount 0 ;
-                sh:message ""A record can have at most one comment"";
-                sh:severity sh:Warning;
-            ] ,
-            [ 
-                sh:datatype xsd:string ;
-                sh:maxCount 1 ;
-                sh:minCount 0 ;
-                sh:path skos:prefLabel ;
-                sh:message ""A record can have at most one skos:prefLabel"";
-                sh:severity sh:Warning 
-            ],
-            [
-                sh:path rdfs:label;
-                sh:name ""Label"";
-                sh:maxCount 1;
-                sh:message ""A record can have at most one label"";
-                sh:severity sh:Warning;
-            ] ,
-            [ 
-                sh:path ([ sh:zeroOrMorePath rec:isSubRecordOf ]  rec:isInScope ) ;
-                sh:minCount 1;
-                sh:deactivated true;
-                sh:name ""SuperRecordScope"";
-                sh:message ""All records must have at least one scope, potentially reachable via subRecordOf relations"";
-            ] .
-    
-    ");
+        var outputFolderPath = Assembly.GetExecutingAssembly()
+                                   .GetManifestResourceStream("Records.Schema.record-single-syntax.shacl.ttl") ??
+                               throw new Exception("Could not get assembly path.");
+        var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
+        shapes.LoadFromString(shapeString);
         _processor = new ShapesGraph(shapes);
     }
 
     #region With-Methods
 
     #region Provenance-Methods
+
     #region With-Provenance-Methods
 
     public RecordBuilder WithScopes(params string[] scopes) =>
@@ -189,6 +88,7 @@ public record RecordBuilder
             }
         };
 
+
     public RecordBuilder WithReplaces(IEnumerable<string> replaces) => WithReplaces(replaces.ToArray());
 
     public RecordBuilder WithReplaces(params Uri[] replaces) => WithReplaces(replaces.Select(r => r.ToString()));
@@ -212,9 +112,32 @@ public record RecordBuilder
         };
 
     public RecordBuilder WithId(string id) => WithId(new Uri(id));
+
+    #endregion
+
+    #region ProvenanceBuilderWrappers
+
+    public RecordBuilder WithAdditionalContentProvenance(params Func<ProvenanceBuilder, ProvenanceBuilder>[] provenanceBuilders) =>
+        this with
+        {
+            _contentProvenance = provenanceBuilders.Aggregate(
+                _contentProvenance,
+                (prov, provenanceBuilder) => provenanceBuilder(prov))
+        };
+
+
+    public RecordBuilder WithAdditionalMetadataProvenance(params Func<ProvenanceBuilder, ProvenanceBuilder>[] provenanceBuilders) =>
+        this with
+        {
+            _metadataProvenance = provenanceBuilders.Aggregate(
+                _metadataProvenance,
+                (prov, provenanceBuilder) => provenanceBuilder(prov))
+        };
+
     #endregion
 
     #region With-Additional-Provenance-Methods
+
     public RecordBuilder WithAdditionalScopes(params string[] scopes) =>
         this with
         {
@@ -223,7 +146,6 @@ public record RecordBuilder
                 Scopes = _storage.Scopes.Concat(scopes).ToList()
             }
         };
-
     public RecordBuilder WithAdditionalScopes(IEnumerable<string> scopes)
         => WithAdditionalScopes(scopes.ToArray());
     public RecordBuilder WithAdditionalScopes(params Uri[] scopes) => WithAdditionalScopes(scopes.Select(s => s.ToString()));
@@ -360,6 +282,7 @@ public record RecordBuilder
 
         recordQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
 
+
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
         recordQuads.Add(typeQuad);
 
@@ -373,6 +296,8 @@ public record RecordBuilder
 
         var tripleString = string.Join("\n", recordQuads.Select(q => q.ToTripleString()));
         _graph.LoadFromString(tripleString);
+        _graph.Assert(_metadataProvenance.Build(_graph, _graph.Name));
+        _graph.Assert(_contentProvenance.Build(_graph, _graph.Name));
 
         var report = _processor.Validate(_graph);
         if (!report.Conforms) throw ShaclException(report);
@@ -415,6 +340,11 @@ public record RecordBuilder
         return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _graph.BaseUri)).ToList();
     }
 
+    private string CreateRecordVersionUri() =>
+        $"https://www.nuget.org/packages/Record/{GetType().Assembly.GetName().Version}";
+
+
+
     private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
     {
         if (_graph.BaseUri == null) throw new RecordException("Record ID must be added first.");
@@ -437,7 +367,10 @@ public record RecordBuilder
 
     private SafeQuad CreateReplacesQuad(string replaces) =>
         CreateQuadWithPredicateAndObject(Namespaces.Record.Replaces, replaces);
+
+
     #endregion
+
 
     private record Storage
     {

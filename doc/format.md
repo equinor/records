@@ -12,14 +12,15 @@ The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and
 * prov: http://www.w3.org/ns/prov#
 * ex: http://example.com/data/ 
 
-## Provenance
-The provenance graph is the subgraph of the record named graph which is reachable from the IRI of the named graph which stops whenever a resource which is not of type Record is encountered. The rest of the graph is the content.
-We require these triples in the provenance graph to have a special meaning and only be used in the provenance
+## Record Metadata
+The record metadata graph is the subgraph of the record named graph which is reachable from the IRI of the named graph which stops whenever a resource which is not of type Record is encountered. The rest of the graph is the content.
+We require these triples in the record metadata graph to have a special meaning and only be used in the metadata
 * The record is of type rec:Record
 * The record is related to at most one other record with the relation rec:isSubRecordOf. That is, rec:isSubRecordOf is functional, but not inverse functional. The subrecord relation is used to avoid duplication.
 * The record is related to at least one resource with rec:isInScope (possibly indirectly through rec:isSubRecordOf). These resources are called scopes.
 * The record is related to any number of resources with rec:describes. 
-* The record is related to any number of records with rec:replaces. In other words it is a many-to-many relation.
+* The record is related to any number of records with rec:replaces. In other words it is a many-to-many relation
+* The record is related to at most two prov:Activity with prov:wasGeneratedBy. This is the representation of the content and metadata provenance.
 
 ### Scopes
 The intention of the 'scopes' is to make explicit the scope in which the content of the record is valid. If there are several scopes, the content is valid in all of them. This implies an intersection-type semantics for scope. 
@@ -130,3 +131,7 @@ Some work processes have their own concepts of revisions and versions. These pat
 *  [Example](../example/revisions.trig)
   
 There is currently only one subclass of `rev:Revision` for revisions of documents. Revisions of documents have author and dates. The can also have the relation `rev:describes` to the document it revises. Note that this is not the same relation as `rec:describes` in the record provenance. Document revisions are intended to support existing workflows where documents have editions/revisions/versions that are issued at certain times.
+
+
+## Provenance
+We use [the prov-o ontology](http://www.w3.org/ns/prov#), especially prov:wasGeneratedBy and prov:Activity for modelling the provenance of the record metadata and content. For example, [the dotnet record library](../src/Record) will always add metadata provenance using prov:wasAssociatedWith to link to the version of the Records library that generated the record.
