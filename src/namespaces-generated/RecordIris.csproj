@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <PackageId>RecordIris.csproj</PackageId>
+        <Description>An automatically generated nuget package for IRIs. Generated from: equinor/records:960f27024a2284cf278f8c1d349e7ecbaa300e40</Description>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    </PropertyGroup>
+</Project>
+    
