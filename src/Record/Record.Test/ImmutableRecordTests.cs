@@ -94,16 +94,18 @@ public class ImmutableRecordTests
         result.Should().Be(28);
     }
 
-    //[Fact]
-    //public void Record_Can_Be_Serialised_Turtle()
-    //{
-    //    var record = new Record(TestData.ValidJsonLdRecordString());
+    [Fact]
+    public void Record_Can_Be_Serialised_Nquad_With_Direct_Writer()
+    {
+        var record = new Record(TestData.ValidJsonLdRecordString());
 
-    //    var result = record.ToString<CompressingTurtleWriter>().Split("\n").Length;
+        var result = record.ToString(new NQuadsWriter()).Split("\n").Length;
 
-    //    // This is how many lines should be contained in the turtle serialisation
-    //    result.Should().Be(28);
-    //}
+        // This is how many quads are generated
+        result.Should().Be(28);
+    }
+
+
 
     [Fact]
     public void Record_Can_Produce_Quads()
