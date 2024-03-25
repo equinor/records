@@ -269,8 +269,10 @@ public class Record : IEquatable<Record>
     }
 
     public string ToString<T>() where T : IStoreWriter, new()
+        => ToString(new T());
+
+    public string ToString(IStoreWriter writer)
     {
-        var writer = new T();
         var stringWriter = new StringWriter();
         writer.Save(_store, stringWriter);
 
