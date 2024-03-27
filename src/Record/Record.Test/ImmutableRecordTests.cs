@@ -388,5 +388,55 @@ public class ImmutableRecordTests
         recordTriples.Count().Should().Be(1);
         recordTriples.Single().Should().Be(Quad.CreateUnsafe(recordId, Namespaces.Rdf.Type, Namespaces.Record.RecordType, recordId));
     }
+
+    [Fact]
+    public void Record_Can_Be_Created_From_String_And_IStoreReader()
+    {
+        var recordString = TestData.ValidJsonLdRecordString();
+        var reader = new JsonLdParser();
+
+        var loadResult = () =>
+        {
+            var record = new Record(recordString, reader);
+        };
+
+        loadResult.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Record_With_Wrong_IStoreReader_Fails_To_Load()
+    {
+        var recordString = TestData.ValidJsonLdRecordString();
+        var reader = new NQuadsParser();
+
+        var loadResult = () =>
+        {
+            var record = new Record(recordString, reader);
+        };
+
+        loadResult.Should().Throw<RdfParseException>();
+    }
+
+    [Fact]
+    public void Record_Can_Load_From_TripleStore()
+    {
+        var originalRecord = TestData.ValidRecord();
+
+        var recordString = originalRecord.ToString<JsonLdWriter>();
+        var store = new TripleStore();
+        store.LoadFromString(recordString, new JsonLdParser());
+
+        var record = default(Record);
+
+        var loadResult = () =>
+        {
+            record = new Record(store);
+        };
+
+        loadResult.Should().NotThrow();
+
+        record.Should().NotBeNull();
+        record.Id.Should().Be(originalRecord.Id);
+    }
 }
 

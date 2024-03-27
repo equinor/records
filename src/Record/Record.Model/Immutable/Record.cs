@@ -26,12 +26,30 @@ public class Record : IEquatable<Record>
 
     public string? IsSubRecordOf { get; set; }
 
-
     public Record(string rdfString) => LoadFromString(rdfString);
-
+    public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
     public Record(IGraph graph) => LoadFromGraph(graph);
+    public Record(ITripleStore store) => LoadFromTripleStore(store);
 
     private string _nQuadsString;
+
+    private void LoadFromString(string rdfString, IStoreReader reader)
+    {
+        var store = new TripleStore();
+        if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null)
+            throw new RecordException("Record is already loaded.");
+
+        store.LoadFromString(rdfString, reader);
+
+        LoadFromTripleStore(store);
+    }
+
+    private void LoadFromTripleStore(ITripleStore store)
+    {
+        if (store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
+        var graph = store.Graphs.First();
+        LoadFromGraph(graph);
+    }
 
     private void LoadFromString(string rdfString)
     {
@@ -48,10 +66,10 @@ public class Record : IEquatable<Record>
             ValidateJsonLd(rdfString);
             store.LoadFromString(rdfString, new JsonLdParser());
         }
-        if (store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
-        var graph = store.Graphs.First();
-        LoadFromGraph(graph);
+
+        LoadFromTripleStore(store);
     }
+
     private void LoadFromGraph(IGraph graph)
     {
         _graph = graph;
