@@ -18,6 +18,8 @@ public record RecordBuilder
     private Storage _storage;
     private ProvenanceBuilder _metadataProvenance;
     private ProvenanceBuilder _contentProvenance;
+
+
     private IGraph _graph;
     private ShapesGraph _processor;
 
