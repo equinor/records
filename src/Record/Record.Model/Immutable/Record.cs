@@ -29,7 +29,6 @@ public class Record : IEquatable<Record>
     public Record(string rdfString) => LoadFromString(rdfString);
     public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
     public Record(IGraph graph) => LoadFromGraph(graph);
-
     public Record(ITripleStore store) => LoadFromTripleStore(store);
 
     private string _nQuadsString;
