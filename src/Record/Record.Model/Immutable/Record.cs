@@ -76,7 +76,7 @@ public class Record : IEquatable<Record>
         if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
         var tempGraph = new Graph(graph.Name);
         tempGraph.Merge(graph);
-        
+
         _graph = tempGraph;
         _store.Add(_graph);
         _dataset = new InMemoryDataset(_graph);
