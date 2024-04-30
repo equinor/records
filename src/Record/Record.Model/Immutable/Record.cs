@@ -59,6 +59,7 @@ public class Record : IEquatable<Record>
         _dataset = new InMemoryDataset(graph);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
+        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
         Id = graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();
@@ -91,7 +92,7 @@ public class Record : IEquatable<Record>
 
     public IGraph Graph()
     {
-        var tempGraph = new Graph();
+        var tempGraph = new Graph(new Uri(Id));
         tempGraph.Merge(_graph);
         return tempGraph;
     }
@@ -282,6 +283,11 @@ public class Record : IEquatable<Record>
         if (writer is JsonLdWriter) result = result[1..(result.Length - 1)];
 
         return result;
+    }
+
+    public void Canon()
+    {
+        //var canon = new VDS.RDF.RdfCanonicalizer("SHA256");
     }
 
     public bool Equals(Record? other)

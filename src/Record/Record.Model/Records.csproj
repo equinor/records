@@ -12,7 +12,7 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>7.2.0$(ReleaseType)</VersionPrefix>
+		<VersionPrefix>7.2.1$(ReleaseType)</VersionPrefix>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -21,6 +21,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="dotNetRdf.Core" Version="3.1.1" />
 		<PackageReference Include="json-ld.net" Version="1.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -32,7 +33,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="dotNetRDF" Version="3.0.0" />
+		<PackageReference Include="dotNetRDF" Version="3.1.1" />
 	</ItemGroup>
 	
 	<ItemGroup>

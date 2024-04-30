@@ -285,7 +285,7 @@ public class ImmutableRecordTests
         loadResult.Should().NotThrow();
 
         var graph = record.Graph();
-
+        graph.Name.ToString().Should().Be(record.Id);
         record.Triples().Should().Contain(graph.Triples);
 
         graph.Clear();
