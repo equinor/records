@@ -29,7 +29,14 @@ public class Record : IEquatable<Record>
 
     public Record(string rdfString) => LoadFromString(rdfString);
 
-    public Record(IGraph graph) => LoadFromGraph(graph);
+    public Record(IGraph graph)
+    {
+        if(graph.Name == null) throw new RecordException("The IGraph's name must be set.");
+        var tempGraph = new Graph(graph.Name);
+        tempGraph.Merge(graph);
+        
+        LoadFromGraph(tempGraph);
+    }
 
     private string _nQuadsString;
 
@@ -54,12 +61,13 @@ public class Record : IEquatable<Record>
     }
     private void LoadFromGraph(IGraph graph)
     {
-        _graph = graph;
+        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
+        _graph = graph;        
         _store.Add(_graph);
+
         _dataset = new InMemoryDataset(graph);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
-        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
         Id = graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();

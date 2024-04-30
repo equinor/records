@@ -296,6 +296,36 @@ public class ImmutableRecordTests
     }
 
     [Fact]
+    public void Record_Can_Be_Copied_To_New_Record_Via_IGraph()
+    {
+        var record = default(Record);
+        var loadResult = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+            .WithIsSubRecordOf(TestData.CreateRecordId(1))
+            .Build();
+        };
+
+        loadResult.Should().NotThrow();
+
+        var graph = record.Graph();
+        graph.Name.ToString().Should().Be(record.Id);
+        record.Triples().Should().Contain(graph.Triples);
+
+        var newRecord = new Record(graph);
+        newRecord.Should().Be(record);
+        newRecord.Id.Should().Be(record.Id);
+        newRecord.Triples().Should().Contain(record.Triples());
+
+        graph.Clear();
+
+        graph.IsEmpty.Should().BeTrue();
+
+        record.Graph().IsEmpty.Should().BeFalse();
+        newRecord.Graph().IsEmpty.Should().BeFalse();
+    }
+
+    [Fact]
     public void Record_Can_Query_Subjects_With_Type()
     {
         var record = default(Record);
