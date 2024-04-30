@@ -72,12 +72,16 @@ public class Record : IEquatable<Record>
 
     private void LoadFromGraph(IGraph graph)
     {
-        _graph = graph;
+        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
+        var tempGraph = new Graph(graph.Name);
+        tempGraph.Merge(graph);
+
+        _graph = tempGraph;
         _store.Add(_graph);
-        _dataset = new InMemoryDataset(graph);
+        _dataset = new InMemoryDataset(_graph);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
-        Id = graph.Name.ToSafeString();
+        Id = _graph.Name.ToSafeString();
 
         Provenance = QuadsWithSubject(Id).ToList();
         if (!Provenance.Any(p => p.Object.Equals(Namespaces.Record.RecordType))) throw new RecordException("A record must have exactly one provenance object.");
@@ -109,7 +113,7 @@ public class Record : IEquatable<Record>
 
     public IGraph Graph()
     {
-        var tempGraph = new Graph();
+        var tempGraph = new Graph(new Uri(Id));
         tempGraph.Merge(_graph);
         return tempGraph;
     }
