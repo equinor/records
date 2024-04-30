@@ -26,19 +26,38 @@ public class Record : IEquatable<Record>
 
     public string? IsSubRecordOf { get; set; }
 
-
     public Record(string rdfString) => LoadFromString(rdfString);
-
+    public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
     public Record(IGraph graph)
     {
-        if(graph.Name == null) throw new RecordException("The IGraph's name must be set.");
+        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
         var tempGraph = new Graph(graph.Name);
         tempGraph.Merge(graph);
-        
+
         LoadFromGraph(tempGraph);
     }
 
+    public Record(ITripleStore store) => LoadFromTripleStore(store);
+
     private string _nQuadsString;
+
+    private void LoadFromString(string rdfString, IStoreReader reader)
+    {
+        var store = new TripleStore();
+        if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null)
+            throw new RecordException("Record is already loaded.");
+
+        store.LoadFromString(rdfString, reader);
+
+        LoadFromTripleStore(store);
+    }
+
+    private void LoadFromTripleStore(ITripleStore store)
+    {
+        if (store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
+        var graph = store.Graphs.First();
+        LoadFromGraph(graph);
+    }
 
     private void LoadFromString(string rdfString)
     {
@@ -55,16 +74,15 @@ public class Record : IEquatable<Record>
             ValidateJsonLd(rdfString);
             store.LoadFromString(rdfString, new JsonLdParser());
         }
-        if (store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
-        var graph = store.Graphs.First();
-        LoadFromGraph(graph);
+
+        LoadFromTripleStore(store);
     }
+
     private void LoadFromGraph(IGraph graph)
     {
-        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
-        _graph = graph;        
+        if(graph.Name == null) throw new RecordException("The IGraph's name must be set.");
+        _graph = graph;
         _store.Add(_graph);
-
         _dataset = new InMemoryDataset(graph);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
@@ -291,11 +309,6 @@ public class Record : IEquatable<Record>
         if (writer is JsonLdWriter) result = result[1..(result.Length - 1)];
 
         return result;
-    }
-
-    public void Canon()
-    {
-        //var canon = new VDS.RDF.RdfCanonicalizer("SHA256");
     }
 
     public bool Equals(Record? other)
