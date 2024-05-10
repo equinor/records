@@ -46,7 +46,7 @@ public class ImmutableRecordTests
     public void Record_Can_Do_Queries()
     {
         var record = new Record(TestData.ValidJsonLdRecordString());
-        var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}}");
+        var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
         var result = queryResult.Count();
         result.Should().Be(5);
     }
@@ -59,7 +59,7 @@ public class ImmutableRecordTests
 
         var result = () => new Record(rdf);
 
-        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one provenance object.");
+        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one provenance graph.");
     }
 
 
@@ -70,18 +70,6 @@ public class ImmutableRecordTests
         var result = () => new Record(invalidJsonLdString);
         result.Should().Throw<RecordException>().WithInnerException<JsonReaderException>();
     }
-
-
-    [Fact]
-    public void Creating_Record_With_More_Than_One_Named_Graph_Throws()
-    {
-        var jsonArray = $"[{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(1))}," +
-                        $"{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(2))}]";
-
-        var result = () => new Record(jsonArray);
-        result.Should().Throw<RecordException>().WithMessage("A record must contain exactly one named graph.");
-    }
-
 
     [Fact]
     public void Record_Can_Be_Serialised_Nquad()
@@ -284,19 +272,12 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var graph = record.Graph();
-        graph.Name.ToString().Should().Be(record.Id);
-        record.Triples().Should().Contain(graph.Triples);
-
-        graph.Clear();
-
-        graph.IsEmpty.Should().BeTrue();
-
-        record.Graph().IsEmpty.Should().BeFalse();
+        var tripleStore = record.TripleStore();
+        record.Triples().Should().Contain(tripleStore.Triples);
     }
 
     [Fact]
-    public void Record_Can_Be_Copied_To_New_Record_Via_IGraph()
+    public void Record_Can_Be_Copied_To_New_Record_Via_ITripleStore()
     {
         var record = default(Record);
         var loadResult = () =>
@@ -308,21 +289,16 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var graph = record.Graph();
-        graph.Name.ToString().Should().Be(record.Id);
-        record.Triples().Should().Contain(graph.Triples);
+        var tripleStore = record.TripleStore();
+        var provenanceGraph = record.ProvenanceGraph();
+        provenanceGraph.Name.ToString().Should().Be(record.Id);
 
-        var newRecord = new Record(graph);
+        record.Triples().Should().Contain(tripleStore.Triples);
+
+        var newRecord = new Record(tripleStore);
         newRecord.Should().Be(record);
         newRecord.Id.Should().Be(record.Id);
         newRecord.Triples().Should().Contain(record.Triples());
-
-        graph.Clear();
-
-        graph.IsEmpty.Should().BeTrue();
-
-        record.Graph().IsEmpty.Should().BeFalse();
-        newRecord.Graph().IsEmpty.Should().BeFalse();
     }
 
     [Fact]

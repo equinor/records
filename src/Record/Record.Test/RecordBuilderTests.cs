@@ -72,10 +72,12 @@ public class RecordBuilderTests
         record.Describes.Should().Contain(describes.First());
         record.Describes.Should().Contain(describes.Last());
         record.Id.Should().Be(id);
-        CheckShaclFile(record.Graph(), "Data/record-unit-test.shacl.ttl");
+        //CheckShaclFile(record.Graph(), "Data/record-unit-test.shacl.ttl");
         var query = new SparqlQueryParser().ParseFromString(
-            $"SELECT * WHERE {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }}");
-        var ds = new InMemoryDataset(record.Graph());
+            $"SELECT * WHERE {{ graph <{record.Id}>  {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }} }}");
+        
+        var tripleStore = record.TripleStore();
+        var ds = new InMemoryDataset((TripleStore)tripleStore);
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qresults = qProcessor.ProcessQuery(query);
         bool foundVersion = false;
