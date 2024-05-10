@@ -75,7 +75,7 @@ public class RecordBuilderTests
         //CheckShaclFile(record.Graph(), "Data/record-unit-test.shacl.ttl");
         var query = new SparqlQueryParser().ParseFromString(
             $"SELECT * WHERE {{ graph <{record.Id}>  {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }} }}");
-        
+
         var tripleStore = record.TripleStore();
         var ds = new InMemoryDataset((TripleStore)tripleStore);
         var qProcessor = new LeviathanQueryProcessor(ds);

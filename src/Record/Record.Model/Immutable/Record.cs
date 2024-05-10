@@ -49,7 +49,7 @@ public class Record : IEquatable<Record>
     {
         if (store?.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
 
-        foreach(var graph in store.Graphs) _store.Add(graph);
+        foreach (var graph in store.Graphs) _store.Add(graph);
 
 
         _dataset = new InMemoryDataset(_store);
@@ -127,7 +127,7 @@ public class Record : IEquatable<Record>
         // Extract the graph name from the result set
         var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
 
-        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one provenance graph.");        
+        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one provenance graph.");
 
         result.BaseUri = new Uri(graphName);
 
@@ -147,7 +147,7 @@ public class Record : IEquatable<Record>
     public ITripleStore TripleStore()
     {
         var tempStore = new TripleStore();
-        foreach(var graph in _store.Graphs) tempStore.Add(graph);
+        foreach (var graph in _store.Graphs) tempStore.Add(graph);
 
         return tempStore;
     }
