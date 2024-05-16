@@ -38,7 +38,7 @@ public record FileRecordBuilder
             }
         };
     public FileRecordBuilder WithId(string id) => WithId(new IriReference(id));
-    
+
     public FileRecordBuilder WithDescribes(IriReference id) =>
         this with
         {

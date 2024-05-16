@@ -77,7 +77,7 @@ public class FileRecordBuilderTests
 
         var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).First();
         describesNode.Should().Be("https://example.com/describes");
-        
+
 
     }
 
