@@ -1,5 +1,6 @@
 ﻿using VDS.RDF;
 using System.Security.Cryptography;
+using IriTools;
 using Records.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Record = Records.Immutable.Record;
@@ -12,10 +13,11 @@ public record FileRecordBuilder
 
     private record Storage
     {
-        internal Uri? Id { get; set; }
+        internal IriReference? Id { get; set; }
         internal string? IsSubRecordOf { get; set; }
         internal byte[]? Content { get; set; }
         internal string? FileName { get; set; }
+        internal IriReference? Describes { get; set; }
         internal string? FileExtension { get; set; }
         internal string? ByteSize { get; set; }
         internal string? Checksum { get; set; }
@@ -27,7 +29,7 @@ public record FileRecordBuilder
     }
 
     #region With-Methods
-    public FileRecordBuilder WithId(Uri id) =>
+    public FileRecordBuilder WithId(IriReference id) =>
         this with
         {
             _storage = _storage with
@@ -35,7 +37,17 @@ public record FileRecordBuilder
                 Id = id
             }
         };
-    public FileRecordBuilder WithId(string id) => WithId(new Uri(id));
+    public FileRecordBuilder WithId(string id) => WithId(new IriReference(id));
+
+    public FileRecordBuilder WithDescribes(IriReference id) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                Describes = id
+            }
+        };
+    public FileRecordBuilder WithDescribes(string id) => WithDescribes(new IriReference(id));
     public FileRecordBuilder WithModelType(string modelType) =>
         this with
         {
@@ -160,7 +172,7 @@ public record FileRecordBuilder
 
         var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)
-                             .WithDescribes(_storage.Id!)
+                             .WithDescribes(_storage.Describes ?? _storage.Id)
                              .WithScopes(_storage.Scopes)
                              .WithIsSubRecordOf(_storage.IsSubRecordOf!)
                              .WithContent(fileRecordTriples!)
