@@ -81,7 +81,7 @@ public class FileRecordBuilderTests
 
     }
 
-    
+
     [Fact]
     public void FileRecordBuilder__ShouldCreateDescribes__FromUri()
     {
@@ -107,7 +107,7 @@ public class FileRecordBuilderTests
 
 
     }
-    
+
     [Fact]
     public void FileRecordBuilder__SHouldThrowException__WhenSuperRecordIsMissing()
     {
