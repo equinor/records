@@ -16,7 +16,7 @@ public class RecordRepositoryTests
         repo.Add(record1);
 
         var result = repo.Count;
-        result.Should().Be(2);
+        result.Should().Be(4);
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class RecordRepositoryTests
         repo.Add(record1);
 
         var firstCountResult = repo.Count;
-        firstCountResult.Should().Be(2);
+        firstCountResult.Should().Be(4);
 
         repo.TryRemove(record1);
         var result = repo.Count;
@@ -46,7 +46,7 @@ public class RecordRepositoryTests
         var repo = new RecordRepository(new[] { record1, record2 });
         var repoCount = repo.Count;
 
-        repoCount.Should().Be(2);
+        repoCount.Should().Be(4);
     }
 
     [Fact]

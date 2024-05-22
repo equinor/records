@@ -7,6 +7,7 @@ using VDS.RDF.Writing;
 using Newtonsoft.Json;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using Newtonsoft.Json.Linq;
 
 namespace Records.Tests;
 
@@ -18,7 +19,7 @@ public class ImmutableRecordTests
         var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Provenance.Count();
 
-        result.Should().Be(13);
+        result.Should().Be(14);
     }
 
     [Fact]
@@ -36,7 +37,10 @@ public class ImmutableRecordTests
         ITripleStore store = new TripleStore();
         store.LoadFromString(TestData.ValidJsonLdRecordString(), new JsonLdParser());
 
-        var record = new Record(store.Graphs.First());
+        var graph = store.Graphs.First();
+        graph.Merge(store.Graphs.Last());
+
+        var record = new Record(graph);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -79,7 +83,7 @@ public class ImmutableRecordTests
         var result = record.ToString<NQuadsWriter>().Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(28);
+        result.Should().Be(29);
     }
 
     [Fact]
@@ -90,7 +94,7 @@ public class ImmutableRecordTests
         var result = record.ToString(new NQuadsWriter()).Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(28);
+        result.Should().Be(29);
     }
 
 
@@ -102,7 +106,7 @@ public class ImmutableRecordTests
         var result = record.Quads().Count();
 
         // This is how many quads should be extraced from the JSON-LD
-        result.Should().Be(27);
+        result.Should().Be(28);
     }
 
     [Fact]
@@ -160,16 +164,17 @@ public class ImmutableRecordTests
 
         var jsonLdString = record.ToString<JsonLdWriter>();
 
-        var jsonObject = default(JsonObject);
+        var jsonArray = default(JsonArray);
 
-        var deserialisationFunc = () => jsonObject = System.Text.Json.JsonSerializer.Deserialize<JsonObject>(jsonLdString);
+        var deserialisationFunc = () => jsonArray = JsonNode.Parse(jsonLdString) as JsonArray;
         deserialisationFunc.Should().NotThrow();
 
-        jsonObject.Should().NotBeNull();
-        jsonObject?.ContainsKey("@id").Should().BeTrue();
+        jsonArray.Should().NotBeNull();
+        jsonArray?.Count.Should().Be(2);
 
-        var jsonObjectId = jsonObject?["@id"]?.GetValue<string>();
-        jsonObjectId.Should().Be("https://ssi.example.com/record/1");
+        jsonArray
+            .Any(child =>(child as JsonObject)!["@id"].ToString()!.Equals("https://ssi.example.com/record/1"))
+            .Should().BeTrue();
     }
 
     [Fact]

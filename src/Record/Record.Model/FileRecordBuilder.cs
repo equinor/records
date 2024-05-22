@@ -9,6 +9,7 @@ namespace Records;
 public record FileRecordBuilder
 {
     private Storage _storage = new();
+    private Uri _fileId;
 
     private record Storage
     {
@@ -116,7 +117,7 @@ public record FileRecordBuilder
     {
         var content = new Graph();
         var checksumBlank = content.CreateBlankNode();
-        content.Assert(new Triple(content.CreateUriNode(_storage.Id!), content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
+        content.Assert(new Triple(content.CreateUriNode(_fileId!), content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
         content.Assert(new Triple(checksumBlank, content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), content.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
         content.Assert(new Triple(checksumBlank, content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), content.CreateLiteralNode(checksum, new Uri(Namespaces.DataType.HexBinary))));
         return content.Triples;
@@ -142,6 +143,7 @@ public record FileRecordBuilder
 
     public Record Build()
     {
+        _fileId = new Uri($"{Namespaces.FileContent.Att}/file/{Guid.NewGuid()}"); // TODO: Check if this should go back to _strorage.Id only
         VerifyBuild();
 
         var fileRecordTriples = new List<Triple?>
@@ -195,7 +197,7 @@ public record FileRecordBuilder
     }
 
     private Triple CreateTripleWithPredicateAndObject(string predicate, string @object, string literalNodeDataType = "")
-        => new(new UriNode(_storage.Id),
+        => new(new UriNode(_fileId),
                 new UriNode(new Uri(predicate)),
                 string.IsNullOrEmpty(literalNodeDataType) ?
                     new UriNode(new Uri(@object)) :

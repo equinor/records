@@ -7,7 +7,6 @@ using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 using Newtonsoft.Json;
-using static Lucene.Net.Analysis.Synonym.SynonymMap;
 
 namespace Records.Immutable;
 
@@ -122,7 +121,7 @@ public class Record : IEquatable<Record>
         var provenanceQuery = parser.ParseFromString(provenanceQueryString);
 
         var result = (IGraph)_queryProcessor.ProcessQuery(provenanceQuery);
-        if (result == null) throw new RecordException("A record must have exactly one provenance graph.");
+        if (result == null || result.IsEmpty) throw new RecordException("A record must have exactly one provenance graph.");
 
         // Extract the graph name from the result set
         var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
@@ -228,7 +227,7 @@ public class Record : IEquatable<Record>
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
 
-    public IEnumerable<Quad> Quads() => _provenanceGraph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
+    public IEnumerable<Quad> Quads() => _store.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<INode> SubjectWithType(string type) => SubjectWithType(new Uri(type));
     public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
@@ -256,7 +255,7 @@ public class Record : IEquatable<Record>
     public IEnumerable<Quad> QuadsWithPredicate(string predicate) => QuadsWithPredicate(new Uri(predicate));
     public IEnumerable<Quad> QuadsWithPredicate(Uri predicate) => QuadsWithPredicate(new UriNode(predicate));
     public IEnumerable<Quad> QuadsWithPredicate(INode predicate)
-      => _provenanceGraph
+      => _store
         .GetTriplesWithPredicate(predicate)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
@@ -333,9 +332,6 @@ public class Record : IEquatable<Record>
         writer.Save(_store, stringWriter);
 
         var result = stringWriter.ToString();
-
-        // JsonLdWriter writes a JsonArray, but we would like only the contained JsonNode
-        if (writer is JsonLdWriter) result = result[1..(result.Length - 1)];
 
         return result;
     }
