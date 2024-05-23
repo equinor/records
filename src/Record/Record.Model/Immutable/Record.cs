@@ -151,6 +151,8 @@ public class Record : IEquatable<Record>
         return tempStore;
     }
 
+    public IGraph Graph() => _store.Collapse(Id);
+
     /// <summary>
     /// This method allows you to do a subset of SPARQL queries on your record.
     /// Supported queries: construct, select. 

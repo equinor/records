@@ -4,6 +4,23 @@ using VDS.RDF.Writing;
 namespace Records.Tests;
 public static class TestData
 {
+
+    public static IGraph CreateGraph(string id)
+    {
+        var graph = new Graph(new Uri(id));
+
+        var guid = Guid.NewGuid().ToString();
+
+        Enumerable.Range(1, 10)
+            .ToList().ForEach(i =>
+            {
+                var (s, p, o) = CreateRecordTripleStringTuple($"{guid}/{i}");
+                graph.Assert(new Triple(new UriNode(new Uri(s)), new UriNode(new Uri(p)), new UriNode(new Uri(o))));
+            });
+
+        return graph;
+    }
+
     public static Mutable.Record MutableRecordWithContent(string? id = null)
     {
         id ??= CreateRecordId("1");

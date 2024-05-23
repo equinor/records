@@ -35,10 +35,7 @@ public class ImmutableRecordTests
     public void Record_CanBeCreated_FromGraph()
     {
         ITripleStore store = new TripleStore();
-        store.LoadFromString(TestData.ValidJsonLdRecordString(), new JsonLdParser());
-
-        var graph = store.Graphs.First();
-        graph.Merge(store.Graphs.Last());
+        var graph = TestData.ValidRecord().Graph();
 
         var record = new Record(graph);
         var result = record.Id;
@@ -448,6 +445,26 @@ public class ImmutableRecordTests
 
         record.Should().NotBeNull();
         record.Id.Should().Be(originalRecord.Id);
+    }
+
+    [Fact]
+    public void Record_Collapse_ShouldReturnSingleGraphWithAllTriples()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
+        var tripleStore = record.TripleStore();
+
+        var collapsedGraph = tripleStore.Collapse(recordId);
+
+        // Act
+        var result = record.Graph();
+
+        // Assert
+        result.Should().BeEquivalentTo(collapsedGraph);
+        result.Triples.Should().HaveCount(tripleStore.Triples.Count());
+        tripleStore.Triples.Should().Contain(tripleStore.Triples);
     }
 }
 
