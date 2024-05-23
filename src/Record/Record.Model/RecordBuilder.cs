@@ -354,7 +354,6 @@ public record RecordBuilder
         $"https://www.nuget.org/packages/Record/{GetType().Assembly.GetName().Version}";
 
 
-
     private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
     {
         if (_storage.Id == null) throw new RecordException("Record ID must be added first.");

@@ -56,6 +56,57 @@ public class FileRecordBuilderTests
 
     }
 
+    [Fact]
+    public void FileRecordBuilder__ShouldCreateDescribes()
+    {
+        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+        var fileRecordId = TestData.CreateRecordId("fileRecordId");
+        var scopes = TestData.CreateObjectList(3, "scope");
+        var fileRecord = new FileRecordBuilder()
+            .WithId(fileRecordId)
+            .WithDescribes("https://example.com/describes")
+            .WithIsSubRecordOf(superRecord.Id)
+            .WithFileExtension("xslx")
+            .WithFileName("filename")
+            .WithScopes(scopes)
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
+            .WithLanguage("en-US")
+            .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
+            .Build();
+
+        var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).First();
+        describesNode.Should().Be("https://example.com/describes");
+
+
+    }
+
+
+    [Fact]
+    public void FileRecordBuilder__ShouldCreateDescribes__FromUri()
+    {
+        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+        var fileRecordId = TestData.CreateRecordId("fileRecordId");
+        var scopes = TestData.CreateObjectList(3, "scope");
+        var httpsExampleComDescribes = new Uri("https://example.com/describes");
+        var fileRecord = new FileRecordBuilder()
+            .WithId(fileRecordId)
+            .WithDescribes(httpsExampleComDescribes)
+            .WithIsSubRecordOf(superRecord.Id)
+            .WithFileExtension("xslx")
+            .WithFileName("filename")
+            .WithScopes(scopes)
+            .WithDocumentType("doctype")
+            .WithModelType("modeltype")
+            .WithLanguage("en-US")
+            .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
+            .Build();
+
+        var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).First();
+        describesNode.Should().Be(httpsExampleComDescribes.ToString());
+
+
+    }
 
     [Fact]
     public void FileRecordBuilder__SHouldThrowException__WhenSuperRecordIsMissing()
