@@ -354,6 +354,14 @@ public class Record : IEquatable<Record>
         return Equals((Record)obj);
     }
 
+    public bool SameTriplesAs(Record? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        
+        return _store.Triples.Count().Equals(other._store.Triples.Count()) && _store.Triples.SequenceEqual(other._store.Triples);
+    }
+
     public override int GetHashCode()
     {
         return HashCode.Combine(Scopes, Describes);

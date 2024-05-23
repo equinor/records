@@ -466,5 +466,22 @@ public class ImmutableRecordTests
         result.Triples.Should().HaveCount(tripleStore.Triples.Count());
         tripleStore.Triples.Should().Contain(tripleStore.Triples);
     }
+
+    [Fact]
+    public void RecordGraph_Can_Create_New_Record()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
+        var graph = record.Graph();
+
+        // Act
+        var result = new Record(graph);
+
+        // Assert
+        result.Should().Be(record);
+        result.SameTriplesAs(record).Should().BeTrue();
+    }
 }
 
