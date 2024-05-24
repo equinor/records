@@ -18,6 +18,7 @@ public class Record : IEquatable<Record>
     private readonly TripleStore _store = new();
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
+    private string _nQuadsString;
 
     public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
@@ -25,24 +26,10 @@ public class Record : IEquatable<Record>
     public List<string>? Replaces { get; private set; }
 
     public string? IsSubRecordOf { get; set; }
-
+    public Record(ITripleStore store) => LoadFromTripleStore(store);
+    public Record(IGraph graph) => LoadFromGraph(graph);
     public Record(string rdfString) => LoadFromString(rdfString);
     public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
-    public Record(IGraph graph) => LoadFromGraph(graph);
-    public Record(ITripleStore store) => LoadFromTripleStore(store);
-
-    private string _nQuadsString;
-
-    private void LoadFromString(string rdfString, IStoreReader reader)
-    {
-        var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_provenanceGraph.IsEmpty || Provenance != null)
-            throw new RecordException("Record is already loaded.");
-
-        store.LoadFromString(rdfString, reader);
-
-        LoadFromTripleStore(store);
-    }
 
     private void LoadFromTripleStore(ITripleStore store)
     {
@@ -73,6 +60,18 @@ public class Record : IEquatable<Record>
 
         _nQuadsString = ToString<NQuadsWriter>();
     }
+
+    private void LoadFromString(string rdfString, IStoreReader reader)
+    {
+        var store = new TripleStore();
+        if (!string.IsNullOrEmpty(Id) || !_provenanceGraph.IsEmpty || Provenance != null)
+            throw new RecordException("Record is already loaded.");
+
+        store.LoadFromString(rdfString, reader);
+
+        LoadFromTripleStore(store);
+    }
+
 
     private void LoadFromString(string rdfString)
     {
@@ -111,6 +110,7 @@ public class Record : IEquatable<Record>
         tempGraph.Merge(_provenanceGraph);
         return tempGraph;
     }
+
     private IGraph FindProvenanceGraph()
     {
         var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . ?g a @RecordType . } }");
@@ -151,7 +151,9 @@ public class Record : IEquatable<Record>
         return tempStore;
     }
 
-    public IGraph Graph() => _store.Collapse(Id);
+    public IGraph GetMergedGraphs() => _store.Collapse(Id);
+    public IEnumerable<IGraph> GetContentGraphs()
+        => _store.Graphs.Where(g => g.Name?.ToString() != Id && !g.IsEmpty);
 
     /// <summary>
     /// This method allows you to do a subset of SPARQL queries on your record.
@@ -320,13 +322,9 @@ public class Record : IEquatable<Record>
 
     public bool ContainsQuad(Quad quad) => _store.Contains(quad.ToTriple());
 
-    public override string ToString()
-    {
-        return _nQuadsString;
-    }
+    public override string ToString() => _nQuadsString;
 
-    public string ToString<T>() where T : IStoreWriter, new()
-        => ToString(new T());
+    public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
 
     public string ToString(IStoreWriter writer)
     {

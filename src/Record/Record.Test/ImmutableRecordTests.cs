@@ -35,7 +35,7 @@ public class ImmutableRecordTests
     public void Record_CanBeCreated_FromGraph()
     {
         ITripleStore store = new TripleStore();
-        var graph = TestData.ValidRecord().Graph();
+        var graph = TestData.ValidRecord().GetMergedGraphs();
 
         var record = new Record(graph);
         var result = record.Id;
@@ -459,7 +459,7 @@ public class ImmutableRecordTests
         var collapsedGraph = tripleStore.Collapse(recordId);
 
         // Act
-        var result = record.Graph();
+        var result = record.GetMergedGraphs();
 
         // Assert
         result.Should().BeEquivalentTo(collapsedGraph);
@@ -474,7 +474,7 @@ public class ImmutableRecordTests
         var recordId = "https://example.com/1";
 
         var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
-        var graph = record.Graph();
+        var graph = record.GetMergedGraphs();
 
         // Act
         var result = new Record(graph);
@@ -482,6 +482,22 @@ public class ImmutableRecordTests
         // Assert
         result.Should().Be(record);
         result.SameTriplesAs(record).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Record_GetContentGraphs_Returns_All_Content_Graphs()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(recordId);
+
+        // Act
+        var result = record.GetContentGraphs();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result.First().Name.Should().NotBe(recordId);
     }
 }
 

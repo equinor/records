@@ -182,6 +182,20 @@ public record RecordBuilder
 
     #region Content-Methods
     #region With-Content
+    public RecordBuilder WithContent(params IGraph[] graphs) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            ContentGraphs = graphs.ToList(),
+            RdfStrings = new(),
+            Triples = new(),
+            Quads = new()
+        }
+
+    };
+    public RecordBuilder WithContent(IEnumerable<IGraph> graphs) => WithContent(graphs.ToArray());
+
     public RecordBuilder WithContent(params Quad[] quads) =>
         this with
         {
@@ -189,7 +203,8 @@ public record RecordBuilder
             {
                 Quads = quads.ToList(),
                 RdfStrings = new(),
-                Triples = new()
+                Triples = new(),
+                ContentGraphs = new()
             }
         };
 
@@ -202,7 +217,8 @@ public record RecordBuilder
             {
                 Triples = triples.ToList(),
                 Quads = new(),
-                RdfStrings = new()
+                RdfStrings = new(),
+                ContentGraphs = new()
             }
         };
     public RecordBuilder WithContent(IEnumerable<Triple> triples) => WithContent(triples.ToArray());
@@ -214,13 +230,28 @@ public record RecordBuilder
             {
                 RdfStrings = rdfStrings.ToList(),
                 Triples = new(),
-                Quads = new()
+                Quads = new(),
+                ContentGraphs = new()
             }
         };
     public RecordBuilder WithContent(IEnumerable<string> rdfStrings) => WithContent(rdfStrings.ToArray());
     #endregion
 
     #region With-Additional-Content
+    public RecordBuilder WithAdditionalContent(params IGraph[] graphs) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            ContentGraphs = _storage.ContentGraphs.Concat(graphs).ToList(),
+            Quads = _storage.Quads.ToList(),
+            Triples = _storage.Triples.ToList(),
+            RdfStrings = _storage.RdfStrings.ToList()
+        }
+    };
+
+    public RecordBuilder WithAdditionalContent(IEnumerable<IGraph> graphs) => WithAdditionalContent(graphs.ToArray());
+
     public RecordBuilder WithAdditionalContent(params Triple[] triples) =>
         this with
         {
@@ -228,7 +259,8 @@ public record RecordBuilder
             {
                 Triples = _storage.Triples.Concat(triples).ToList(),
                 Quads = _storage.Quads.ToList(),
-                RdfStrings = _storage.RdfStrings.ToList()
+                RdfStrings = _storage.RdfStrings.ToList(),
+                ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
@@ -240,7 +272,8 @@ public record RecordBuilder
             {
                 Quads = _storage.Quads.Concat(quads).ToList(),
                 Triples = _storage.Triples.ToList(),
-                RdfStrings = _storage.RdfStrings.ToList()
+                RdfStrings = _storage.RdfStrings.ToList(),
+                ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
 
@@ -253,7 +286,8 @@ public record RecordBuilder
             {
                 RdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
                 Quads = _storage.Quads.ToList(),
-                Triples = _storage.Triples.ToList()
+                Triples = _storage.Triples.ToList(),
+                ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<string> rdfStrings) => WithAdditionalContent(rdfStrings.ToArray());
@@ -310,6 +344,10 @@ public record RecordBuilder
         var tripleString = string.Join("\n", contentQuads.Select(q => q.ToTripleString()));
         contentGraph.LoadFromString(tripleString);
 
+        foreach(var graph in _storage.ContentGraphs.Select(g => g.Triples))
+            if(graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
+                throw new RecordException("Content may not make provenance statements.");
+
         var report = _processor.Validate(provenanceGraph);
         if (!report.Conforms) throw ShaclException(report);
 
@@ -317,6 +355,8 @@ public record RecordBuilder
         var ts = new TripleStore();
         ts.Add(contentGraph);
         ts.Add(provenanceGraph);
+        foreach(var graph in _storage.ContentGraphs)
+            ts.Add(graph);
 
         return new(ts);
     }
@@ -392,5 +432,6 @@ public record RecordBuilder
         internal List<string> RdfStrings = new();
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
+        internal List<IGraph> ContentGraphs = new();
     }
 }

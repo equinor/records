@@ -448,4 +448,18 @@ public class RecordBuilderTests
 
         record.Should().BeNull();
     }
+
+    [Fact]
+    public void RecordBuilder_Can_Add_ContentGraphs()
+    {
+        var firstGraph = TestData.CreateGraph("https://example.com/1");
+        var secondGraph = TestData.CreateGraph("https://example.com/2");
+
+        var record = TestData.RecordBuilderWithProvenanceAndWithoutContent()
+            .WithContent(firstGraph)
+            .WithAdditionalContent(secondGraph)
+            .Build();
+
+        record.GetContentGraphs().Should().HaveCount(2);
+    }
 }

@@ -39,16 +39,24 @@ public static class TestData
     {
         id ??= CreateRecordId("1");
 
+        var content = CreateQuadList(numberQuads, id);
+        return RecordBuilderWithProvenanceAndWithoutContent(id, numberScopes, numberDescribes, numberQuads)
+            .WithContent(content);
+    }
+
+    public static RecordBuilder RecordBuilderWithProvenanceAndWithoutContent(string? id = null, int numberScopes = 5,
+    int numberDescribes = 5, int numberQuads = 10)
+    {
+        id ??= CreateRecordId("1");
+
         var scopes = CreateObjectList(numberScopes, "scope");
         var describes = CreateObjectList(numberDescribes, "describes");
-        var content = CreateQuadList(numberQuads, id);
 
         return new RecordBuilder()
             .WithId(id)
             .WithScopes(scopes)
             .WithDescribes(describes)
-            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool("https://example.com/software/v1"))
-            .WithContent(content);
+            .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool("https://example.com/software/v1"));
     }
 
     public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
