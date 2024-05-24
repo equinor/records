@@ -170,7 +170,7 @@ public class ImmutableRecordTests
         jsonArray?.Count.Should().Be(2);
 
         jsonArray
-            .Any(child =>(child as JsonObject)!["@id"].ToString()!.Equals("https://ssi.example.com/record/1"))
+            .Any(child => (child as JsonObject)!["@id"].ToString()!.Equals("https://ssi.example.com/record/1"))
             .Should().BeTrue();
     }
 

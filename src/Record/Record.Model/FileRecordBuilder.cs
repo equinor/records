@@ -39,7 +39,7 @@ public record FileRecordBuilder
             }
         };
     public FileRecordBuilder WithId(string id) => WithId(new IriReference(id));
-    
+
     public FileRecordBuilder WithFileId(IriReference fileId) =>
     this with
     {
@@ -165,7 +165,7 @@ public record FileRecordBuilder
 
     public Record Build()
     {
-        if(_storage.FileId == null)
+        if (_storage.FileId == null)
             _storage.FileId = new Uri($"{Namespaces.FileContent.Att}/file/{Guid.NewGuid()}");
 
         VerifyBuild();

@@ -298,7 +298,7 @@ public record RecordBuilder
     public Record Build()
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
-        
+
         var provenanceGraph = new Graph(_storage.Id);
         provenanceGraph.BaseUri = _storage.Id;
 
@@ -338,25 +338,28 @@ public record RecordBuilder
         contentQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
         contentQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
 
-        if(contentQuads.Any(q => q.Subject.Equals($"<{_storage.Id.ToString()}>"))) 
+        if (contentQuads.Any(q => q.Subject.Equals($"<{_storage.Id.ToString()}>")))
             throw new RecordException("Content may not make provenance statements.");
 
         var tripleString = string.Join("\n", contentQuads.Select(q => q.ToTripleString()));
         contentGraph.LoadFromString(tripleString);
 
-        foreach(var graph in _storage.ContentGraphs.Select(g => g.Triples))
-            if(graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
+        foreach (var graph in _storage.ContentGraphs.Select(g => g.Triples))
+            if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
                 throw new RecordException("Content may not make provenance statements.");
 
         var report = _processor.Validate(provenanceGraph);
         if (!report.Conforms) throw ShaclException(report);
 
-        var writer = new NQuadsWriter();
         var ts = new TripleStore();
-        ts.Add(contentGraph);
-        ts.Add(provenanceGraph);
-        foreach(var graph in _storage.ContentGraphs)
+        foreach (var graph in _storage.ContentGraphs)
+        {
             ts.Add(graph);
+            provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
+        }
+
+        ts.Add(provenanceGraph);
+        ts.Add(contentGraph);
 
         return new(ts);
     }

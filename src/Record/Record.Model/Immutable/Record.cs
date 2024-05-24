@@ -37,7 +37,6 @@ public class Record : IEquatable<Record>
 
         foreach (var graph in store.Graphs) _store.Add(graph);
 
-
         _dataset = new InMemoryDataset(_store);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
@@ -152,6 +151,7 @@ public class Record : IEquatable<Record>
     }
 
     public IGraph GetMergedGraphs() => _store.Collapse(Id);
+
     public IEnumerable<IGraph> GetContentGraphs()
         => _store.Graphs.Where(g => g.Name?.ToString() != Id && !g.IsEmpty);
 
@@ -356,7 +356,7 @@ public class Record : IEquatable<Record>
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        
+
         return _store.Triples.Count().Equals(other._store.Triples.Count()) && _store.Triples.SequenceEqual(other._store.Triples);
     }
 
