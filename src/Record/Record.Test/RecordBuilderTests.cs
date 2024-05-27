@@ -417,7 +417,12 @@ public class RecordBuilderTests
         JArray.Parse(jsonLd)
             .SelectMany(jo => jo["@graph"].Children<JObject>())
             .SelectMany(jo => jo.Properties())
-            .Any(jp => jp.Value is JArray ja && ja.Any(item => item["@type"]?.ToString() == dateTypeUri.ToString()))
+            .Any(jp => 
+                jp.Name.Equals(p) 
+                && jp.Value is JArray ja 
+                && ja.Any(item => 
+                    item["@type"].ToString() == dateTypeUri.ToString())
+                )
             .Should()
             .BeTrue();
     }
