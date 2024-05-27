@@ -357,7 +357,7 @@ public class Record : IEquatable<Record>
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
 
-        return _store.Triples.Count().Equals(other._store.Triples.Count()) && _store.Triples.SequenceEqual(other._store.Triples);
+        return _store.Triples.SequenceEqual(other._store.Triples);
     }
 
     public override int GetHashCode()
