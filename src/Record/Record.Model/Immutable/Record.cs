@@ -14,10 +14,11 @@ namespace Records.Immutable;
 public class Record : IEquatable<Record>
 {
     public string Id { get; private set; } = null!;
-    private IGraph _graph = new Graph();
+    private IGraph _provenanceGraph = new Graph();
     private readonly TripleStore _store = new();
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
+    private string _nQuadsString;
 
     public List<Quad>? Provenance { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
@@ -25,18 +26,44 @@ public class Record : IEquatable<Record>
     public List<string>? Replaces { get; private set; }
 
     public string? IsSubRecordOf { get; set; }
-
+    public Record(ITripleStore store) => LoadFromTripleStore(store);
+    public Record(IGraph graph) => LoadFromGraph(graph);
     public Record(string rdfString) => LoadFromString(rdfString);
     public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
-    public Record(IGraph graph) => LoadFromGraph(graph);
-    public Record(ITripleStore store) => LoadFromTripleStore(store);
 
-    private string _nQuadsString;
+    private void LoadFromTripleStore(ITripleStore store)
+    {
+        if (store?.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
+
+        foreach (var graph in store.Graphs) _store.Add(graph);
+
+        _dataset = new InMemoryDataset(_store);
+        _queryProcessor = new LeviathanQueryProcessor(_dataset);
+
+        _provenanceGraph = FindProvenanceGraph();
+        Id = _provenanceGraph.BaseUri?.ToString() ?? throw new RecordException("Provenance graph must have a base URI.");
+
+        Provenance = QuadsWithSubject(Id).ToList();
+
+        Scopes = QuadsWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object).OrderBy(s => s).ToHashSet();
+        Describes = QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).OrderBy(d => d).ToHashSet();
+
+        var replaces = QuadsWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object).ToArray();
+        Replaces = replaces.ToList();
+
+        var subRecordOf = QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).ToArray();
+        if (subRecordOf.Length > 1)
+            throw new RecordException("A record can at most be the subrecord of one other record.");
+
+        IsSubRecordOf = subRecordOf.FirstOrDefault();
+
+        _nQuadsString = ToString<NQuadsWriter>();
+    }
 
     private void LoadFromString(string rdfString, IStoreReader reader)
     {
         var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null)
+        if (!string.IsNullOrEmpty(Id) || !_provenanceGraph.IsEmpty || Provenance != null)
             throw new RecordException("Record is already loaded.");
 
         store.LoadFromString(rdfString, reader);
@@ -44,17 +71,11 @@ public class Record : IEquatable<Record>
         LoadFromTripleStore(store);
     }
 
-    private void LoadFromTripleStore(ITripleStore store)
-    {
-        if (store?.Graphs.Count != 1) throw new RecordException("A record must contain exactly one named graph.");
-        var graph = store.Graphs.First();
-        LoadFromGraph(graph);
-    }
 
     private void LoadFromString(string rdfString)
     {
         var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_graph.IsEmpty || Provenance != null)
+        if (!string.IsNullOrEmpty(Id) || !_provenanceGraph.IsEmpty || Provenance != null)
             throw new RecordException("Record is already loaded.");
 
         try
@@ -76,29 +97,39 @@ public class Record : IEquatable<Record>
         var tempGraph = new Graph(graph.Name);
         tempGraph.Merge(graph);
 
-        _graph = tempGraph;
-        _store.Add(_graph);
-        _dataset = new InMemoryDataset(_graph);
-        _queryProcessor = new LeviathanQueryProcessor(_dataset);
+        var tempStore = new TripleStore();
+        tempStore.Add(tempGraph);
 
-        Id = _graph.Name.ToSafeString();
+        LoadFromTripleStore(tempStore);
+    }
 
-        Provenance = QuadsWithSubject(Id).ToList();
-        if (!Provenance.Any(p => p.Object.Equals(Namespaces.Record.RecordType))) throw new RecordException("A record must have exactly one provenance object.");
+    public IGraph ProvenanceGraph()
+    {
+        var tempGraph = new Graph(_provenanceGraph.BaseUri);
+        tempGraph.Merge(_provenanceGraph);
+        return tempGraph;
+    }
 
-        Scopes = QuadsWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object).OrderBy(s => s).ToHashSet();
-        Describes = QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).OrderBy(d => d).ToHashSet();
+    private IGraph FindProvenanceGraph()
+    {
+        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . ?g a @RecordType . } }");
+        parameterizedQuery.SetUri("RecordType", new Uri(Namespaces.Record.RecordType));
 
-        var replaces = QuadsWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object).ToArray();
-        Replaces = replaces.ToList();
+        var parser = new SparqlQueryParser();
+        var provenanceQueryString = parameterizedQuery.ToString();
+        var provenanceQuery = parser.ParseFromString(provenanceQueryString);
 
-        var subRecordOf = QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).ToArray();
-        if (subRecordOf.Length > 1)
-            throw new RecordException("A record can at most be the subrecord of one other record.");
+        var result = (IGraph)_queryProcessor.ProcessQuery(provenanceQuery);
+        if (result == null || result.IsEmpty) throw new RecordException("A record must have exactly one provenance graph.");
 
-        IsSubRecordOf = subRecordOf.FirstOrDefault();
+        // Extract the graph name from the result set
+        var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
 
-        _nQuadsString = ToString<NQuadsWriter>();
+        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one provenance graph.");
+
+        result.BaseUri = new Uri(graphName);
+
+        return result;
     }
 
     private static void ValidateJsonLd(string rdfString)
@@ -111,12 +142,18 @@ public class Record : IEquatable<Record>
         }
     }
 
-    public IGraph Graph()
+    public ITripleStore TripleStore()
     {
-        var tempGraph = new Graph(new Uri(Id));
-        tempGraph.Merge(_graph);
-        return tempGraph;
+        var tempStore = new TripleStore();
+        foreach (var graph in _store.Graphs) tempStore.Add(graph);
+
+        return tempStore;
     }
+
+    public IGraph GetMergedGraphs() => _store.Collapse(Id);
+
+    public IEnumerable<IGraph> GetContentGraphs()
+        => _store.Graphs.Where(g => g.Name?.ToString() != Id && !g.IsEmpty);
 
     /// <summary>
     /// This method allows you to do a subset of SPARQL queries on your record.
@@ -194,19 +231,19 @@ public class Record : IEquatable<Record>
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
 
-    public IEnumerable<Quad> Quads() => _graph.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
+    public IEnumerable<Quad> Quads() => _store.Triples.Select(t => Quad.CreateSafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<INode> SubjectWithType(string type) => SubjectWithType(new Uri(type));
     public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
     public IEnumerable<INode> SubjectWithType(INode type)
-        => _graph
+        => _store
         .GetTriplesWithPredicateObject(new UriNode(new Uri(Namespaces.Rdf.Type)), type)
         .Select(t => t.Subject);
 
     public IEnumerable<string> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
     public IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
     public IEnumerable<string> LabelsOfSubject(INode subject)
-        => _graph
+        => _store
         .GetTriplesWithSubjectPredicate(subject, new UriNode(new Uri(Namespaces.Rdfs.Label)))
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value);
@@ -215,47 +252,47 @@ public class Record : IEquatable<Record>
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
     public IEnumerable<Quad> QuadsWithSubject(Uri subject) => QuadsWithSubject(new UriNode(subject));
     public IEnumerable<Quad> QuadsWithSubject(INode subject)
-        => _graph
+        => _store
         .GetTriplesWithSubject(subject)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithPredicate(string predicate) => QuadsWithPredicate(new Uri(predicate));
     public IEnumerable<Quad> QuadsWithPredicate(Uri predicate) => QuadsWithPredicate(new UriNode(predicate));
     public IEnumerable<Quad> QuadsWithPredicate(INode predicate)
-      => _graph
+      => _store
         .GetTriplesWithPredicate(predicate)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithObject(string @object) => QuadsWithObject(new Uri(@object));
     public IEnumerable<Quad> QuadsWithObject(Uri @object) => QuadsWithObject(new UriNode(@object));
     public IEnumerable<Quad> QuadsWithObject(INode @object)
-        => _graph
+        => _store
         .GetTriplesWithObject(@object)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubjectPredicate(string subject, string predicate) => QuadsWithSubjectPredicate(new Uri(subject), new Uri(predicate));
     public IEnumerable<Quad> QuadsWithSubjectPredicate(Uri subject, Uri predicate) => QuadsWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
     public IEnumerable<Quad> QuadsWithSubjectPredicate(INode subject, INode predicate)
-        => _graph
+        => _store
         .GetTriplesWithSubjectPredicate(subject, predicate)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithPredicateAndObject(string predicate, string @object) => QuadsWithPredicateAndObject(new Uri(predicate), new Uri(@object));
     public IEnumerable<Quad> QuadsWithPredicateAndObject(Uri predicate, Uri @object) => QuadsWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
     public IEnumerable<Quad> QuadsWithPredicateAndObject(INode predicate, INode @object)
-        => _graph
+        => _store
         .GetTriplesWithPredicateObject(predicate, @object)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
     public IEnumerable<Quad> QuadsWithSubjectObject(string subject, string @object) => QuadsWithSubjectObject(new Uri(subject), new Uri(@object));
     public IEnumerable<Quad> QuadsWithSubjectObject(Uri subject, Uri @object) => QuadsWithSubjectObject(new UriNode(subject), new UriNode(@object));
     public IEnumerable<Quad> QuadsWithSubjectObject(UriNode subject, UriNode @object)
-        => _graph
+        => _store
         .GetTriplesWithSubjectObject(subject, @object)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
 
-    public IEnumerable<Triple> Triples() => _graph.Triples ?? throw new UnloadedRecordException();
+    public IEnumerable<Triple> Triples() => _store.Triples ?? throw new UnloadedRecordException();
     public IEnumerable<Triple> ContentAsTriples()
     {
         var parser = new SparqlQueryParser();
@@ -281,17 +318,13 @@ public class Record : IEquatable<Record>
         return provenance.Triples;
     }
 
-    public bool ContainsTriple(Triple triple) => _graph.ContainsTriple(triple);
+    public bool ContainsTriple(Triple triple) => _store.Contains(triple);
 
-    public bool ContainsQuad(Quad quad) => _graph.ContainsTriple(quad.ToTriple());
+    public bool ContainsQuad(Quad quad) => _store.Contains(quad.ToTriple());
 
-    public override string ToString()
-    {
-        return _nQuadsString;
-    }
+    public override string ToString() => _nQuadsString;
 
-    public string ToString<T>() where T : IStoreWriter, new()
-        => ToString(new T());
+    public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
 
     public string ToString(IStoreWriter writer)
     {
@@ -299,9 +332,6 @@ public class Record : IEquatable<Record>
         writer.Save(_store, stringWriter);
 
         var result = stringWriter.ToString();
-
-        // JsonLdWriter writes a JsonArray, but we would like only the contained JsonNode
-        if (writer is JsonLdWriter) result = result[1..(result.Length - 1)];
 
         return result;
     }
@@ -320,6 +350,14 @@ public class Record : IEquatable<Record>
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != GetType()) return false;
         return Equals((Record)obj);
+    }
+
+    public bool SameTriplesAs(Record? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return _store.Triples.SequenceEqual(other._store.Triples);
     }
 
     public override int GetHashCode()

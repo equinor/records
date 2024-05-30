@@ -27,7 +27,6 @@ public class FileRecordBuilderTests
 
         fileRecord.Should().NotBeNull();
         fileRecord.QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).Single().Should().Be(superRecord.Id);
-        fileRecord.QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).Single().Should().Be(fileRecordId);
         fileRecord.QuadsWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
         fileRecord.QuadsWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(2);
     }
@@ -57,14 +56,14 @@ public class FileRecordBuilderTests
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateDescribes()
+    public void FileRecordBuilder__ShouldCreateDervivedFrom()
     {
         var superRecord = new Record(TestData.ValidJsonLdRecordString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
-            .WithDescribes("https://example.com/describes")
+            .WithDerivedFrom("https://example.com/derivedFrom")
             .WithIsSubRecordOf(superRecord.Id)
             .WithFileExtension("xslx")
             .WithFileName("filename")
@@ -75,23 +74,23 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).First();
-        describesNode.Should().Be("https://example.com/describes");
+        var derivedFromNode = fileRecord.QuadsWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object).First();
+        derivedFromNode.Should().Be("https://example.com/derivedFrom");
 
 
     }
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateDescribes__FromUri()
+    public void FileRecordBuilder__ShouldCreateDerivedFrom__FromUri()
     {
         var superRecord = new Record(TestData.ValidJsonLdRecordString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
-        var httpsExampleComDescribes = new Uri("https://example.com/describes");
+        var httpsExampleComDescribes = new Uri("https://example.com/derivedFrom");
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
-            .WithDescribes(httpsExampleComDescribes)
+            .WithDerivedFrom(httpsExampleComDescribes)
             .WithIsSubRecordOf(superRecord.Id)
             .WithFileExtension("xslx")
             .WithFileName("filename")
@@ -102,7 +101,7 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).First();
+        var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object).First();
         describesNode.Should().Be(httpsExampleComDescribes.ToString());
 
 

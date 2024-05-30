@@ -7,6 +7,7 @@ using VDS.RDF.Writing;
 using Newtonsoft.Json;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using Newtonsoft.Json.Linq;
 
 namespace Records.Tests;
 
@@ -18,7 +19,7 @@ public class ImmutableRecordTests
         var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Provenance.Count();
 
-        result.Should().Be(13);
+        result.Should().Be(14);
     }
 
     [Fact]
@@ -34,9 +35,9 @@ public class ImmutableRecordTests
     public void Record_CanBeCreated_FromGraph()
     {
         ITripleStore store = new TripleStore();
-        store.LoadFromString(TestData.ValidJsonLdRecordString(), new JsonLdParser());
+        var graph = TestData.ValidRecord().GetMergedGraphs();
 
-        var record = new Record(store.Graphs.First());
+        var record = new Record(graph);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -46,7 +47,7 @@ public class ImmutableRecordTests
     public void Record_Can_Do_Queries()
     {
         var record = new Record(TestData.ValidJsonLdRecordString());
-        var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}}");
+        var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
         var result = queryResult.Count();
         result.Should().Be(5);
     }
@@ -59,7 +60,7 @@ public class ImmutableRecordTests
 
         var result = () => new Record(rdf);
 
-        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one provenance object.");
+        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one provenance graph.");
     }
 
 
@@ -71,18 +72,6 @@ public class ImmutableRecordTests
         result.Should().Throw<RecordException>().WithInnerException<JsonReaderException>();
     }
 
-
-    [Fact]
-    public void Creating_Record_With_More_Than_One_Named_Graph_Throws()
-    {
-        var jsonArray = $"[{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(1))}," +
-                        $"{TestData.ValidJsonLdRecordString(TestData.CreateRecordId(2))}]";
-
-        var result = () => new Record(jsonArray);
-        result.Should().Throw<RecordException>().WithMessage("A record must contain exactly one named graph.");
-    }
-
-
     [Fact]
     public void Record_Can_Be_Serialised_Nquad()
     {
@@ -91,7 +80,7 @@ public class ImmutableRecordTests
         var result = record.ToString<NQuadsWriter>().Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(28);
+        result.Should().Be(29);
     }
 
     [Fact]
@@ -102,7 +91,7 @@ public class ImmutableRecordTests
         var result = record.ToString(new NQuadsWriter()).Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(28);
+        result.Should().Be(29);
     }
 
 
@@ -114,7 +103,7 @@ public class ImmutableRecordTests
         var result = record.Quads().Count();
 
         // This is how many quads should be extraced from the JSON-LD
-        result.Should().Be(27);
+        result.Should().Be(28);
     }
 
     [Fact]
@@ -172,16 +161,17 @@ public class ImmutableRecordTests
 
         var jsonLdString = record.ToString<JsonLdWriter>();
 
-        var jsonObject = default(JsonObject);
+        var jsonArray = default(JsonArray);
 
-        var deserialisationFunc = () => jsonObject = System.Text.Json.JsonSerializer.Deserialize<JsonObject>(jsonLdString);
+        var deserialisationFunc = () => jsonArray = JsonNode.Parse(jsonLdString) as JsonArray;
         deserialisationFunc.Should().NotThrow();
 
-        jsonObject.Should().NotBeNull();
-        jsonObject?.ContainsKey("@id").Should().BeTrue();
+        jsonArray.Should().NotBeNull();
+        jsonArray?.Count.Should().Be(2);
 
-        var jsonObjectId = jsonObject?["@id"]?.GetValue<string>();
-        jsonObjectId.Should().Be("https://ssi.example.com/record/1");
+        jsonArray
+            .Any(child => (child as JsonObject)!["@id"].ToString()!.Equals("https://ssi.example.com/record/1"))
+            .Should().BeTrue();
     }
 
     [Fact]
@@ -284,19 +274,12 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var graph = record.Graph();
-        graph.Name.ToString().Should().Be(record.Id);
-        record.Triples().Should().Contain(graph.Triples);
-
-        graph.Clear();
-
-        graph.IsEmpty.Should().BeTrue();
-
-        record.Graph().IsEmpty.Should().BeFalse();
+        var tripleStore = record.TripleStore();
+        record.Triples().Should().Contain(tripleStore.Triples);
     }
 
     [Fact]
-    public void Record_Can_Be_Copied_To_New_Record_Via_IGraph()
+    public void Record_Can_Be_Copied_To_New_Record_Via_ITripleStore()
     {
         var record = default(Record);
         var loadResult = () =>
@@ -308,21 +291,16 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var graph = record.Graph();
-        graph.Name.ToString().Should().Be(record.Id);
-        record.Triples().Should().Contain(graph.Triples);
+        var tripleStore = record.TripleStore();
+        var provenanceGraph = record.ProvenanceGraph();
+        provenanceGraph.Name.ToString().Should().Be(record.Id);
 
-        var newRecord = new Record(graph);
+        record.Triples().Should().Contain(tripleStore.Triples);
+
+        var newRecord = new Record(tripleStore);
         newRecord.Should().Be(record);
         newRecord.Id.Should().Be(record.Id);
         newRecord.Triples().Should().Contain(record.Triples());
-
-        graph.Clear();
-
-        graph.IsEmpty.Should().BeTrue();
-
-        record.Graph().IsEmpty.Should().BeFalse();
-        newRecord.Graph().IsEmpty.Should().BeFalse();
     }
 
     [Fact]
@@ -467,6 +445,59 @@ public class ImmutableRecordTests
 
         record.Should().NotBeNull();
         record.Id.Should().Be(originalRecord.Id);
+    }
+
+    [Fact]
+    public void Record_Collapse_ShouldReturnSingleGraphWithAllTriples()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
+        var tripleStore = record.TripleStore();
+
+        var collapsedGraph = tripleStore.Collapse(recordId);
+
+        // Act
+        var result = record.GetMergedGraphs();
+
+        // Assert
+        result.Should().BeEquivalentTo(collapsedGraph);
+        result.Triples.Should().HaveCount(tripleStore.Triples.Count());
+        tripleStore.Triples.Should().Contain(tripleStore.Triples);
+    }
+
+    [Fact]
+    public void RecordGraph_Can_Create_New_Record()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
+        var graph = record.GetMergedGraphs();
+
+        // Act
+        var result = new Record(graph);
+
+        // Assert
+        result.Should().Be(record);
+        result.SameTriplesAs(record).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Record_GetContentGraphs_Returns_All_Content_Graphs()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(recordId);
+
+        // Act
+        var result = record.GetContentGraphs();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result.First().Name.Should().NotBe(recordId);
     }
 }
 

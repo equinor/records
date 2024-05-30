@@ -19,8 +19,6 @@ public record RecordBuilder
     private ProvenanceBuilder _metadataProvenance;
     private ProvenanceBuilder _contentProvenance;
 
-
-    private IGraph _graph;
     private ShapesGraph _processor;
 
     public RecordBuilder()
@@ -184,6 +182,20 @@ public record RecordBuilder
 
     #region Content-Methods
     #region With-Content
+    public RecordBuilder WithContent(params IGraph[] graphs) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            ContentGraphs = graphs.ToList(),
+            RdfStrings = new(),
+            Triples = new(),
+            Quads = new()
+        }
+
+    };
+    public RecordBuilder WithContent(IEnumerable<IGraph> graphs) => WithContent(graphs.ToArray());
+
     public RecordBuilder WithContent(params Quad[] quads) =>
         this with
         {
@@ -191,7 +203,8 @@ public record RecordBuilder
             {
                 Quads = quads.ToList(),
                 RdfStrings = new(),
-                Triples = new()
+                Triples = new(),
+                ContentGraphs = new()
             }
         };
 
@@ -204,7 +217,8 @@ public record RecordBuilder
             {
                 Triples = triples.ToList(),
                 Quads = new(),
-                RdfStrings = new()
+                RdfStrings = new(),
+                ContentGraphs = new()
             }
         };
     public RecordBuilder WithContent(IEnumerable<Triple> triples) => WithContent(triples.ToArray());
@@ -216,13 +230,28 @@ public record RecordBuilder
             {
                 RdfStrings = rdfStrings.ToList(),
                 Triples = new(),
-                Quads = new()
+                Quads = new(),
+                ContentGraphs = new()
             }
         };
     public RecordBuilder WithContent(IEnumerable<string> rdfStrings) => WithContent(rdfStrings.ToArray());
     #endregion
 
     #region With-Additional-Content
+    public RecordBuilder WithAdditionalContent(params IGraph[] graphs) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            ContentGraphs = _storage.ContentGraphs.Concat(graphs).ToList(),
+            Quads = _storage.Quads.ToList(),
+            Triples = _storage.Triples.ToList(),
+            RdfStrings = _storage.RdfStrings.ToList()
+        }
+    };
+
+    public RecordBuilder WithAdditionalContent(IEnumerable<IGraph> graphs) => WithAdditionalContent(graphs.ToArray());
+
     public RecordBuilder WithAdditionalContent(params Triple[] triples) =>
         this with
         {
@@ -230,7 +259,8 @@ public record RecordBuilder
             {
                 Triples = _storage.Triples.Concat(triples).ToList(),
                 Quads = _storage.Quads.ToList(),
-                RdfStrings = _storage.RdfStrings.ToList()
+                RdfStrings = _storage.RdfStrings.ToList(),
+                ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
@@ -242,7 +272,8 @@ public record RecordBuilder
             {
                 Quads = _storage.Quads.Concat(quads).ToList(),
                 Triples = _storage.Triples.ToList(),
-                RdfStrings = _storage.RdfStrings.ToList()
+                RdfStrings = _storage.RdfStrings.ToList(),
+                ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
 
@@ -255,7 +286,8 @@ public record RecordBuilder
             {
                 RdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
                 Quads = _storage.Quads.ToList(),
-                Triples = _storage.Triples.ToList()
+                Triples = _storage.Triples.ToList(),
+                ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<string> rdfStrings) => WithAdditionalContent(rdfStrings.ToArray());
@@ -266,11 +298,34 @@ public record RecordBuilder
     public Record Build()
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
-        _graph = new Graph(_storage.Id);
-        _graph.BaseUri = _storage.Id;
 
-        var recordQuads = new List<SafeQuad>();
-        recordQuads.AddRange(_storage.Quads.Select(quad =>
+        var provenanceGraph = new Graph(_storage.Id);
+        provenanceGraph.BaseUri = _storage.Id;
+
+        var provenanceQuads = new List<SafeQuad>();
+        var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
+        provenanceQuads.Add(typeQuad);
+
+        if (_storage.IsSubRecordOf != null)
+            provenanceQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+
+        provenanceQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
+        provenanceQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
+        provenanceQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
+
+        var provenanceTripleString = string.Join("\n", provenanceQuads.Select(q => q.ToTripleString()));
+        provenanceGraph.LoadFromString(provenanceTripleString);
+        provenanceGraph.Assert(_metadataProvenance.Build(provenanceGraph, provenanceGraph.Name));
+        provenanceGraph.Assert(_contentProvenance.Build(provenanceGraph, provenanceGraph.Name));
+
+        var contentGraphId = provenanceGraph.CreateBlankNode();
+
+        provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
+
+        var contentGraph = new Graph(contentGraphId);
+
+        var contentQuads = new List<SafeQuad>();
+        contentQuads.AddRange(_storage.Quads.Select(quad =>
         {
             return quad switch
             {
@@ -280,35 +335,33 @@ public record RecordBuilder
             };
         }));
 
-        recordQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
+        contentQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
+        contentQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
 
+        if (contentQuads.Any(q => q.Subject.Equals($"<{_storage.Id.ToString()}>")))
+            throw new RecordException("Content may not make provenance statements.");
 
-        var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
-        recordQuads.Add(typeQuad);
+        var tripleString = string.Join("\n", contentQuads.Select(q => q.ToTripleString()));
+        contentGraph.LoadFromString(tripleString);
 
-        if (_storage.IsSubRecordOf != null)
-            recordQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+        foreach (var graph in _storage.ContentGraphs.Select(g => g.Triples))
+            if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
+                throw new RecordException("Content may not make provenance statements.");
 
-        recordQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
-        recordQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
-        recordQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
-        recordQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
-
-        var tripleString = string.Join("\n", recordQuads.Select(q => q.ToTripleString()));
-        _graph.LoadFromString(tripleString);
-        _graph.Assert(_metadataProvenance.Build(_graph, _graph.Name));
-        _graph.Assert(_contentProvenance.Build(_graph, _graph.Name));
-
-        var report = _processor.Validate(_graph);
+        var report = _processor.Validate(provenanceGraph);
         if (!report.Conforms) throw ShaclException(report);
 
-        var writer = new NQuadsWriter();
-        var sw = new System.IO.StringWriter();
         var ts = new TripleStore();
-        ts.Add(_graph);
-        writer.Save(ts, sw);
+        foreach (var graph in _storage.ContentGraphs)
+        {
+            ts.Add(graph);
+            provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
+        }
 
-        return new(sw.ToString());
+        ts.Add(provenanceGraph);
+        ts.Add(contentGraph);
+
+        return new(ts);
     }
 
     #region Private-Helper-Methods
@@ -337,7 +390,7 @@ public record RecordBuilder
         var tempStoreGraph = tempStore.Graphs.FirstOrDefault();
         if (tempStoreGraph == null) throw new UnloadedRecordException();
 
-        return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _graph.BaseUri)).ToList();
+        return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _storage.Id.ToString())).ToList();
     }
 
     private string CreateRecordVersionUri() =>
@@ -346,13 +399,14 @@ public record RecordBuilder
 
     private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
     {
-        if (_graph.BaseUri == null) throw new RecordException("Record ID must be added first.");
-        return Quad.CreateSafe(_graph.BaseUri.ToString(), predicate, @object, _graph.BaseUri.ToString());
+        if (_storage.Id == null) throw new RecordException("Record ID must be added first.");
+        return Quad.CreateSafe(_storage.Id.ToString(), predicate, @object, _storage.Id.ToString());
     }
 
     private SafeQuad CreateQuadFromTriple(Triple triple)
     {
-        return Quad.CreateSafe(triple, _graph.BaseUri.ToString());
+        if (_storage.Id == null) throw new RecordException("Record ID must be added first.");
+        return Quad.CreateSafe(triple, _storage.Id.ToString());
     }
 
     private SafeQuad CreateIsSubRecordOfQuad(string subRecordOf) =>
@@ -381,5 +435,6 @@ public record RecordBuilder
         internal List<string> RdfStrings = new();
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
+        internal List<IGraph> ContentGraphs = new();
     }
 }

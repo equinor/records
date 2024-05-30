@@ -14,10 +14,11 @@ public record FileRecordBuilder
     private record Storage
     {
         internal IriReference? Id { get; set; }
+        internal IriReference? FileId { get; set; }
         internal string? IsSubRecordOf { get; set; }
         internal byte[]? Content { get; set; }
         internal string? FileName { get; set; }
-        internal IriReference? Describes { get; set; }
+        internal IriReference? DerivedFrom { get; set; }
         internal string? FileExtension { get; set; }
         internal string? ByteSize { get; set; }
         internal string? Checksum { get; set; }
@@ -39,15 +40,25 @@ public record FileRecordBuilder
         };
     public FileRecordBuilder WithId(string id) => WithId(new IriReference(id));
 
-    public FileRecordBuilder WithDescribes(IriReference id) =>
+    public FileRecordBuilder WithFileId(IriReference fileId) =>
+    this with
+    {
+        _storage = _storage with
+        {
+            FileId = fileId
+        }
+    };
+    public FileRecordBuilder WithFileId(string fileId) => WithId(new IriReference(fileId));
+
+    public FileRecordBuilder WithDerivedFrom(IriReference id) =>
         this with
         {
             _storage = _storage with
             {
-                Describes = id
+                DerivedFrom = id
             }
         };
-    public FileRecordBuilder WithDescribes(string id) => WithDescribes(new IriReference(id));
+    public FileRecordBuilder WithDerivedFrom(string id) => WithDerivedFrom(new IriReference(id));
     public FileRecordBuilder WithModelType(string modelType) =>
         this with
         {
@@ -128,7 +139,7 @@ public record FileRecordBuilder
     {
         var content = new Graph();
         var checksumBlank = content.CreateBlankNode();
-        content.Assert(new Triple(content.CreateUriNode(_storage.Id!), content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
+        content.Assert(new Triple(content.CreateUriNode(_storage.FileId!), content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checksumBlank));
         content.Assert(new Triple(checksumBlank, content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), content.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
         content.Assert(new Triple(checksumBlank, content.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), content.CreateLiteralNode(checksum, new Uri(Namespaces.DataType.HexBinary))));
         return content.Triples;
@@ -154,6 +165,9 @@ public record FileRecordBuilder
 
     public Record Build()
     {
+        if (_storage.FileId == null)
+            _storage.FileId = new Uri($"{Namespaces.FileContent.Att}/file/{Guid.NewGuid()}");
+
         VerifyBuild();
 
         var fileRecordTriples = new List<Triple?>
@@ -172,12 +186,19 @@ public record FileRecordBuilder
 
         var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)
-                             .WithDescribes(_storage.Describes ?? _storage.Id)
+                             .WithDescribes(_storage.FileId)
                              .WithScopes(_storage.Scopes)
                              .WithIsSubRecordOf(_storage.IsSubRecordOf!)
-                             .WithContent(fileRecordTriples!)
-                             .Build();
-        return fileRecord;
+                             .WithContent(fileRecordTriples!);
+
+        if (_storage.DerivedFrom != null)
+        {
+            fileRecord = fileRecord
+                .WithAdditionalDescribes(_storage.DerivedFrom)
+                .WithAdditionalContent(new Triple(new UriNode(_storage.FileId), new UriNode(new Uri(Namespaces.Prov.WasDerivedFrom)), new UriNode(_storage.DerivedFrom)));
+        }
+
+        return fileRecord.Build(); ;
     }
 
     private void VerifyBuild()
@@ -207,7 +228,7 @@ public record FileRecordBuilder
     }
 
     private Triple CreateTripleWithPredicateAndObject(string predicate, string @object, string literalNodeDataType = "")
-        => new(new UriNode(_storage.Id),
+        => new(new UriNode(_storage.FileId),
                 new UriNode(new Uri(predicate)),
                 string.IsNullOrEmpty(literalNodeDataType) ?
                     new UriNode(new Uri(@object)) :
