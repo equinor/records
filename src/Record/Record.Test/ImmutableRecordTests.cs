@@ -499,5 +499,23 @@ public class ImmutableRecordTests
         result.Should().HaveCount(1);
         result.First().Name.Should().NotBe(recordId);
     }
+
+    [Fact]
+    public void Record_SameCanon_Is_True_With_Same_BlankNodes()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(recordId);
+
+        var recordTriples = record.TripleStore().Triples;
+        var recordGraph = new Graph();
+        foreach(var triple in recordTriples) recordGraph.Assert(triple);
+
+        var record2 = new Record(recordGraph);
+
+        record.HasSameCanonAs(record2).Should().BeTrue();
+
+    }
 }
 
