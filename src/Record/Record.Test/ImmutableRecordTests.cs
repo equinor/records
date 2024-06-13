@@ -481,7 +481,8 @@ public class ImmutableRecordTests
 
         // Assert
         result.Should().Be(record);
-        result.SameTriplesAs(record).Should().BeTrue();
+        result.HasSameTriplesAs(record).Should().BeTrue();
+        result.HasSameCanonAs(record).Should().BeFalse();
     }
 
     [Fact]
@@ -507,15 +508,9 @@ public class ImmutableRecordTests
         var recordId = "https://example.com/1";
 
         var record = TestData.ValidRecord(recordId);
-
-        var recordTriples = record.TripleStore().Triples;
-        var recordGraph = new Graph();
-        foreach(var triple in recordTriples) recordGraph.Assert(triple);
-
-        var record2 = new Record(recordGraph);
+        var record2 = TestData.ValidRecord(recordId);
 
         record.HasSameCanonAs(record2).Should().BeTrue();
-
     }
 }
 

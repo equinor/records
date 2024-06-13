@@ -358,7 +358,7 @@ public class Record : IEquatable<Record>
         return Equals((Record)obj);
     }
 
-    public bool SameTriplesAs(Record? other)
+    public bool HasSameTriplesAs(Record? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
