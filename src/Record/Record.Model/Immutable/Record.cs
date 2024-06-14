@@ -358,7 +358,7 @@ public class Record : IEquatable<Record>
         return Equals((Record)obj);
     }
 
-    public bool HasSameTriplesAs(Record? other)
+    public bool SameTriplesAs(Record? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -366,7 +366,7 @@ public class Record : IEquatable<Record>
         return _store.Triples.SequenceEqual(other._store.Triples);
     }
 
-    public bool HasSameCanonAs(Record? other) 
+    public bool SameCanonAs(Record? other) 
     {
         var thisString = _nQuadsString;
         var otherString = other._nQuadsString;
