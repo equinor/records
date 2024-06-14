@@ -6,7 +6,7 @@ public static class CanonicalisationExtensions
 {
     public static ITripleStore Canonicalise(this ITripleStore store) => new RdfCanonicalizer().Canonicalize(store).OutputDataset;
 
-    public static IEnumerable<Triple> Canonicalise(this IEnumerable<Triple> triples) => PutTriplesInStore(triples).Canonicalise().Triples;    
+    public static IEnumerable<Triple> Canonicalise(this IEnumerable<Triple> triples) => PutTriplesInStore(triples).Canonicalise().Triples;
 
     public static IGraph Canonicalise(this IGraph graph) => PutGraphInStore(graph).Canonicalise().Graphs.Single();
 

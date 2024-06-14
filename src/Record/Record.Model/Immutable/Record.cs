@@ -60,7 +60,7 @@ public class Record : IEquatable<Record>
         var canonicaliser = new RdfCanonicalizer();
         var canon = canonicaliser.Canonicalize(_store);
         _nQuadsString = canon.SerializedNQuads;
-        
+
     }
 
     private void LoadFromString(string rdfString, IStoreReader reader)
@@ -366,7 +366,7 @@ public class Record : IEquatable<Record>
         return _store.Triples.SequenceEqual(other._store.Triples);
     }
 
-    public bool SameCanonAs(Record? other) 
+    public bool SameCanonAs(Record? other)
     {
         var thisString = _nQuadsString;
         var otherString = other._nQuadsString;
