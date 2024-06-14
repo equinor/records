@@ -57,9 +57,7 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        var canonicaliser = new RdfCanonicalizer();
-        var canon = canonicaliser.Canonicalize(_store);
-        _nQuadsString = canon.SerializedNQuads;
+        _nQuadsString = ToString<NQuadsWriter>();
 
     }
 
