@@ -513,4 +513,3 @@ public class ImmutableRecordTests
         record.HasSameCanonAs(record2).Should().BeTrue();
     }
 }
-
