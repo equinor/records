@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using FluentAssertions;
 using Record = Records.Immutable.Record;
 using Records.Exceptions;
@@ -7,7 +6,6 @@ using VDS.RDF.Writing;
 using Newtonsoft.Json;
 using VDS.RDF;
 using VDS.RDF.Parsing;
-using Newtonsoft.Json.Linq;
 
 namespace Records.Tests;
 

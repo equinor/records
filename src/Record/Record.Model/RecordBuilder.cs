@@ -299,28 +299,28 @@ public record RecordBuilder
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
-        var provenanceGraph = new Graph(_storage.Id);
-        provenanceGraph.BaseUri = _storage.Id;
+        var metadataGraph = new Graph(_storage.Id);
+        metadataGraph.BaseUri = _storage.Id;
 
-        var provenanceQuads = new List<SafeQuad>();
+        var metadataQuads = new List<SafeQuad>();
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
-        provenanceQuads.Add(typeQuad);
+        metadataQuads.Add(typeQuad);
 
         if (_storage.IsSubRecordOf != null)
-            provenanceQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+            metadataQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
 
-        provenanceQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
-        provenanceQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
-        provenanceQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
+        metadataQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
+        metadataQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
+        metadataQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
 
-        var provenanceTripleString = string.Join("\n", provenanceQuads.Select(q => q.ToTripleString()));
-        provenanceGraph.LoadFromString(provenanceTripleString);
-        provenanceGraph.Assert(_metadataProvenance.Build(provenanceGraph, provenanceGraph.Name));
-        provenanceGraph.Assert(_contentProvenance.Build(provenanceGraph, provenanceGraph.Name));
+        var provenanceTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
+        metadataGraph.LoadFromString(provenanceTripleString);
+        metadataGraph.Assert(_metadataProvenance.Build(metadataGraph, metadataGraph.Name));
+        metadataGraph.Assert(_contentProvenance.Build(metadataGraph, metadataGraph.Name));
 
-        var contentGraphId = provenanceGraph.CreateBlankNode();
+        var contentGraphId = metadataGraph.CreateBlankNode();
 
-        provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
+        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
 
         var contentGraph = new Graph(contentGraphId);
 
@@ -348,17 +348,17 @@ public record RecordBuilder
             if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
                 throw new RecordException("Content may not make provenance statements.");
 
-        var report = _processor.Validate(provenanceGraph);
+        var report = _processor.Validate(metadataGraph);
         if (!report.Conforms) throw ShaclException(report);
 
         var ts = new TripleStore();
         foreach (var graph in _storage.ContentGraphs)
         {
             ts.Add(graph);
-            provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
+            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
         }
 
-        ts.Add(provenanceGraph);
+        ts.Add(metadataGraph);
         ts.Add(contentGraph);
 
         return new(ts);
