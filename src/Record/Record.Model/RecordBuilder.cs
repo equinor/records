@@ -176,6 +176,45 @@ public record RecordBuilder
 
     public RecordBuilder WithAdditionalReplaces(params Uri[] replaces) => WithAdditionalReplaces(replaces.Select(r => r.ToString()));
 
+    public RecordBuilder WithAdditionalMetadata(params IGraph[] graphs) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                MetadataGraphs = _storage.MetadataGraphs.Concat(graphs).ToList(),
+                MetadataRdfStrings = _storage.MetadataRdfStrings.ToList(),
+                MetadataTriples = _storage.MetadataTriples.ToList()
+            }
+        };
+
+    public RecordBuilder WithAdditionalMetadata(IEnumerable<IGraph> graphs) => WithAdditionalMetadata(graphs.ToArray());
+
+    public RecordBuilder WithAdditionalMetadata(params Triple[] triples) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                MetadataTriples = _storage.Triples.Concat(triples).ToList(),
+                MetadataRdfStrings = _storage.RdfStrings.ToList(),
+                MetadataGraphs = _storage.ContentGraphs.ToList()
+            }
+        };
+
+    public RecordBuilder WithAdditionalMetadata(IEnumerable<Triple> triples) => WithAdditionalMetadata(triples.ToArray());
+
+    public RecordBuilder WithAdditionalMetadata(params string[] rdfStrings) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                MetadataRdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
+                MetadataTriples = _storage.Triples.ToList(),
+                MetadataGraphs = _storage.ContentGraphs.ToList()
+            }
+        };
+
+    public RecordBuilder WithAdditionalMetadata(IEnumerable<string> rdfStrings) => WithAdditionalMetadata(rdfStrings.ToArray());
+
 
     #endregion
     #endregion
@@ -299,28 +338,30 @@ public record RecordBuilder
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
-        var provenanceGraph = new Graph(_storage.Id);
-        provenanceGraph.BaseUri = _storage.Id;
+        var metadataGraph = new Graph(_storage.Id);
+        metadataGraph.BaseUri = _storage.Id;
 
-        var provenanceQuads = new List<SafeQuad>();
+        var metadataQuads = new List<SafeQuad>();
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
-        provenanceQuads.Add(typeQuad);
+        metadataQuads.Add(typeQuad);
 
         if (_storage.IsSubRecordOf != null)
-            provenanceQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+            metadataQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
 
-        provenanceQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
-        provenanceQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
-        provenanceQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
+        metadataQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
+        metadataQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
+        metadataQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
 
-        var provenanceTripleString = string.Join("\n", provenanceQuads.Select(q => q.ToTripleString()));
-        provenanceGraph.LoadFromString(provenanceTripleString);
-        provenanceGraph.Assert(_metadataProvenance.Build(provenanceGraph, provenanceGraph.Name));
-        provenanceGraph.Assert(_contentProvenance.Build(provenanceGraph, provenanceGraph.Name));
 
-        var contentGraphId = provenanceGraph.CreateBlankNode();
 
-        provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
+        var provenanceTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
+        metadataGraph.LoadFromString(provenanceTripleString);
+        metadataGraph.Assert(_metadataProvenance.Build(metadataGraph, metadataGraph.Name));
+        metadataGraph.Assert(_contentProvenance.Build(metadataGraph, metadataGraph.Name));
+
+        var contentGraphId = metadataGraph.CreateBlankNode();
+
+        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
 
         var contentGraph = new Graph(contentGraphId);
 
@@ -348,17 +389,17 @@ public record RecordBuilder
             if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
                 throw new RecordException("Content may not make provenance statements.");
 
-        var report = _processor.Validate(provenanceGraph);
+        var report = _processor.Validate(metadataGraph);
         if (!report.Conforms) throw ShaclException(report);
 
         var ts = new TripleStore();
         foreach (var graph in _storage.ContentGraphs)
         {
             ts.Add(graph);
-            provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
+            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
         }
 
-        ts.Add(provenanceGraph);
+        ts.Add(metadataGraph);
         ts.Add(contentGraph);
 
         return new(ts);
@@ -436,5 +477,8 @@ public record RecordBuilder
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
         internal List<IGraph> ContentGraphs = new();
+        internal List<Triple> MetadataTriples = new();
+        internal List<string> MetadataRdfStrings = new();
+        internal List<IGraph> MetadataGraphs = new();
     }
 }
