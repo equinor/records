@@ -7,9 +7,7 @@ using VDS.RDF.Shacl;
 using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
-using VDS.RDF.Writing;
 using static Records.ProvenanceBuilder;
-using Path = System.IO.Path;
 
 namespace Records;
 
@@ -322,9 +320,42 @@ public record RecordBuilder
 
         provenanceGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
 
-        var contentGraph = new Graph(contentGraphId);
+        //Dealing with additional metadata graph
+        var additionalMetaData = new Graph(); 
 
+        //Load the additional metadata triples and rdfstrings to quads
+        var additionalMetaDataQuads = new List<SafeQuad>();
+        additionalMetaDataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
+        additionalMetaDataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
+
+        var recordPredicates = new List<string>
+        {
+            Namespaces.Record.IsInScope, 
+            Namespaces.Record.Replaces,
+            Namespaces.Record.Describes,
+            Namespaces.Record.IsSubRecordOf ,
+            Namespaces.Record.HasContent
+        }; 
+
+        //error checking
+        if (additionalMetaDataQuads.Any(q => recordPredicates.Contains(q.Predicate) && !q.Subject.Equals($"<{_storage.Id.ToString()}>")))
+            throw new RecordException("Metadata content may not make statements about other record metadata graphs.");
+
+        //join them with the graph
+        var additionalMetadatatripleString = string.Join("\n", additionalMetaDataQuads.Select(q => q.ToTripleString()));
+        provenanceGraph.LoadFromString(additionalMetadatatripleString);
+
+        //deal with the metadata graph, error checking
+        foreach (var graph in _storage.MetaDataContentGraphs.Select(g => g.Triples))
+            if (graph.Any(t => recordPredicates.Contains(t.Predicate.ToString()) && !t.Subject.ToString().Equals(_storage.Id.ToString())))
+                throw new RecordException("Metadata content may not make statements about other record metadata graphs.");
+
+        //merge the metadata graph with the provenance graph
+        _storage.MetaDataContentGraphs.ForEach(provenanceGraph.Merge);
+
+        var contentGraph = new Graph(contentGraphId);
         var contentQuads = new List<SafeQuad>();
+
         contentQuads.AddRange(_storage.Quads.Select(quad =>
         {
             return quad switch
@@ -335,6 +366,7 @@ public record RecordBuilder
             };
         }));
 
+        //WE WANT THIS
         contentQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
         contentQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
 
@@ -436,5 +468,8 @@ public record RecordBuilder
         internal List<Quad> Quads = new();
         internal List<Triple> Triples = new();
         internal List<IGraph> ContentGraphs = new();
+        internal List<Triple> MetadataTriples = new();
+        internal List<string> MetadataRdfStrings = new();
+        internal List<IGraph> MetaDataContentGraphs = new();
     }
 }
