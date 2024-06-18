@@ -1,6 +1,4 @@
 using VDS.RDF;
-using VDS.RDF.Query.Algebra;
-using Graph = VDS.RDF.Query.Algebra.Graph;
 
 namespace Records;
 

@@ -45,9 +45,9 @@ public record RecordBuilder
 
     #region With-Methods
 
-    #region Provenance-Methods
+    #region Metadata-Methods
 
-    #region With-Provenance-Methods
+    #region With-Metadata-Methods
 
     public RecordBuilder WithScopes(params string[] scopes) =>
         this with
@@ -113,7 +113,7 @@ public record RecordBuilder
 
     #endregion
 
-    #region ProvenanceBuilderWrappers
+    #region MetadataBuilderWrappers
 
     public RecordBuilder WithAdditionalContentProvenance(params Func<ProvenanceBuilder, ProvenanceBuilder>[] provenanceBuilders) =>
         this with
@@ -134,7 +134,7 @@ public record RecordBuilder
 
     #endregion
 
-    #region With-Additional-Provenance-Methods
+    #region With-Additional-Metadata-Methods
 
     public RecordBuilder WithAdditionalScopes(params string[] scopes) =>
         this with
@@ -339,14 +339,14 @@ public record RecordBuilder
         contentQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
 
         if (contentQuads.Any(q => q.Subject.Equals($"<{_storage.Id.ToString()}>")))
-            throw new RecordException("Content may not make provenance statements.");
+            throw new RecordException("Content may not make metadata statements.");
 
         var tripleString = string.Join("\n", contentQuads.Select(q => q.ToTripleString()));
         contentGraph.LoadFromString(tripleString);
 
         foreach (var graph in _storage.ContentGraphs.Select(g => g.Triples))
             if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
-                throw new RecordException("Content may not make provenance statements.");
+                throw new RecordException("Content may not make metadata statements.");
 
         var report = _processor.Validate(metadataGraph);
         if (!report.Conforms) throw ShaclException(report);
