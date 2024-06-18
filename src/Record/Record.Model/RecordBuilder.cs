@@ -342,6 +342,7 @@ public record RecordBuilder
         metadataGraph.BaseUri = _storage.Id;
 
         var metadataQuads = new List<SafeQuad>();
+        var additionalMetadataQuads = new List<SafeQuad>();
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
         metadataQuads.Add(typeQuad);
 
@@ -352,7 +353,15 @@ public record RecordBuilder
         metadataQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
         metadataQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
 
+        additionalMetadataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
+        additionalMetadataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
 
+        var recordConstants = typeof(Namespaces.Record).GetFields()
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => f.GetValue(null).ToString());
+
+        if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordConstants.Contains(q.Predicate)))
+            throw new RecordException("Metadata may not make provenance statements.");
 
         var provenanceTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
         metadataGraph.LoadFromString(provenanceTripleString);
