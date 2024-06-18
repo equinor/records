@@ -2,9 +2,16 @@
 Records are intended to make exchange of RDF safer and easier. More details on motivation and background in [motivation.md](motivation.md)
 
 ## Record Format Summary  
-Records encapsulate an immutable list of triples (an RDF graph). We call this graph the 'content' of the record.
-Records are implemented as a named graph, and the identity of the record is the IRI of the named graph.
-The contents of a record are immutable by agreement and specification. The triples in the named graph in a record are of two types, content and the 'provenance'. 
+Records is an immutable collections of triples, forming an RDF graph. A record consists of at least two named graphs: a metadata graph, and a content graph.
+
+The metadata graph in the record is of type [:Record](https://rdf.equinor.com/ontology/record/Record), and the record's identity is defined by the IRI of this named metadata graph. 
+The content graph on the other hand, is not of type [:Record](https://rdf.equinor.com/ontology/record/Record). Furthermore, the content graph is not allowed to make statements 
+about the metadata graph. In other words, a triple, in which the subject is the id of the metadata graph, should not exist within the content graph.
+The metadata graph is connected to the content graphs with the [:hasContent](https://rdf.equinor.com/ontology/record/hasContent) predicate:
+
+    :metadataGraphId :hasContent :contentGraph1, ..., :contentGraphN
+
+The contents of a record are immutable by agreement and specification. If changes are made to the metadata graph or any of the content graphs linked via [:hasContent](https://rdf.equinor.com/ontology/record/hasContent), the integrity of the record is compromised.
 The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and [record-syntax.shacl](../schema/record-syntax.shacl). Further, experimental, axioms are in [record-rules.ttl](../schema/record-rules.ttl)
 
 ## Namespaces
@@ -12,8 +19,7 @@ The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and
 * prov: http://www.w3.org/ns/prov#
 * ex: http://example.com/data/ 
 
-## Record Metadata
-The record metadata graph is the subgraph of the record named graph which is reachable from the IRI of the named graph which stops whenever a resource which is not of type Record is encountered. The rest of the graph is the content.
+## Record Metadata Graph
 We require these triples in the record metadata graph to have a special meaning and only be used in the metadata
 * The record is of type rec:Record
 * The record is related to at most one other record with the relation rec:isSubRecordOf. That is, rec:isSubRecordOf is functional, but not inverse functional. The subrecord relation is used to avoid duplication.
@@ -135,3 +141,32 @@ There is currently only one subclass of `rev:Revision` for revisions of document
 
 ## Provenance
 We use [the prov-o ontology](http://www.w3.org/ns/prov#), especially prov:wasGeneratedBy and prov:Activity for modelling the provenance of the record metadata and content. For example, [the dotnet record library](../src/Record) will always add metadata provenance using prov:wasAssociatedWith to link to the version of the Records library that generated the record.
+
+## Compatability with older versions of Records
+ ```ttl
+ex:Object1/Content1 {
+    ex:Object1 a ex:System;
+                rdfs:label "System 1";
+                ex:hasSubSystem ex:Object2, ex:Object3.
+    ex:Object2 a ex:SubSystem.
+    ex:Object3 a ex:SubSystem.
+}
+ex:Object1/Record1 {
+    ex:Object1/Record1 a rec:Record;
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project.
+        rec:replaces ex:Object1/Record0;
+        rec:hasContent ex:Object1/Content1.
+}
+ ```
+ ex:Object1/Record0 can also be written this way
+```ttl
+ex:Object1/Record0 {
+    ex:Object1 a ex:System.
+    ex:Object1/Record0 a rec:Record;
+        rec:describes ex:Object1;
+        rec:isInScope ex:Project.
+}
+ ```
+ These two ways of writing the record are equivalent and there is no difference in the two. Therefor the IRI of the "content" named graph is ephemeral.
+When a record is written as two named graphs, the two named graphs must be be sent and stored together. 
