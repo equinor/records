@@ -113,7 +113,7 @@ public record RecordBuilder
 
     #endregion
 
-    #region MetadataBuilderWrappers
+    #region ProvenanceBuilderWrappers
 
     public RecordBuilder WithAdditionalContentProvenance(params Func<ProvenanceBuilder, ProvenanceBuilder>[] provenanceBuilders) =>
         this with
