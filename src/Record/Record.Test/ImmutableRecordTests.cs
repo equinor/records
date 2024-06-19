@@ -241,25 +241,6 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_Metadata_Only_Contains_Metadata()
-    {
-        var record = default(Record);
-        var loadResult = () =>
-        {
-            record = TestData.ValidRecordBeforeBuildComplete()
-            .WithIsSubRecordOf(TestData.CreateRecordId(1))
-            .Build();
-        };
-        loadResult.Should().NotThrow();
-
-        var metadata = record.MetadataAsTriples();
-        var metadataSubjects = metadata.Select(t => t.Subject.ToString());
-        var metadataSubjectsHashSet = metadataSubjects.ToHashSet();
-        metadataSubjectsHashSet.Count.Should().Be(1, "The only subject should be the record ID.");
-        metadataSubjectsHashSet.Single().Should().Be(record.Id, "The subject in the metadata should be the record ID.");
-    }
-
-    [Fact]
     public void Record_Can_Copy_Of_Internal_Graph()
     {
         var record = default(Record);

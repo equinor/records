@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using AngleSharp.Common;
 using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -7,9 +6,7 @@ using VDS.RDF.Shacl;
 using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
-using VDS.RDF.Writing;
 using static Records.ProvenanceBuilder;
-using Path = System.IO.Path;
 
 namespace Records;
 
@@ -18,7 +15,6 @@ public record RecordBuilder
     private Storage _storage;
     private ProvenanceBuilder _metadataProvenance;
     private ProvenanceBuilder _contentProvenance;
-
     private ShapesGraph _processor;
 
     public RecordBuilder()
@@ -338,11 +334,99 @@ public record RecordBuilder
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
+        var metadataGraph = CreateMetadataGraph();
+
+        var contentGraphId = metadataGraph.CreateBlankNode();
+        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
+
+        var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
+        var ts = CreateTripleStore(metadataGraph, contentGraph);
+
+        return new Record(ts);
+    }
+
+    #region Private-Builder-Helper-Methods
+    private Graph CreateMetadataGraph()
+    {
         var metadataGraph = new Graph(_storage.Id);
         metadataGraph.BaseUri = _storage.Id;
 
-        var metadataQuads = new List<SafeQuad>();
+        var recordPredicates = GetRecordPredicates();
+
+        var metadataTripleString = GetMetadataTripleString(recordPredicates);
+        metadataGraph.LoadFromString(metadataTripleString);
+
+        CheckMetadataGraph(recordPredicates);
+
+        _storage.MetadataGraphs.ForEach(metadataGraph.Merge);
+        metadataGraph.Assert(_metadataProvenance.Build(metadataGraph, metadataGraph.Name));
+        metadataGraph.Assert(_contentProvenance.Build(metadataGraph, metadataGraph.Name));
+
+        return metadataGraph;
+    }
+
+    private Graph CreateContentGraph(IBlankNode contentGraphId, Graph metadataGraph)
+    {
+        var contentGraph = new Graph(contentGraphId);
+
+        var tripleString = CreateContentTripleString();
+        contentGraph.LoadFromString(tripleString);
+
+        CheckContentGraph();
+
+        var report = _processor.Validate(metadataGraph);
+        if (!report.Conforms) throw ShaclException(report);
+
+        return contentGraph;
+    }
+
+    private TripleStore CreateTripleStore(Graph metadataGraph, Graph contentGraph)
+    {
+        var ts = new TripleStore();
+
+        foreach (var graph in _storage.ContentGraphs)
+        {
+            ts.Add(graph);
+            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
+        }
+
+        ts.Add(metadataGraph);
+        ts.Add(contentGraph);
+
+        return ts;
+    }
+
+    private void CheckMetadataGraph(IEnumerable<string> recordPredicates)
+    {
+        foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
+            if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
+                throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+    }
+
+    private string GetMetadataTripleString(IEnumerable<string> recordPredicates)
+    {
+        var metadataQuads = CreateMetadataQuads();
+        var additionalMetadataQuads = CreateAdditionalMetadataQuads(recordPredicates);
+        metadataQuads.AddRange(additionalMetadataQuads);
+        var metadataTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
+        return metadataTripleString;
+    }
+
+    private List<SafeQuad> CreateAdditionalMetadataQuads(IEnumerable<string> recordPredicates)
+    {
         var additionalMetadataQuads = new List<SafeQuad>();
+        additionalMetadataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
+        additionalMetadataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
+
+        if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordPredicates.Contains(q.Predicate)))
+            throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+
+        return additionalMetadataQuads;
+    }
+
+    private List<SafeQuad> CreateMetadataQuads()
+    {
+        var metadataQuads = new List<SafeQuad>();
         var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
         metadataQuads.Add(typeQuad);
 
@@ -353,36 +437,26 @@ public record RecordBuilder
         metadataQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
         metadataQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
 
-        additionalMetadataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
-        additionalMetadataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
+        return metadataQuads;
+    }
 
-        var recordPredicates = typeof(Namespaces.Record).GetFields()
+    private static IEnumerable<string> GetRecordPredicates()
+    {
+        return typeof(Namespaces.Record).GetFields()
             .Where(f => f.IsLiteral && !f.IsInitOnly)
             .Select(f => f.GetValue(null)!.ToString())
             .Select(p => $"<{p}>");
+    }
 
-        if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordPredicates.Contains(q.Predicate)))
-            throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+    private void CheckContentGraph()
+    {
+        foreach (var graph in _storage.ContentGraphs.Select(g => g.Triples))
+            if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
+                throw new RecordException("Content may not make metadata statements.");
+    }
 
-        metadataQuads.AddRange(additionalMetadataQuads);
-        var metadataTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
-        metadataGraph.LoadFromString(metadataTripleString);
-
-        foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
-            if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
-                throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
-
-        _storage.MetadataGraphs.ForEach(metadataGraph.Merge);
-
-        metadataGraph.Assert(_metadataProvenance.Build(metadataGraph, metadataGraph.Name));
-        metadataGraph.Assert(_contentProvenance.Build(metadataGraph, metadataGraph.Name));
-
-        var contentGraphId = metadataGraph.CreateBlankNode();
-
-        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
-
-        var contentGraph = new Graph(contentGraphId);
-
+    private string CreateContentTripleString()
+    {
         var contentQuads = new List<SafeQuad>();
         contentQuads.AddRange(_storage.Quads.Select(quad =>
         {
@@ -401,27 +475,9 @@ public record RecordBuilder
             throw new RecordException("Content may not make metadata statements.");
 
         var tripleString = string.Join("\n", contentQuads.Select(q => q.ToTripleString()));
-        contentGraph.LoadFromString(tripleString);
-
-        foreach (var graph in _storage.ContentGraphs.Select(g => g.Triples))
-            if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
-                throw new RecordException("Content may not make metadata statements.");
-
-        var report = _processor.Validate(metadataGraph);
-        if (!report.Conforms) throw ShaclException(report);
-
-        var ts = new TripleStore();
-        foreach (var graph in _storage.ContentGraphs)
-        {
-            ts.Add(graph);
-            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
-        }
-
-        ts.Add(metadataGraph);
-        ts.Add(contentGraph);
-
-        return new(ts);
+        return tripleString;
     }
+    #endregion
 
     #region Private-Helper-Methods
     private Exception ShaclException(Report report)
@@ -482,7 +538,6 @@ public record RecordBuilder
 
 
     #endregion
-
 
     private record Storage
     {
