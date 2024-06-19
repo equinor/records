@@ -344,9 +344,10 @@ public record RecordBuilder
         var contentGraphId = metadataGraph.CreateBlankNode();
 
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
-        var checkSumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
 
         metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
+        var checkSumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
+        metadataGraph.Assert(checkSumTriples);
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
@@ -355,13 +356,7 @@ public record RecordBuilder
 
     private static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
     {
-        IEnumerable<(string graphId, string value)> checkSums = contentGraphs
-            .Select(CanonicalisationExtensions.Canonicalise)
-            .Select(g =>
-            (
-                graphId: g.Name.ToString(),
-                value: Encoding.UTF8.GetString(MD5.HashData(Encoding.ASCII.GetBytes(g.ToSafeString())))
-            ));
+        IEnumerable<(string graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name.ToString(), value: HashContentGraph(g)));
 
         return checkSums.Select(cs =>
             {
@@ -374,6 +369,13 @@ public record RecordBuilder
 
                 return graph.Triples;
             }).SelectMany(g => g);
+    }
+
+    private static string HashContentGraph(IGraph graph)
+    {
+        var canonicalisedGraph = CanonicalisationExtensions.Canonicalise(graph);
+        var hashBytes = MD5.HashData(Encoding.ASCII.GetBytes(canonicalisedGraph.ToSafeString()));
+        return Encoding.UTF8.GetString(hashBytes);
     }
 
     #region Private-Builder-Helper-Methods
