@@ -359,7 +359,7 @@ public record RecordBuilder
             .Select(CanonicalisationExtensions.Canonicalise)
             .Select(g =>
             (
-                graphId: g.Name.ToString(), 
+                graphId: g.Name.ToString(),
                 value: Encoding.UTF8.GetString(MD5.HashData(Encoding.ASCII.GetBytes(g.ToSafeString())))
             ));
 
