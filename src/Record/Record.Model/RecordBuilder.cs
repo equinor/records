@@ -358,10 +358,11 @@ public record RecordBuilder
 
         var recordPredicates = typeof(Namespaces.Record).GetFields()
             .Where(f => f.IsLiteral && !f.IsInitOnly)
-            .Select(f => f.GetValue(null)!.ToString());
+            .Select(f => f.GetValue(null)!.ToString())
+            .Select(p => $"<{p}>");
 
         if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordPredicates.Contains(q.Predicate)))
-            throw new RecordException("Other records cannot make metadata statements on other metadata graphs than it's own.");
+            throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
 
         metadataQuads.AddRange(additionalMetadataQuads);
         var metadataTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
@@ -369,7 +370,7 @@ public record RecordBuilder
 
         foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
             if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
-                throw new RecordException("Other records cannot make metadata statements on other metadata graphs than it's own.");
+                throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
 
         _storage.MetadataGraphs.ForEach(metadataGraph.Merge);
 

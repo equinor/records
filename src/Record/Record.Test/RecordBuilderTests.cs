@@ -467,4 +467,50 @@ public class RecordBuilderTests
 
         record.GetContentGraphs().Should().HaveCount(2);
     }
+
+    [Fact]
+    public void RecordBuilder_Can_Add_Additional_Metadata()
+    {
+        var (s, p, _, _) = TestData.CreateRecordQuadStringTuple("1");
+        var subject = new UriNode(new Uri(s));
+        var predicate = new UriNode(new Uri(p));
+        var @object = new LiteralNode("date", UriFactory.Create("http://www.w3.org/2001/XMLSchema#date"));
+        var additionalMetadata = new Triple(subject, predicate, @object);
+
+        var record = TestData.ValidRecordBeforeBuildComplete()
+            .WithAdditionalMetadata(additionalMetadata)
+            .Build();
+
+        var metadataTriples = record.MetadataAsTriples();
+        var contentTriples = record.ContentAsTriples();
+
+        metadataTriples.Should().Contain(additionalMetadata);
+        contentTriples.Should().NotContain(additionalMetadata);
+    }
+
+    [Fact]
+    public void RecordBuilder_Fails_If_Subject_Is_Not_Record_Id_And_Predicate_Is_Record_Predicate()
+    {
+        var (s, _, _, g) = TestData.CreateRecordQuadStringTuple("1");
+        var subject = new UriNode(new Uri(s));
+        var predicate = new UriNode(new Uri(Namespaces.Record.Describes));
+        var @object = new LiteralNode("string", UriFactory.Create("http://www.w3.org/2001/XMLSchema#string"));
+        var additionalMetadata = new Triple(subject, predicate, @object);
+
+        var record = default(Record);
+
+        var recordBuilder = () =>
+        {
+            record = TestData.ValidRecordBeforeBuildComplete()
+                .WithAdditionalMetadata(additionalMetadata)
+                .Build();
+        };
+
+        recordBuilder
+            .Should()
+            .Throw<RecordException>()
+            .WithMessage("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+
+        record.Should().BeNull();
+    }
 }
