@@ -449,7 +449,7 @@ public class RecordBuilderTests
 
         recordBuilder.Should()
             .Throw<RecordException>()
-            .WithMessage("Content may not make provenance statements.");
+            .WithMessage("Content may not make metadata statements.");
 
         record.Should().BeNull();
     }

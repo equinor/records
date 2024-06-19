@@ -14,13 +14,13 @@ namespace Records.Immutable;
 public class Record : IEquatable<Record>
 {
     public string Id { get; private set; } = null!;
-    private IGraph _provenanceGraph = new Graph();
+    private IGraph _metadataGraph = new Graph();
     private readonly TripleStore _store = new();
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
 
-    public List<Quad>? Provenance { get; private set; }
+    public List<Quad>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
@@ -40,10 +40,10 @@ public class Record : IEquatable<Record>
         _dataset = new InMemoryDataset(_store);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
-        _provenanceGraph = FindProvenanceGraph();
-        Id = _provenanceGraph.BaseUri?.ToString() ?? throw new RecordException("Provenance graph must have a base URI.");
+        _metadataGraph = FindMetadataGraph();
+        Id = _metadataGraph.BaseUri?.ToString() ?? throw new RecordException("Metadata graph must have a base URI.");
 
-        Provenance = QuadsWithSubject(Id).ToList();
+        Metadata = QuadsWithSubject(Id).ToList();
 
         Scopes = QuadsWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object).OrderBy(s => s).ToHashSet();
         Describes = QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).OrderBy(d => d).ToHashSet();
@@ -64,7 +64,7 @@ public class Record : IEquatable<Record>
     private void LoadFromString(string rdfString, IStoreReader reader)
     {
         var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_provenanceGraph.IsEmpty || Provenance != null)
+        if (!string.IsNullOrEmpty(Id) || !_metadataGraph.IsEmpty || Metadata != null)
             throw new RecordException("Record is already loaded.");
 
         store.LoadFromString(rdfString, reader);
@@ -76,7 +76,7 @@ public class Record : IEquatable<Record>
     private void LoadFromString(string rdfString)
     {
         var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_provenanceGraph.IsEmpty || Provenance != null)
+        if (!string.IsNullOrEmpty(Id) || !_metadataGraph.IsEmpty || Metadata != null)
             throw new RecordException("Record is already loaded.");
 
         try
@@ -104,29 +104,29 @@ public class Record : IEquatable<Record>
         LoadFromTripleStore(tempStore);
     }
 
-    public IGraph ProvenanceGraph()
+    public IGraph MetadataGraph()
     {
-        var tempGraph = new Graph(_provenanceGraph.BaseUri);
-        tempGraph.Merge(_provenanceGraph);
+        var tempGraph = new Graph(_metadataGraph.BaseUri);
+        tempGraph.Merge(_metadataGraph);
         return tempGraph;
     }
 
-    private IGraph FindProvenanceGraph()
+    private IGraph FindMetadataGraph()
     {
         var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . ?g a @RecordType . } }");
         parameterizedQuery.SetUri("RecordType", new Uri(Namespaces.Record.RecordType));
 
         var parser = new SparqlQueryParser();
-        var provenanceQueryString = parameterizedQuery.ToString();
-        var provenanceQuery = parser.ParseFromString(provenanceQueryString);
+        var metadataQueryString = parameterizedQuery.ToString();
+        var metadataQuery = parser.ParseFromString(metadataQueryString);
 
-        var result = (IGraph)_queryProcessor.ProcessQuery(provenanceQuery);
-        if (result == null || result.IsEmpty) throw new RecordException("A record must have exactly one provenance graph.");
+        var result = (IGraph)_queryProcessor.ProcessQuery(metadataQuery);
+        if (result == null || result.IsEmpty) throw new RecordException("A record must have exactly one metadata graph.");
 
         // Extract the graph name from the result set
         var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
 
-        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one provenance graph.");
+        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one metadata graph.");
 
         result.BaseUri = new Uri(graphName);
 
@@ -297,26 +297,26 @@ public class Record : IEquatable<Record>
     public IEnumerable<Triple> ContentAsTriples()
     {
         var parser = new SparqlQueryParser();
-        var provenance = ProvenanceAsTriples();
+        var metadata = MetadataAsTriples();
 
         var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
         var contentQuery = parser.ParseFromString(contentQueryString);
         var content = ConstructQuery(contentQuery);
-        return content.Triples.Except(provenance);
+        return content.Triples.Except(metadata);
     }
 
-    public IEnumerable<Triple> ProvenanceAsTriples()
+    public IEnumerable<Triple> MetadataAsTriples()
     {
         var parser = new SparqlQueryParser();
         var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {@Id ?p ?o} WHERE { GRAPH @Id { @Id ?p ?o} }");
         parameterizedQuery.SetUri("Id", new Uri(Id));
-        var provenanceQueryString = parameterizedQuery.ToString();
+        var metadataQueryString = parameterizedQuery.ToString();
 
-        var provenanceQuery = parser.ParseFromString(provenanceQueryString);
-        var provenance = ConstructQuery(provenanceQuery);
-        return provenance.Triples;
+        var metadataQuery = parser.ParseFromString(metadataQueryString);
+        var metadata = ConstructQuery(metadataQuery);
+        return metadata.Triples;
     }
 
     public bool ContainsTriple(Triple triple) => _store.Contains(triple);
