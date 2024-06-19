@@ -356,15 +356,23 @@ public record RecordBuilder
         additionalMetadataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
         additionalMetadataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
 
-        var recordConstants = typeof(Namespaces.Record).GetFields()
+        var recordPredicates = typeof(Namespaces.Record).GetFields()
             .Where(f => f.IsLiteral && !f.IsInitOnly)
-            .Select(f => f.GetValue(null).ToString());
+            .Select(f => f.GetValue(null)!.ToString());
 
-        if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordConstants.Contains(q.Predicate)))
-            throw new RecordException("Metadata may not make provenance statements.");
+        if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordPredicates.Contains(q.Predicate)))
+            throw new RecordException("Other records cannot make metadata statements on other metadata graphs than it's own.");
 
-        var provenanceTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
-        metadataGraph.LoadFromString(provenanceTripleString);
+        metadataQuads.AddRange(additionalMetadataQuads);
+        var metadataTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
+        metadataGraph.LoadFromString(metadataTripleString);
+
+        foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
+            if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
+                throw new RecordException("Other records cannot make metadata statements on other metadata graphs than it's own.");
+
+        _storage.MetadataGraphs.ForEach(metadataGraph.Merge);
+
         metadataGraph.Assert(_metadataProvenance.Build(metadataGraph, metadataGraph.Name));
         metadataGraph.Assert(_contentProvenance.Build(metadataGraph, metadataGraph.Name));
 
