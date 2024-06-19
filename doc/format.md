@@ -2,17 +2,18 @@
 Records are intended to make exchange of RDF safer and easier. More details on motivation and background in [motivation.md](motivation.md)
 
 ## Record Format Summary  
-Records is an immutable collections of triples, forming an RDF graph. A record consists of at least two named graphs: a metadata graph, and a content graph.
+Records is an immutable collections of named graphs, forming a RDF dataset. A record consists of at least two named graphs: one metadata graph, and one or more content graphs.
 
-The metadata graph in the record is of type [:Record](https://rdf.equinor.com/ontology/record/Record), and the record's identity is defined by the IRI of this named metadata graph. 
-The content graph on the other hand, is not of type [:Record](https://rdf.equinor.com/ontology/record/Record). Furthermore, the content graph is not allowed to make statements 
+The metadata graph in the record is of type [:Record](https://rdf.equinor.com/ontology/record/Record), and the record's identity is the IRI of this named metadata graph. 
+The content graph does not have any restrictions on type. Furthermore, the content graph is not allowed to make statements 
 about the metadata graph. In other words, a triple, in which the subject is the id of the metadata graph, should not exist within the content graph.
 The metadata graph is connected to the content graphs with the [:hasContent](https://rdf.equinor.com/ontology/record/hasContent) predicate:
 
     :metadataGraphId :hasContent :contentGraph1, ..., :contentGraphN
 
-The contents of a record are immutable by agreement and specification. If changes are made to the metadata graph or any of the content graphs linked via [:hasContent](https://rdf.equinor.com/ontology/record/hasContent), the integrity of the record is compromised.
-The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and [record-syntax.shacl](../schema/record-syntax.shacl). Further, experimental, axioms are in [record-rules.ttl](../schema/record-rules.ttl)
+The contents of a record are immutable by agreement and specification. If changes are made to the metadata graph or any of the content graphs linked via [:hasContent](https://rdf.equinor.com/ontology/record/hasContent), 
+the integrity of the record is compromised. The schema is formalized in [record-syntax.ttl](../schema/record-syntax.ttl) and [record-syntax.shacl](../schema/record-syntax.shacl). 
+Further, experimental, axioms are in [record-rules.ttl](../schema/record-rules.ttl)
 
 ## Namespaces
 * rec: https://rdf.equinor.com/ontology/record/
@@ -168,5 +169,4 @@ ex:Object1/Record0 {
         rec:isInScope ex:Project.
 }
  ```
- These two ways of writing the record are equivalent and there is no difference in the two. Therefor the IRI of the "content" named graph is ephemeral.
-When a record is written as two named graphs, the two named graphs must be be sent and stored together. 
+ These two ways of writing the record are equivalent and there is no difference in the two. Therefore the IRI of the "content" named graph is ephemeral.
