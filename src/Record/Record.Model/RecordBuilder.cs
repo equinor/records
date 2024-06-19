@@ -363,7 +363,7 @@ public record RecordBuilder
                 var graph = new Graph();
                 var checkSumNode = graph.CreateBlankNode();
 
-                graph.Assert(new Triple(graph.CreateUriNode(cs.graphId), graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checkSumNode));
+                graph.Assert(new Triple(graph.CreateBlankNode(cs.graphId), graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checkSumNode));
                 graph.Assert(new Triple(checkSumNode, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), graph.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
                 graph.Assert(new Triple(checkSumNode, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), graph.CreateLiteralNode(cs.value, new Uri(Namespaces.DataType.HexBinary))));
 
