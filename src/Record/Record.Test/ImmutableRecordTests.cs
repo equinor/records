@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using FluentAssertions;
 using Record = Records.Immutable.Record;
 using Records.Exceptions;
@@ -7,17 +6,16 @@ using VDS.RDF.Writing;
 using Newtonsoft.Json;
 using VDS.RDF;
 using VDS.RDF.Parsing;
-using Newtonsoft.Json.Linq;
 
 namespace Records.Tests;
 
 public class ImmutableRecordTests
 {
     [Fact]
-    public void Record_Has_Provenance()
+    public void Record_Has_Metadata()
     {
         var record = new Record(TestData.ValidJsonLdRecordString());
-        var result = record.Provenance.Count();
+        var result = record.Metadata.Count();
 
         result.Should().Be(14);
     }
@@ -53,14 +51,14 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_Does_Not_Have_Provenance()
+    public void Record_Does_Not_Have_Metadata()
     {
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
         var result = () => new Record(rdf);
 
-        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one provenance graph.");
+        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one metadata graph.");
     }
 
 
@@ -224,7 +222,7 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_Content_Does_Not_Include_Provenance()
+    public void Record_Content_Does_Not_Include_Metadata()
     {
         var record = default(Record);
         var loadResult = () =>
@@ -235,15 +233,15 @@ public class ImmutableRecordTests
         };
         loadResult.Should().NotThrow();
 
-        var provenance = record.ProvenanceAsTriples();
+        var metadata = record.MetadataAsTriples();
         var content = record.ContentAsTriples();
         var contentSubjects = content.Select(t => t.Subject.ToString()).ToList();
         contentSubjects.Should().NotContain(record.Id);
-        content.Should().NotContain(provenance);
+        content.Should().NotContain(metadata);
     }
 
     [Fact]
-    public void Record_Provenance_Only_Contains_Provenance()
+    public void Record_Metadata_Only_Contains_Metadata()
     {
         var record = default(Record);
         var loadResult = () =>
@@ -254,11 +252,11 @@ public class ImmutableRecordTests
         };
         loadResult.Should().NotThrow();
 
-        var provenance = record.ProvenanceAsTriples();
-        var provenanceSubjects = provenance.Select(t => t.Subject.ToString());
-        var provenanceSubjectsHashSet = provenanceSubjects.ToHashSet();
-        provenanceSubjectsHashSet.Count.Should().Be(1, "The only subject should be the record ID.");
-        provenanceSubjectsHashSet.Single().Should().Be(record.Id, "The subject in the provenance should be the record ID.");
+        var metadata = record.MetadataAsTriples();
+        var metadataSubjects = metadata.Select(t => t.Subject.ToString());
+        var metadataSubjectsHashSet = metadataSubjects.ToHashSet();
+        metadataSubjectsHashSet.Count.Should().Be(1, "The only subject should be the record ID.");
+        metadataSubjectsHashSet.Single().Should().Be(record.Id, "The subject in the metadata should be the record ID.");
     }
 
     [Fact]
@@ -292,8 +290,8 @@ public class ImmutableRecordTests
         loadResult.Should().NotThrow();
 
         var tripleStore = record.TripleStore();
-        var provenanceGraph = record.ProvenanceGraph();
-        provenanceGraph.Name.ToString().Should().Be(record.Id);
+        var metadataGraph = record.MetadataGraph();
+        metadataGraph.Name.ToString().Should().Be(record.Id);
 
         record.Triples().Should().Contain(tripleStore.Triples);
 
@@ -482,6 +480,7 @@ public class ImmutableRecordTests
         // Assert
         result.Should().Be(record);
         result.SameTriplesAs(record).Should().BeTrue();
+        result.SameCanonAs(record).Should().BeFalse();
     }
 
     [Fact]
@@ -499,5 +498,16 @@ public class ImmutableRecordTests
         result.Should().HaveCount(1);
         result.First().Name.Should().NotBe(recordId);
     }
-}
 
+    [Fact]
+    public void Record_SameCanon_Is_True_With_Same_BlankNodes()
+    {
+        // Arrange
+        var recordId = "https://example.com/1";
+
+        var record = TestData.ValidRecord(recordId);
+        var record2 = TestData.ValidRecord(recordId);
+
+        record.SameCanonAs(record2).Should().BeTrue();
+    }
+}
