@@ -307,17 +307,7 @@ public class Record : IEquatable<Record>
         return content.Triples.Except(metadata);
     }
 
-    public IEnumerable<Triple> MetadataAsTriples()
-    {
-        var parser = new SparqlQueryParser();
-        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {@Id ?p ?o} WHERE { GRAPH @Id { @Id ?p ?o} }");
-        parameterizedQuery.SetUri("Id", new Uri(Id));
-        var metadataQueryString = parameterizedQuery.ToString();
-
-        var metadataQuery = parser.ParseFromString(metadataQueryString);
-        var metadata = ConstructQuery(metadataQuery);
-        return metadata.Triples;
-    }
+    public IEnumerable<Triple> MetadataAsTriples() => _metadataGraph.Triples;
 
     public bool ContainsTriple(Triple triple) => _store.Contains(triple);
 
