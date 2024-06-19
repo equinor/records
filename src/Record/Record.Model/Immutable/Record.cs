@@ -58,6 +58,7 @@ public class Record : IEquatable<Record>
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
         _nQuadsString = ToString<NQuadsWriter>();
+
     }
 
     private void LoadFromString(string rdfString, IStoreReader reader)
@@ -328,8 +329,11 @@ public class Record : IEquatable<Record>
 
     public string ToString(IStoreWriter writer)
     {
+        var canon = new RdfCanonicalizer().Canonicalize(_store);
+        var canonStore = canon.OutputDataset;
+
         var stringWriter = new StringWriter();
-        writer.Save(_store, stringWriter);
+        writer.Save(canonStore, stringWriter);
 
         var result = stringWriter.ToString();
 
@@ -358,6 +362,13 @@ public class Record : IEquatable<Record>
         if (ReferenceEquals(this, other)) return true;
 
         return _store.Triples.SequenceEqual(other._store.Triples);
+    }
+
+    public bool SameCanonAs(Record? other)
+    {
+        var thisString = _nQuadsString;
+        var otherString = other._nQuadsString;
+        return thisString.Equals(otherString);
     }
 
     public override int GetHashCode()
