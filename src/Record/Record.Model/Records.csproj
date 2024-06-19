@@ -41,5 +41,9 @@
 	    <PackageCopyToOutput>true</PackageCopyToOutput>
 	  </EmbeddedResource>
 	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\Records.Utils\Records.Utils.csproj" />
+	</ItemGroup>
 
 </Project>

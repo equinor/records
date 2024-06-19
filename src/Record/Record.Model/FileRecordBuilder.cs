@@ -91,7 +91,7 @@ public record FileRecordBuilder
         _storage = _storage with
         {
             Content = content,
-            Checksum = string.Join("", MD5.Create().ComputeHash(content).Select(x => x.ToString("x2"))),
+            Checksum = string.Join("", MD5.HashData(content).Select(x => x.ToString("x2"))),
             ByteSize = content.Length.ToString()
         }
     };
