@@ -356,9 +356,9 @@ public record RecordBuilder
         return new Record(ts);
     }
 
-    private static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
+    internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
     {
-        IEnumerable<(IRefNode graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name, value: HashContentGraph(g)));
+        IEnumerable<(IRefNode graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name, value: CanonicalisationExtensions.HashGraph(g)));
 
         return checkSums.Select(cs =>
             {
@@ -371,13 +371,6 @@ public record RecordBuilder
 
                 return graph.Triples;
             }).SelectMany(g => g);
-    }
-
-    private static string HashContentGraph(IGraph graph)
-    {
-        var canonicalisedGraph = CanonicalisationExtensions.Canonicalise(graph);
-        var hashBytes = MD5.HashData(Encoding.ASCII.GetBytes(canonicalisedGraph.ToSafeString()));
-        return Encoding.UTF8.GetString(hashBytes);
     }
 
     #region Private-Builder-Helper-Methods

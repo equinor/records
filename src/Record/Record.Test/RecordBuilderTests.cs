@@ -10,6 +10,8 @@ using VDS.RDF.Shacl;
 using VDS.RDF.Writing;
 using static Records.ProvenanceBuilder;
 using Xunit.Abstractions;
+using Records.Utils;
+using VDS.RDF.Nodes;
 
 namespace Records.Tests;
 public class RecordBuilderTests
@@ -512,5 +514,48 @@ public class RecordBuilderTests
             .WithMessage("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
 
         record.Should().BeNull();
+    }
+
+
+    [Fact]
+    public void RecordBuilder__Hashes__ContentGraphs()
+    {
+        // Arrange 
+       
+        var contentGraphX = TestData.CreateGraph(TestData.CreateRecordId("contentX"), 1);
+        var contentGraphY = TestData.CreateGraph(TestData.CreateRecordId("contentY"), 5);
+        var hashX = CanonicalisationExtensions.HashGraph(contentGraphX);
+        var hashY = CanonicalisationExtensions.HashGraph(contentGraphY);
+
+        // Act
+        var record = TestData.RecordBuilderWithProvenanceAndWithoutContent()
+            .WithContent(contentGraphX)
+            .WithAdditionalContent(contentGraphY)
+            .Build();
+
+        // Assert
+        var contentGraphNames = record.GetContentGraphs().Select(g => g.Name);
+
+        var query = new SparqlQueryParser().ParseFromString(
+            @$"SELECT DISTINCT ?contentId ?checksumValue WHERE 
+                    {{ 
+                        GRAPH ?g {{ ?s ?p ?o . ?g a <{Namespaces.Record.RecordType}> .
+                                    ?s <{Namespaces.Record.HasContent}> ?contentId . 
+                                    ?contentId <{Namespaces.FileContent.HasChecksum}> ?checksum .
+                                    ?checksum <{Namespaces.FileContent.HasChecksumValue}> ?checksumValue .
+                                  }} 
+                    }}");
+
+        var ds = new InMemoryDataset((TripleStore)record.TripleStore());
+        var qProcessor = new LeviathanQueryProcessor(ds);
+        var qresults = (SparqlResultSet)qProcessor.ProcessQuery(query);
+        var resultDict = qresults.Select(r => 
+                (
+                id: r["contentId"].ToString(), 
+                checksum: string.Join("", r["checksumValue"].ToString().TakeWhile(c => !c.Equals('^')))
+                )).ToDictionary(tuple => tuple.id, tuple => tuple.checksum); 
+        
+        resultDict[contentGraphX.Name.ToString()].Should().Be(hashX);
+        resultDict[contentGraphY.Name.ToString()].Should().Be(hashY);
     }
 }
