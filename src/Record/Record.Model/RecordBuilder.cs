@@ -345,9 +345,11 @@ public record RecordBuilder
 
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
 
-        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
-        var checkSumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
-        metadataGraph.Assert(checkSumTriples);
+        //TODO the blank node ids are different, why :) also! I think we need to do something differently to ensure different blank node values on the hash triples.
+        //add them to the same triplestore in steps. This ensures different blank nodes. Not sure what happens if they are added to the same graph in steps.
+        //I am very confused, i do not know what to do. 
+        var checksumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
+        metadataGraph.Assert(checksumTriples.Append(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId)));
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
@@ -356,14 +358,14 @@ public record RecordBuilder
 
     private static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
     {
-        IEnumerable<(string graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name.ToString(), value: HashContentGraph(g)));
+        IEnumerable<(IRefNode graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name, value: HashContentGraph(g)));
 
         return checkSums.Select(cs =>
             {
                 var graph = new Graph();
                 var checkSumNode = graph.CreateBlankNode();
 
-                graph.Assert(new Triple(graph.CreateBlankNode(cs.graphId), graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checkSumNode));
+                graph.Assert(new Triple(cs.graphId, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checkSumNode));
                 graph.Assert(new Triple(checkSumNode, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), graph.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
                 graph.Assert(new Triple(checkSumNode, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), graph.CreateLiteralNode(cs.value, new Uri(Namespaces.DataType.HexBinary))));
 
