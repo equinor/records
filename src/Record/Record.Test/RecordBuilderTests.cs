@@ -520,7 +520,7 @@ public class RecordBuilderTests
     public void RecordBuilder__Hashes__ContentGraphs()
     {
         // Arrange 
-       
+
         var contentGraphX = TestData.CreateGraph(TestData.CreateRecordId("contentX"), 1);
         var contentGraphY = TestData.CreateGraph(TestData.CreateRecordId("contentY"), 5);
         var hashX = CanonicalisationExtensions.HashGraph(contentGraphX);
@@ -548,13 +548,29 @@ public class RecordBuilderTests
         var ds = new InMemoryDataset((TripleStore)record.TripleStore());
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qresults = (SparqlResultSet)qProcessor.ProcessQuery(query);
-        var resultDict = qresults.Select(r => 
+        var resultDict = qresults.Select(r =>
                 (
-                id: r["contentId"].ToString(), 
+                id: r["contentId"].ToString(),
                 checksum: string.Join("", r["checksumValue"].ToString().TakeWhile(c => !c.Equals('^')))
-                )).ToDictionary(tuple => tuple.id, tuple => tuple.checksum); 
-        
+                )).ToDictionary(tuple => tuple.id, tuple => tuple.checksum);
+
         resultDict[contentGraphX.Name.ToString()].Should().Be(hashX);
         resultDict[contentGraphY.Name.ToString()].Should().Be(hashY);
     }
+
+
+    [Fact]
+    public void RecordBuilder__CanBuild__RecordWithOnlyMetaDataGraph()
+    {
+        // Arrange 
+        var recordBuilder = TestData.RecordBuilderWithProvenanceAndWithoutContent();
+
+        // Act
+        var record = recordBuilder.Build();
+
+        // Assert
+        record.MetadataGraph().Should().NotBeNull();
+        record.GetContentGraphs().Should().BeEmpty();
+    }
+
 }

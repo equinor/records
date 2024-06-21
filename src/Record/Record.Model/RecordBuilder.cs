@@ -337,13 +337,15 @@ public record RecordBuilder
 
         var metadataGraph = CreateMetadataGraph();
 
+        if (_storage.ContentGraphs == null || _storage.Quads == null && _storage.Triples == null && _storage.RdfStrings == null)
+        {
+            var metaDataTs = new TripleStore();
+            metaDataTs.Add(metadataGraph);
+            return new Record(metaDataTs);
+        }
+
         var contentGraphId = metadataGraph.CreateBlankNode();
-
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
-
-        //TODO the blank node ids are different, why :) also! I think we need to do something differently to ensure different blank node values on the hash triples.
-        //add them to the same triplestore in steps. This ensures different blank nodes. Not sure what happens if they are added to the same graph in steps.
-        //I am very confused, i do not know what to do. 
         var checksumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
         metadataGraph.Assert(checksumTriples.Append(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId)));
 
