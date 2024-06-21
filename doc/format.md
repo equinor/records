@@ -2,7 +2,9 @@
 Records are intended to make exchange of RDF safer and easier. More details on motivation and background in [motivation.md](motivation.md)
 
 ## Record Format Summary  
-Records is an immutable collections of named graphs, forming a RDF dataset. A record consists of at least two named graphs: one metadata graph, and one or more content graphs.
+Records is an immutable collections of named graphs, forming a RDF dataset. A record conists of one metadata graph, 
+but most often a record will contain several named graphs: at least one metadata graph, and one or more content graphs.
+A record can only contain one metadata graph, but can contain any number of content graphs.
 
 The metadata graph in the record is of type [:Record](https://rdf.equinor.com/ontology/record/Record), and the record's identity is the IRI of this named metadata graph. 
 The content graph does not have any restrictions on type. Furthermore, the content graph is not allowed to make statements 
@@ -76,6 +78,50 @@ ex:Object1/Record0 {
  ```
 These two ways of writing the record are equivalent and there is no difference in the two. Therefor the IRI of the "content" named graph is ephemeral.
 When a record is written as two named graphs, the two named graphs must be be sent and stored together. 
+
+## Checksum
+For every content graph in a record, a checksum must be calculated and stored in the metadata graph.
+The checksum is calculated as the MD5 hash of the content graph, and is used to verify that the content graph has not been tampered with. 
+
+### Example
+```ttl
+
+@prefix spdx: <http://spdx.org/rdf/terms#> .
+@prefix rec:  <https://rdf.equinor.com/ontology/record/> .
+@prefix xml:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Object1/Record1 {
+    ex:Object1/Record1 a rec:Record ;
+        rec:describes ex:Object1 ;
+        rec:isInScope ex:Project .
+        rec:hasContent ex:Object1/Content1, ex:Object1/Content2 .
+
+        ex:Object1/Content1 spdx:checksum _:b0 .
+        _:b0 spdx:algorithm spdx:checksumAlgorithm_md5 .
+        _:b0 spdx:checksumValue "50DC0EBCDD76DE9A9FCE377A20783CFC"^^xml:hexBinary> .
+
+         ex:Object1/Content2 spdx:checksum _:b1 .
+        _:b1 spdx:algorithm spdx:checksumAlgorithm_md5 .
+        _:b1 spdx:checksumValue "317F37DEBA13C0DA7E5F87280FA3ED67"^^xml:hexBinary> .
+}
+
+ex:Object1/Content1 {
+    ex:Object1 a ex:System;
+                rdfs:label "System 1";
+                ex:hasSubSystem ex:Object2, ex:Object3.
+    ex:Object2 a ex:SubSystem.
+    ex:Object3 a ex:SubSystem.
+}
+
+ex:Object1/Content2 {
+    ex:Object2 a ex:System;
+                rdfs:label "System 2";
+                ex:hasSubSystem ex:Object5, ex:Object6.
+    ex:Object5 a ex:SubSystem.
+    ex:Object6 a ex:SubSystem.
+}
+
+```
 
 
 ## Subrecords
