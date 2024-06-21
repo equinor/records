@@ -82,6 +82,7 @@ When a record is written as two named graphs, the two named graphs must be be se
 ## Checksum
 For every content graph in a record, a checksum must be calculated and stored in the metadata graph.
 The checksum is calculated as the MD5 hash of the content graph, and is used to verify that the content graph has not been tampered with. 
+Before the checksum is computed the content graphs are canonicalized. 
 
 ### Example
 ```ttl
