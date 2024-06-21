@@ -337,7 +337,7 @@ public record RecordBuilder
 
         var metadataGraph = CreateMetadataGraph();
 
-        if (_storage.ContentGraphs == null || _storage.Quads == null && _storage.Triples == null && _storage.RdfStrings == null)
+        if (_storage.ContentGraphs.Count == 0 && _storage.Quads.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
         {
             var metaDataTs = new TripleStore();
             metaDataTs.Add(metadataGraph);
