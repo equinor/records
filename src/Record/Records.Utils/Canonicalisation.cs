@@ -23,7 +23,7 @@ public static class CanonicalisationExtensions
         var stringWriter = new System.IO.StringWriter();
         var writer = new NQuadsWriter();
         writer.Save(ts, stringWriter);
-        var rdfString = stringWriter.ToString(); 
+        var rdfString = stringWriter.ToString();
 
         var hashBytes = MD5.HashData(Encoding.ASCII.GetBytes(rdfString));
 
