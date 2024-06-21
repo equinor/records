@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using VDS.RDF;
+using VDS.RDF.Writing;
 
 namespace Records.Utils;
 
@@ -16,8 +17,16 @@ public static class CanonicalisationExtensions
     public static string HashGraph(IGraph graph)
     {
         var canonicalisedGraph = Canonicalise(graph);
-        var graphAsString = JsonConvert.SerializeObject(canonicalisedGraph);
-        var hashBytes = MD5.HashData(Encoding.ASCII.GetBytes(graphAsString));
+        var ts = new TripleStore();
+        ts.Add(canonicalisedGraph);
+
+        var stringWriter = new System.IO.StringWriter();
+        var writer = new NQuadsWriter();
+        writer.Save(ts, stringWriter);
+        var rdfString = stringWriter.ToString(); 
+
+        var hashBytes = MD5.HashData(Encoding.ASCII.GetBytes(rdfString));
+
         var sb = new StringBuilder();
         for (int i = 0; i < hashBytes.Length; i++)
         {
