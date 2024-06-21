@@ -11,7 +11,6 @@ using VDS.RDF.Writing;
 using static Records.ProvenanceBuilder;
 using Xunit.Abstractions;
 using Records.Utils;
-using VDS.RDF.Nodes;
 
 namespace Records.Tests;
 public class RecordBuilderTests
