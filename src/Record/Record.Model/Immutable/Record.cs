@@ -57,7 +57,7 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        _nQuadsString = ToString<NQuadsWriter>();
+        _nQuadsString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
 
     }
 

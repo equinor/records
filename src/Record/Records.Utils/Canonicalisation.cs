@@ -21,7 +21,7 @@ public static class CanonicalisationExtensions
         ts.Add(canonicalisedGraph);
 
         var stringWriter = new System.IO.StringWriter();
-        var writer = new NQuadsWriter();
+        var writer = new NQuadsWriter(VDS.RDF.Parsing.NQuadsSyntax.Rdf11);
         writer.Save(ts, stringWriter);
         var rdfString = stringWriter.ToString();
 
