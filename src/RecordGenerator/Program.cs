@@ -106,7 +106,7 @@ public class Program
             {
                 RDFFormat.JsonLd => new JsonLdWriter(),
                 RDFFormat.NQuads => new NQuadsWriter(VDS.RDF.Parsing.NQuadsSyntax.Rdf11),
-                RDFFormat.Trig => new TriGWriter() { Syntax = TriGSyntax.Rdf11},
+                RDFFormat.Trig => new TriGWriter() { Syntax = TriGSyntax.Rdf11 },
                 RDFFormat.CSV => new CsvStoreWriter(),
                 _ => throw new Exception("Invalid RDF Format")
             };
