@@ -238,14 +238,14 @@ public class Record : IEquatable<Record>
     public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
     public IEnumerable<INode> SubjectWithType(INode type)
         => _store
-        .GetTriplesWithPredicateObject(new UriNode(new Uri(Namespaces.Rdf.Type)), type)
+        .GetTriplesWithPredicateObject(Namespaces.Rdf.UriNodes.Type, type)
         .Select(t => t.Subject);
 
     public IEnumerable<string> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
     public IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
     public IEnumerable<string> LabelsOfSubject(INode subject)
         => _store
-        .GetTriplesWithSubjectPredicate(subject, new UriNode(new Uri(Namespaces.Rdfs.Label)))
+        .GetTriplesWithSubjectPredicate(subject, Namespaces.Rdfs.UriNodes.Label)
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value);
 

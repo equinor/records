@@ -347,7 +347,7 @@ public record RecordBuilder
         var contentGraphId = metadataGraph.CreateBlankNode();
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
         var contentGraphChecksumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
-        metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId)));
+        metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
@@ -413,7 +413,7 @@ public record RecordBuilder
         foreach (var graph in _storage.ContentGraphs)
         {
             ts.Add(graph);
-            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), graph.Name));
+            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, graph.Name));
         }
 
         ts.Add(metadataGraph);
