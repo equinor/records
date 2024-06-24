@@ -3,6 +3,8 @@
 using VDS.RDF;
 using VDS.RDF.Writing;
 using System.Collections;
+using VDS.RDF.JsonLd.Syntax;
+using VDS.RDF.Parsing;
 
 namespace RecordGenerator;
 public class Program
@@ -103,8 +105,8 @@ public class Program
             IStoreWriter writer = outFormat switch
             {
                 RDFFormat.JsonLd => new JsonLdWriter(),
-                RDFFormat.NQuads => new NQuadsWriter(),
-                RDFFormat.Trig => new TriGWriter(),
+                RDFFormat.NQuads => new NQuadsWriter(VDS.RDF.Parsing.NQuadsSyntax.Rdf11),
+                RDFFormat.Trig => new TriGWriter() { Syntax = TriGSyntax.Rdf11},
                 RDFFormat.CSV => new CsvStoreWriter(),
                 _ => throw new Exception("Invalid RDF Format")
             };
