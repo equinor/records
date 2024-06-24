@@ -24,7 +24,7 @@ public struct Namespaces
             public readonly static Uri Describes = new(Record.Describes);
             public readonly static Uri IsSubRecordOf = new(Record.IsSubRecordOf);
             public readonly static Uri HasContent = new(Record.HasContent);
-        }   
+        }
 
         public class UriNodes
         {
@@ -62,7 +62,7 @@ public struct Namespaces
         public static class Uris
         {
             public readonly static Uri generatedAtTime = new(FileContent.generatedAtTime);
-            
+
             public readonly static Uri Att = new(FileContent.Att);
             public readonly static Uri Type = new(FileContent.Type);
             public readonly static Uri FileExtension = new(FileContent.FileExtension);
