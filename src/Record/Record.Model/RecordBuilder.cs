@@ -7,6 +7,7 @@ using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
 using static Records.ProvenanceBuilder;
+using Records.Utils;
 
 namespace Records;
 
@@ -336,13 +337,38 @@ public record RecordBuilder
 
         var metadataGraph = CreateMetadataGraph();
 
-        var contentGraphId = metadataGraph.CreateBlankNode();
-        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId));
+        if (_storage.ContentGraphs.Count == 0 && _storage.Quads.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
+        {
+            var metaDataTs = new TripleStore();
+            metaDataTs.Add(metadataGraph);
+            return new Record(metaDataTs);
+        }
 
+        var contentGraphId = metadataGraph.CreateBlankNode();
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
+        var contentGraphChecksumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
+        metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Record.HasContent)), contentGraphId)));
+
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
         return new Record(ts);
+    }
+
+    internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
+    {
+        IEnumerable<(IRefNode graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name, value: CanonicalisationExtensions.HashGraph(g)));
+
+        return checkSums.Select(cs =>
+            {
+                var graph = new Graph();
+                var checkSumNode = graph.CreateBlankNode();
+
+                graph.Assert(new Triple(cs.graphId, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksum)), checkSumNode));
+                graph.Assert(new Triple(checkSumNode, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumAlgorithm)), graph.CreateUriNode(new Uri($"{Namespaces.FileContent.Spdx}checksumAlgorithm_md5"))));
+                graph.Assert(new Triple(checkSumNode, graph.CreateUriNode(new Uri(Namespaces.FileContent.HasChecksumValue)), graph.CreateLiteralNode(cs.value, new Uri(Namespaces.DataType.HexBinary))));
+
+                return graph.Triples;
+            }).SelectMany(g => g);
     }
 
     #region Private-Builder-Helper-Methods

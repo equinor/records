@@ -78,7 +78,7 @@ public class ImmutableRecordTests
         var result = record.ToString<NQuadsWriter>().Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(29);
+        result.Should().Be(32);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class ImmutableRecordTests
         var result = record.ToString(new NQuadsWriter()).Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(29);
+        result.Should().Be(32);
     }
 
 
@@ -101,7 +101,7 @@ public class ImmutableRecordTests
         var result = record.Quads().Count();
 
         // This is how many quads should be extraced from the JSON-LD
-        result.Should().Be(28);
+        result.Should().Be(31);
     }
 
     [Fact]
