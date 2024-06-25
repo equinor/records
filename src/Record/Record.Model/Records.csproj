@@ -12,7 +12,7 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>10.2.1$(ReleaseType)</VersionPrefix>
+		<VersionPrefix>10.3.3$(ReleaseType)</VersionPrefix>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -41,17 +41,6 @@
 	    <PackageCopyToOutput>true</PackageCopyToOutput>
 	  </EmbeddedResource>
 	</ItemGroup>
-	
-	<ItemGroup>
-	  <ProjectReference Include="..\Records.Utils\Records.Utils.csproj" />
-	</ItemGroup>
 
-	<Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
-		<ItemGroup>
-			<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
-			<ProjectReference Include="..\Records.Utils\Records.Utils.csproj" PrivateAssets="all" />
-			<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
-		</ItemGroup>
-	</Target>
 
 </Project>
