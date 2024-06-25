@@ -37,8 +37,9 @@ public class Record : IEquatable<Record>
 
         foreach (var graph in store.Graphs) _store.Add(graph);
 
-        _dataset = new InMemoryDataset(_store);
+        _dataset = new InMemoryDataset(_store, false);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
+
 
         _metadataGraph = FindMetadataGraph();
         Id = _metadataGraph.BaseUri?.ToString() ?? throw new RecordException("Metadata graph must have a base URI.");
@@ -57,7 +58,10 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        _nQuadsString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
+        var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
+        var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
+
+        _nQuadsString = sortedTriples;
 
     }
 
