@@ -57,7 +57,7 @@ public record ProvenanceBuilder
         provenanceTriples.Add(
             new Triple(
                 rootObject,
-                new UriNode(new Uri(Namespaces.Prov.WasGeneratedBy)),
+                Namespaces.Prov.UriNodes.WasGeneratedBy,
                 activity)
         );
         foreach (var (objectList, property) in new (List<string>, Uri)[]
@@ -78,7 +78,7 @@ public record ProvenanceBuilder
         provenanceTriples.AddRange(_storage.Comments.Select(comment =>
             new Triple(
                 activity,
-                new UriNode(new Uri(Namespaces.Rdfs.Comment)),
+                Namespaces.Rdfs.UriNodes.Comment,
                 new LiteralNode(comment))
         ));
         return provenanceTriples;

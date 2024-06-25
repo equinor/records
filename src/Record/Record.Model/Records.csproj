@@ -12,7 +12,8 @@
 		<EnvironmentSuffix></EnvironmentSuffix>
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
-		<VersionPrefix>10.2.1$(ReleaseType)</VersionPrefix>
+
+		<VersionPrefix>10.3.0$(ReleaseType)</VersionPrefix>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
