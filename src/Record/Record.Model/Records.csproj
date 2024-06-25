@@ -15,7 +15,6 @@
 		
 		<VersionPrefix>10.3.4$(ReleaseType)</VersionPrefix>
 
-
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<IncludeSymbols>true</IncludeSymbols>

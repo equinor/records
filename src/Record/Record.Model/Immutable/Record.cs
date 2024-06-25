@@ -62,7 +62,6 @@ public class Record : IEquatable<Record>
         var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
 
         _nQuadsString = sortedTriples;
-
     }
 
     private void LoadFromString(string rdfString, IStoreReader reader)
