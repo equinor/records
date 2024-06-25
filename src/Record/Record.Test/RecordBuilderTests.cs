@@ -494,7 +494,7 @@ public class RecordBuilderTests
     {
         var (s, _, _, g) = TestData.CreateRecordQuadStringTuple("1");
         var subject = new UriNode(new Uri(s));
-        var predicate = new UriNode(new Uri(Namespaces.Record.Describes));
+        var predicate = Namespaces.Record.UriNodes.Describes;
         var @object = new LiteralNode("string", UriFactory.Create("http://www.w3.org/2001/XMLSchema#string"));
         var additionalMetadata = new Triple(subject, predicate, @object);
 

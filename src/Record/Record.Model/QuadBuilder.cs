@@ -79,7 +79,7 @@ public record QuadBuilder
         var ts = new TripleStore();
         ts.Add(tempGraph);
         var sw = new System.IO.StringWriter();
-        var writer = new NQuadsWriter();
+        var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
         writer.Save(ts, sw);
         var quadString = sw.ToString().Trim();
 

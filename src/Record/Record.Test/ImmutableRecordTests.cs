@@ -289,7 +289,7 @@ public class ImmutableRecordTests
 
         var typeExample = new UriNode(new Uri("https://example.com/type/Cool"));
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
-        var content = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdf.Type)), typeExample);
+        var content = new Triple(subjectExample, Namespaces.Rdf.UriNodes.Type, typeExample);
 
         var loadResult = () =>
         {
@@ -314,7 +314,7 @@ public class ImmutableRecordTests
 
         var labelExample = "This is an example label.";
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
-        var content = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdfs.Label)), new LiteralNode(labelExample));
+        var content = new Triple(subjectExample, Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
         var loadResult = () =>
         {
@@ -342,10 +342,10 @@ public class ImmutableRecordTests
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
 
         var labelExample = "This is an example label.";
-        var labelTriple = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdfs.Label)), new LiteralNode(labelExample));
+        var labelTriple = new Triple(subjectExample, Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
         var typeExample = new UriNode(new Uri("https://example.com/type/Example"));
-        var typeTriple = new Triple(subjectExample, new UriNode(new Uri(Namespaces.Rdf.Type)), typeExample);
+        var typeTriple = new Triple(subjectExample, Namespaces.Rdf.UriNodes.Type, typeExample);
 
         var loadResult = () =>
         {
@@ -358,19 +358,19 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var labelTriples = record.QuadsWithPredicateAndObject(new UriNode(new Uri(Namespaces.Rdfs.Label)), new LiteralNode(labelExample));
+        var labelTriples = record.QuadsWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
         labelTriples.Count().Should().Be(1);
         labelTriples.Single().Should().Be(Quad.CreateUnsafe(labelTriple, recordId));
 
 
-        var typeTriples = record.QuadsWithSubjectPredicate(subjectExample, new UriNode(new Uri(Namespaces.Rdf.Type)));
+        var typeTriples = record.QuadsWithSubjectPredicate(subjectExample, Namespaces.Rdf.UriNodes.Type);
 
         typeTriples.Count().Should().Be(1);
         typeTriples.Single().Should().Be(Quad.CreateUnsafe(typeTriple, recordId));
 
 
-        var recordTriples = record.QuadsWithSubjectObject(new UriNode(new Uri(recordId)), new UriNode(new Uri(Namespaces.Record.RecordType)));
+        var recordTriples = record.QuadsWithSubjectObject(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.RecordType);
 
         recordTriples.Count().Should().Be(1);
         recordTriples.Single().Should().Be(Quad.CreateUnsafe(recordId, Namespaces.Rdf.Type, Namespaces.Record.RecordType, recordId));
