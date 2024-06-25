@@ -195,7 +195,7 @@ public record FileRecordBuilder
         {
             fileRecord = fileRecord
                 .WithAdditionalDescribes(_storage.DerivedFrom)
-                .WithAdditionalContent(new Triple(new UriNode(_storage.FileId), new UriNode(new Uri(Namespaces.Prov.WasDerivedFrom)), new UriNode(_storage.DerivedFrom)));
+                .WithAdditionalContent(new Triple(new UriNode(_storage.FileId), Namespaces.Prov.UriNodes.WasDerivedFrom, new UriNode(_storage.DerivedFrom)));
         }
 
         return fileRecord.Build(); ;
