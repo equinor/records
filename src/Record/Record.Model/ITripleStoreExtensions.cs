@@ -41,7 +41,7 @@ public static class ITripleStoreExtensions
 
         var records = new List<Immutable.Record>();
 
-        foreach(var contentGraph in contentGraphs)
+        foreach (var contentGraph in contentGraphs)
         {
             var tripleReferences = store.GetTriplesWithPredicateObject(hasContentNode, contentGraph.Name);
 
