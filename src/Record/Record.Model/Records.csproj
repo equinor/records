@@ -13,8 +13,7 @@
 		<ReleaseType></ReleaseType>
 		<PackageId>Record</PackageId>
 		
-		<VersionPrefix>10.3.4$(ReleaseType)</VersionPrefix>
-
+		<VersionPrefix>10.3.5$(ReleaseType)</VersionPrefix>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
