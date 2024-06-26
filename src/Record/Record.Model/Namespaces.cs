@@ -14,7 +14,6 @@ public struct Namespaces
         public const string Describes = $"{BaseUrl}describes";
         public const string IsSubRecordOf = $"{BaseUrl}isSubRecordOf";
         public const string HasContent = $"{BaseUrl}hasContent";
-        public const string BlankGraph = $"{BaseUrl}BlankGraph#";
 
         public static class Uris
         {
