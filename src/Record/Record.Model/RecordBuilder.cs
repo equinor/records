@@ -344,7 +344,7 @@ public record RecordBuilder
             return new Record(metaDataTs);
         }
 
-        var contentGraphId = metadataGraph.CreateBlankNode();
+        var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
         var contentGraphChecksumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
         metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
@@ -391,7 +391,7 @@ public record RecordBuilder
         return metadataGraph;
     }
 
-    private Graph CreateContentGraph(IBlankNode contentGraphId, Graph metadataGraph)
+    private Graph CreateContentGraph(IRefNode contentGraphId, Graph metadataGraph)
     {
         var contentGraph = new Graph(contentGraphId);
 

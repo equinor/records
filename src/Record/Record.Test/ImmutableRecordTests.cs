@@ -452,7 +452,7 @@ public class ImmutableRecordTests
         // Arrange
         var recordId = "https://example.com/1";
 
-        var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
+        var record = TestData.ValidRecord(recordId);
         var graph = record.GetMergedGraphs();
 
         // Act

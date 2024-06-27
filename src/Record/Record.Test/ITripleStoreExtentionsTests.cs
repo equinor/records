@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using VDS.RDF;
+using VDS.RDF.Parsing;
 
 namespace Records.Tests;
 
@@ -75,4 +76,37 @@ public class ITripleStoreExtentionsTests
         tripleStore.Triples.Should().Contain(tripleStore.Triples);
     }
 
+    [Fact]
+    public void String_WithMultipleRecords_ShouldParseToSameRecords()
+    {
+        // Arrange
+        var firstId = "https://example.com/1";
+        var secondId = "https://example.com/2";
+
+        var tripleStore = new TripleStore();
+
+        var firstRecord = TestData.ValidRecord(firstId);
+        var secondRecord = TestData.ValidRecord(secondId);
+
+        tripleStore.LoadFromString(firstRecord.ToString(), new NQuadsParser());
+        tripleStore.LoadFromString(secondRecord.ToString(), new NQuadsParser());
+
+        // Act
+        var foundRecords = tripleStore.FindRecords();
+        var recordIds = foundRecords.Select(r => r.Id);
+
+        var foundFirstRecord = foundRecords.Where(r => r.Id.Equals(firstId)).Single();
+        var foundSecondRecord = foundRecords.Where(r => r.Id.Equals(secondId)).Single();
+
+        // Assert
+        foundRecords.Should().HaveCount(2);
+
+        recordIds.Should().Contain(firstId);
+        foundRecords.Should().Contain(firstRecord);
+        foundFirstRecord.SameCanonAs(firstRecord).Should().BeTrue();
+
+        recordIds.Should().Contain(secondId);
+        foundRecords.Should().Contain(secondRecord);
+        foundSecondRecord.SameCanonAs(secondRecord).Should().BeTrue();
+    }
 }

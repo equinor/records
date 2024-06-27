@@ -13,7 +13,7 @@ public struct Namespaces
         public const string IsInScope = $"{BaseUrl}isInScope";
         public const string Describes = $"{BaseUrl}describes";
         public const string IsSubRecordOf = $"{BaseUrl}isSubRecordOf";
-        public const string HasContent = $"{BaseUrl}hasContent"; // TODO: Proper name
+        public const string HasContent = $"{BaseUrl}hasContent";
 
         public static class Uris
         {
