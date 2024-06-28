@@ -1,26 +1,30 @@
-name: Publish
+name: 🚀 Build and Publish Records 🚀
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - ".*src/Record/Record.Model.*"
-  
+  release:
+    types: [published] 
+
+
 jobs:
   publish:
-    name: "Nuget publish"
+    name: "Build and publish Records"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+  
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0.x
+
       - name: Restore dependencies
         run: dotnet restore ./src/Record/Record.Model
-      - name: Build
-        run: dotnet build ./src/Record/Record.Model -c release --no-restore  /p:'ReleaseType="";description="A library for using records."'
+
+      - name: Build solution
+        run: dotnet build ./src/Record/Record.Model --no-restore --configuration Release
+
+      - name: Create nuget artifact
+        run: dotnet pack ./src/Record/Record.Model --no-restore -no-build --configuration Release --output ${{ github.workspace }}/out /p:'description="A library for using records.";PackageVersion="${{ github.event.release.name }}"'
+
       - name: Publish
-        run: dotnet nuget push ./src/Record/Record.Model/bin/release/Record*.nupkg --api-key ${{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ${{ github.workspace }}/out/Record*.nupkg --api-key ${{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json
