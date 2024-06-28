@@ -24,7 +24,7 @@ jobs:
         run: dotnet build ./src/Record/Record.Model --no-restore --configuration Release
 
       - name: Create nuget artifact
-        run: dotnet pack ./src/Record/Record.Model --no-restore -no-build --configuration Release --output ${{ github.workspace }}/out /p:'description="A library for using records.";PackageVersion="${{ github.event.release.name }}"'
+        run: dotnet pack ./src/Record/Record.Model --no-restore --no-build --configuration Release --output ${{ github.workspace }}/out /p:'description="A library for using records.";PackageVersion="${{ github.event.release.name }}"'
 
       - name: Publish
         run: dotnet nuget push ${{ github.workspace }}/out/Record*.nupkg --api-key ${{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json
