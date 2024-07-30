@@ -38,6 +38,18 @@
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	    <PackageCopyToOutput>true</PackageCopyToOutput>
 	  </EmbeddedResource>
+		<EmbeddedResource Include="..\..\..\schema\record-syntax.ttl">
+			<Link>Schema\record-syntax.ttl</Link>
+			<IncludeInPackage>true</IncludeInPackage>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<PackageCopyToOutput>true</PackageCopyToOutput>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\..\..\schema\record-rules.ttl">
+			<Link>Schema\record-rules.ttl</Link>
+			<IncludeInPackage>true</IncludeInPackage>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<PackageCopyToOutput>true</PackageCopyToOutput>
+		</EmbeddedResource>
 	</ItemGroup>
 
 
