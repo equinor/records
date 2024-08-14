@@ -1,6 +1,6 @@
 @prefix att: <https://rdf.equinor.com/ontology/Attachment/> .
-@prefix dcat:<http://www.w3.org/ns/dcat#>.
-@prefix spdx:< http://spdx.org/rdf/terms#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix spdx: <http://spdx.org/rdf/terms#>.
 @prefix dc: <http://purl.org/dc/terms/>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
@@ -19,9 +19,9 @@
                                 rec:describes document:B123-EX-W-LA-00001.
             document:B123-EX-W-LA-00001 a <https://rdf.equinor.com/ontology/mel/EquipmentList>;
                                         rdfs:label "B123-EX-W-LA-00001"^^xsd:string;
-                                        famvocab:DocumentType "LA"^^xsd:string;
-                                        famvocab:Facility facility:EXMPL;
-                                        famvocab:Title "MASTER EQUIPMENT LIST - MEL"^^xsd:string.
+                                        exdata:DocumentType "LA"^^xsd:string;
+                                        exdata:Facility exdata:EXMPL;
+                                        exdata:Title "MASTER EQUIPMENT LIST - MEL"^^xsd:string.
         }
 
 
@@ -58,7 +58,7 @@
                     spdx:language "en-US"^^xsd:language;
                     spdx:checksum [
                         spdx:algorithm spdx:checksumAlgorithm_md5 ;
-                        spdx:checksumValue "2b3c4d5e6f7g"^^xsd:hexBinary
+                        spdx:checksumValue "2b3c4d5e6f7g"
                     ] .
 
         }
@@ -90,8 +90,8 @@
             exdata:tagNo20PG123N a <https://rdf.equinor.com/ontology/mel/System>;
                                 rdfs:comment "4th Stage Separator Water Pump Y"^^xsd:string;
                                 rdfs:label "20PG123N"^^xsd:string;
-                                famvocab:TOP_TAG "0"^^xsd:boolean;
-                                famvocab:TagNumber <https://stid.equinor.com/EXMPL/20PG002B>.
+                                exdata:TOP_TAG "0"^^xsd:boolean;
+                                exdata:TagNumber <https://stid.equinor.com/EXMPL/20PG002B>.
         }
 
         exdata:RecordID123.3 {
@@ -101,6 +101,6 @@
             exdata:tagNo18ER508 a <https://rdf.equinor.com/ontology/mel/System>;
                                 rdfs:comment "DCFO Power Unit Go"^^xsd:string;
                                 rdfs:label "18ER509"^^xsd:string;
-                                famvocab:TOP_TAG "0"^^xsd:boolean;
-                                famvocab:TagNumber <https://stid.equinor.com/EXMPL/18ER509>.
+                                exdata:TOP_TAG "0"^^xsd:boolean;
+                                exdata:TagNumber <https://stid.equinor.com/EXMPL/18ER509>.
         }
