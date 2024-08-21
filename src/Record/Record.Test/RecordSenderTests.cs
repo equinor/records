@@ -78,7 +78,6 @@ public class RecordSenderTests
         var resultContent = reader.ReadToEnd();
 
         resultContent.Should().Be(record.ToString<JsonLdWriter>());
-
     }
 
     [Fact]
