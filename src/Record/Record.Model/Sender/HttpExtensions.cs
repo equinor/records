@@ -9,7 +9,7 @@ public static class HttpExtensions
 
     public static void AddRecord(this HttpRequestMessage message, Immutable.Record record) =>
         message.AddRecord(record.ToString<JsonLdWriter>());
- 
+
 
     public static void AddRecordId(this HttpRequestMessage message, string recordId) =>
         message.Content = new MultipartFormDataContent() { { new StringContent(recordId), "recordId" } };
