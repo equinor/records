@@ -29,7 +29,7 @@ public record RecordBuilder
 
         _contentProvenance =
             WithAdditionalComments(
-                "This is the process that generated the record content. In later versions of the record library this will be on a separate content graph")
+                "This is the process that generated the record content.")
         (new ProvenanceBuilder());
         var shapes = new Graph();
         var outputFolderPath = Assembly.GetExecutingAssembly()
