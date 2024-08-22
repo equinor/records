@@ -424,6 +424,8 @@ public record RecordBuilder
 
     private void CheckMetadataGraph(IEnumerable<string> recordPredicates)
     {
+        ArgumentNullException.ThrowIfNull(_storage.Id);
+
         foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
             if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
                 throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
@@ -440,6 +442,8 @@ public record RecordBuilder
 
     private List<SafeQuad> CreateAdditionalMetadataQuads(IEnumerable<string> recordPredicates)
     {
+        ArgumentNullException.ThrowIfNull(_storage.Id);
+
         var additionalMetadataQuads = new List<SafeQuad>();
         additionalMetadataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
         additionalMetadataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
@@ -476,6 +480,8 @@ public record RecordBuilder
 
     private void CheckContentGraph()
     {
+        ArgumentNullException.ThrowIfNull(_storage.Id);
+
         foreach (var graph in _storage.ContentGraphs.Select(g => g.Triples))
             if (graph.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
                 throw new RecordException("Content may not make metadata statements.");
@@ -483,6 +489,8 @@ public record RecordBuilder
 
     private string CreateContentTripleString()
     {
+        ArgumentNullException.ThrowIfNull(_storage.Id);
+
         var contentQuads = new List<SafeQuad>();
         contentQuads.AddRange(_storage.Quads.Select(quad =>
         {
@@ -522,6 +530,8 @@ public record RecordBuilder
 
     private List<SafeQuad> SafeQuadListFromRdfString(string rdfString)
     {
+        ArgumentNullException.ThrowIfNull(_storage.Id);
+
         var tempStore = new TripleStore();
         try { tempStore.LoadFromString(rdfString); }
         catch { tempStore.LoadFromString(rdfString, new JsonLdParser()); }

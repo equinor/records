@@ -232,7 +232,7 @@ public class RecordBuilderTests
         {
             var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
             var quad = Quad.CreateSafe(subject, predicate, @object, id0);
-            record.ContainsQuad(quad).Should().BeTrue();
+            record!.ContainsQuad(quad).Should().BeTrue();
         }
     }
 
@@ -337,7 +337,7 @@ public class RecordBuilderTests
         buildProcess.Should().NotThrow();
         record.Should().NotBeNull();
 
-        record.IsSubRecordOf.Should().Be(superRecordId);
+        record!.IsSubRecordOf.Should().Be(superRecordId);
         record.Id.Should().Be(id);
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
@@ -376,7 +376,7 @@ public class RecordBuilderTests
         buildProcess.Should().NotThrow();
         record.Should().NotBeNull();
 
-        record.IsSubRecordOf.Should().Be(superRecordId2);
+        record!.IsSubRecordOf.Should().Be(superRecordId2);
         record.Id.Should().Be(id);
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
@@ -416,13 +416,13 @@ public class RecordBuilderTests
         var jsonLd = record.ToString<JsonLdWriter>();
 
         JArray.Parse(jsonLd)
-            .SelectMany(jo => jo["@graph"].Children<JObject>())
+            .SelectMany(jo => jo["@graph"]!.Children<JObject>())
             .SelectMany(jo => jo.Properties())
             .Any(jp =>
                 jp.Name.Equals(p)
                 && jp.Value is JArray ja
                 && ja.Any(item =>
-                    item["@type"].ToString() == dateTypeUri.ToString())
+                    item["@type"]!.ToString() == dateTypeUri.ToString())
                 )
             .Should()
             .BeTrue();

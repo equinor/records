@@ -15,7 +15,7 @@ public class ImmutableRecordTests
     public void Record_Has_Metadata()
     {
         var record = new Record(TestData.ValidJsonLdRecordString());
-        var result = record.Metadata.Count();
+        var result = record.Metadata!.Count();
 
         result.Should().Be(14);
     }
@@ -112,8 +112,8 @@ public class ImmutableRecordTests
         var scopes = record.Scopes;
         var describes = record.Describes;
 
-        var scopeCount = scopes.Count();
-        var describesCount = describes.Count();
+        var scopeCount = scopes!.Count();
+        var describesCount = describes!.Count();
 
         scopeCount.Should().Be(5);
         describesCount.Should().Be(5);
@@ -167,8 +167,8 @@ public class ImmutableRecordTests
         jsonArray.Should().NotBeNull();
         jsonArray?.Count.Should().Be(2);
 
-        jsonArray
-            .Any(child => (child as JsonObject)!["@id"].ToString()!.Equals("https://ssi.example.com/record/1"))
+        jsonArray!
+            .Any(child => (child as JsonObject)!["@id"]!.ToString()!.Equals("https://ssi.example.com/record/1"))
             .Should().BeTrue();
     }
 
@@ -187,7 +187,7 @@ public class ImmutableRecordTests
 
         record.Should().NotBeNull();
 
-        record.IsSubRecordOf.Should().NotBeNull();
+        record!.IsSubRecordOf.Should().NotBeNull();
         record.IsSubRecordOf.Should().Be(superRecordId);
     }
 
@@ -199,7 +199,7 @@ public class ImmutableRecordTests
         loadResult.Should().NotThrow();
 
         record.Should().NotBeNull();
-        record.IsSubRecordOf.Should().BeNull();
+        record!.IsSubRecordOf.Should().BeNull();
     }
 
     [Fact]
@@ -211,8 +211,11 @@ public class ImmutableRecordTests
             var immutable = TestData.ValidRecordBeforeBuildComplete()
                 .WithIsSubRecordOf(TestData.CreateRecordId("super"))
                 .Build();
-            var mutable = new Mutable.Record(immutable).WithIsSubRecordof(TestData.CreateRecordId("superduper"));
-            record = mutable.ToImmutable();
+            
+            var recordString = immutable.ToString(new NQuadsWriter());
+            recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}> .\n";
+
+            record = new Record(recordString);
         };
         loadResult.Should()
             .Throw<RecordException>()
@@ -233,7 +236,7 @@ public class ImmutableRecordTests
         };
         loadResult.Should().NotThrow();
 
-        var metadata = record.MetadataAsTriples();
+        var metadata = record!.MetadataAsTriples();
         var content = record.ContentAsTriples();
         var contentSubjects = content.Select(t => t.Subject.ToString()).ToList();
         contentSubjects.Should().NotContain(record.Id);
@@ -253,7 +256,7 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var tripleStore = record.TripleStore();
+        var tripleStore = record!.TripleStore();
         record.Triples().Should().Contain(tripleStore.Triples);
     }
 
@@ -270,7 +273,7 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var tripleStore = record.TripleStore();
+        var tripleStore = record!.TripleStore();
         var metadataGraph = record.MetadataGraph();
         metadataGraph.Name.ToString().Should().Be(record.Id);
 
@@ -301,7 +304,7 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var subjects = record.SubjectWithType(typeExample);
+        var subjects = record!.SubjectWithType(typeExample);
 
         subjects.Count().Should().Be(1);
         subjects.Single().Should().Be(subjectExample);
@@ -326,7 +329,7 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var labels = record.LabelsOfSubject(subjectExample);
+        var labels = record!.LabelsOfSubject(subjectExample);
 
         labels.Count().Should().Be(1);
         labels.Single().Should().Be(labelExample);
@@ -358,7 +361,7 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var labelTriples = record.QuadsWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
+        var labelTriples = record!.QuadsWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
         labelTriples.Count().Should().Be(1);
         labelTriples.Single().Should().Be(Quad.CreateUnsafe(labelTriple, recordId));
@@ -423,7 +426,7 @@ public class ImmutableRecordTests
         loadResult.Should().NotThrow();
 
         record.Should().NotBeNull();
-        record.Id.Should().Be(originalRecord.Id);
+        record!.Id.Should().Be(originalRecord.Id);
     }
 
     [Fact]

@@ -145,16 +145,16 @@ public record FileRecordBuilder
         return content.Triples;
     }
 
-    private Triple? CreateModelTypeTriple(string? modelType) => NullOrDo(modelType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.ModelType, modelType, Namespaces.DataType.String));
-    private Triple? CreateDocumentTypeTriple(string? documentType) => NullOrDo(documentType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.DocumentType, documentType, Namespaces.DataType.String));
+    private Triple? CreateModelTypeTriple(string? modelType) => NullOrDo(modelType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.ModelType, modelType!, Namespaces.DataType.String));
+    private Triple? CreateDocumentTypeTriple(string? documentType) => NullOrDo(documentType, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.DocumentType, documentType!, Namespaces.DataType.String));
 
-    private Triple? CreateFileExtensionTriple(string? fileExtension) => NullOrDo(fileExtension, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.FileExtension, fileExtension, Namespaces.DataType.String));
+    private Triple? CreateFileExtensionTriple(string? fileExtension) => NullOrDo(fileExtension, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.FileExtension, fileExtension!, Namespaces.DataType.String));
 
-    private Triple? CreateByteSizeTriple(string? byteSize) => NullOrDo(byteSize, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasByteSize, byteSize, Namespaces.DataType.Decimal));
+    private Triple? CreateByteSizeTriple(string? byteSize) => NullOrDo(byteSize, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasByteSize, byteSize!, Namespaces.DataType.Decimal));
 
-    private Triple? CreateFileNameTriple(string? fileName) => NullOrDo(fileName, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasTitle, fileName, Namespaces.DataType.String));
+    private Triple? CreateFileNameTriple(string? fileName) => NullOrDo(fileName, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasTitle, fileName!, Namespaces.DataType.String));
 
-    private Triple? CreateLanguageTriple(string? language) => NullOrDo(language, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasLanguage, language, Namespaces.DataType.Language));
+    private Triple? CreateLanguageTriple(string? language) => NullOrDo(language, () => CreateTripleWithPredicateAndObject(Namespaces.FileContent.HasLanguage, language!, Namespaces.DataType.Language));
 
     private static Triple? NullOrDo(string? @object, Func<Triple> function) => string.IsNullOrWhiteSpace(@object) ? null : function();
 
@@ -228,11 +228,15 @@ public record FileRecordBuilder
     }
 
     private Triple CreateTripleWithPredicateAndObject(string predicate, string @object, string literalNodeDataType = "")
-        => new(new UriNode(_storage.FileId),
-                new UriNode(new Uri(predicate)),
-                string.IsNullOrEmpty(literalNodeDataType) ?
-                    new UriNode(new Uri(@object)) :
-                    new LiteralNode(@object, new Uri(literalNodeDataType)));
+    {
+        ArgumentNullException.ThrowIfNull(_storage.FileId);
+
+        return new(new UriNode(_storage.FileId),
+                    new UriNode(new Uri(predicate)),
+                    string.IsNullOrEmpty(literalNodeDataType) ?
+                        new UriNode(new Uri(@object)) :
+                        new LiteralNode(@object, new Uri(literalNodeDataType)));
+    }
 
 }
 

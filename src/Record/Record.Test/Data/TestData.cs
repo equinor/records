@@ -21,14 +21,6 @@ public static class TestData
         return graph;
     }
 
-    public static Mutable.Record MutableRecordWithContent(string? id = null)
-    {
-        id ??= CreateRecordId("1");
-
-        return new Mutable.Record(id)
-            .WithAdditionalQuads(CreateQuadList(10, id).ToArray());
-    }
-
     public static Immutable.Record ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
         return ValidRecordBeforeBuildComplete(id, numberScopes, numberDescribes, numberQuads).Build();

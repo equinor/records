@@ -26,14 +26,19 @@ public class Record : IEquatable<Record>
     public List<string>? Replaces { get; private set; }
 
     public string? IsSubRecordOf { get; set; }
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public Record(ITripleStore store) => LoadFromTripleStore(store);
     public Record(IGraph graph) => LoadFromGraph(graph);
     public Record(string rdfString) => LoadFromString(rdfString);
     public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     private void LoadFromTripleStore(ITripleStore store)
     {
-        if (store?.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
+        ArgumentNullException.ThrowIfNull(store);
+
+        if (store.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
 
         foreach (var graph in store.Graphs) _store.Add(graph);
 
@@ -346,7 +351,7 @@ public class Record : IEquatable<Record>
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
 
-        return Scopes.SetEquals(other.Scopes) && Describes.SetEquals(other.Describes);
+        return Scopes!.SetEquals(other.Scopes!) && Describes!.SetEquals(other.Describes!);
     }
 
     public override bool Equals(object? obj)
@@ -367,6 +372,8 @@ public class Record : IEquatable<Record>
 
     public bool SameCanonAs(Record? other)
     {
+        if (other is null) return false;
+
         var thisString = _nQuadsString;
         var otherString = other._nQuadsString;
         return thisString.Equals(otherString);
@@ -389,7 +396,7 @@ public class Record : IEquatable<Record>
         var rset = Query(query);
         foreach (var result in rset)
         {
-            yield return result.ToString();
+            if (result is not null) yield return result.ToString()!;
         }
     }
 
