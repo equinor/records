@@ -211,7 +211,7 @@ public class ImmutableRecordTests
             var immutable = TestData.ValidRecordBeforeBuildComplete()
                 .WithIsSubRecordOf(TestData.CreateRecordId("super"))
                 .Build();
-            
+
             var recordString = immutable.ToString(new NQuadsWriter());
             recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}> .\n";
 
