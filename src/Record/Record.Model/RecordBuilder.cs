@@ -535,8 +535,7 @@ public record RecordBuilder
     }
 
     private string CreateRecordVersionUri() =>
-        $"https://www.nuget.org/packages/Record/{GetType().Assembly.GetName().Version}";
-
+        System.IO.File.ReadAllText($"{Environment.CurrentDirectory}/Properties/commit.url");
 
     private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
     {
