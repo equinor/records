@@ -57,8 +57,6 @@ public class RecordBuilderTests
 
         if (qResults is SparqlResultSet qResultSet)
         {
-            var test = qResultSet.Results.Single(res => res["version"].ToString().StartsWith("https://github.com/equinor/records/commit"));
-
             var version = qResultSet.Results.Single(res => res["version"]
                 .ToString()
                 .Equals("https://github.com/equinor/records/commit/unknown", StringComparison.OrdinalIgnoreCase));
