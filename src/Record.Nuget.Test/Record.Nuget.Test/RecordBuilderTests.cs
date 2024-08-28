@@ -55,17 +55,18 @@ public class RecordBuilderTests
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qResults = qProcessor.ProcessQuery(query);
 
-        var assembly = typeof(RecordBuilder).Assembly;
-        var version = assembly.GetName().Version;
-        var versionString = $"https://www.nuget.org/packages/Record/{version}";
-
         if (qResults is SparqlResultSet qResultSet)
         {
-            foreach (var result in qResultSet.Results)
-            {
-                if (result["version"].ToString().StartsWith("https://www.nuget.org/packages/Record/"))
-                    result["version"].ToString().Should().Be(versionString);
-            }
+            var test = qResultSet.Results.Single(res => res["version"].ToString().StartsWith("https://github.com/equinor/records/commit"));
+
+            var version = qResultSet.Results.Single(res => res["version"]
+                .ToString()
+                .Equals("https://github.com/equinor/records/commit/unknown", StringComparison.OrdinalIgnoreCase));
+            version.Should().NotBeNull();
+        }
+        else
+        {
+            throw new Exception("qResults is not a SparqlResultSet");
         }
     }
 

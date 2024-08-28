@@ -534,8 +534,14 @@ public record RecordBuilder
         return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _storage.Id.ToString())).ToList();
     }
 
-    private string CreateRecordVersionUri() =>
-        System.IO.File.ReadAllText($"{Environment.CurrentDirectory}/Properties/commit.url");
+    private string CreateRecordVersionUri()
+    {
+        var outputFolderPath = Assembly.GetExecutingAssembly()
+                                   .GetManifestResourceStream("Records.Properties.commit.url") ??
+                               throw new Exception("Could not get Records commit url.");
+        var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
+        return shapeString;
+    }
 
     private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
     {
