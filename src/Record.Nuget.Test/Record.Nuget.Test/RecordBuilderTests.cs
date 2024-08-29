@@ -54,20 +54,18 @@ public class RecordBuilderTests
         var ds = new InMemoryDataset((TripleStore)tripleStore);
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qResults = qProcessor.ProcessQuery(query);
-        var found = false;
 
         if (qResults is SparqlResultSet qResultSet)
         {
-            foreach (var result in qResultSet.Results)
-            {
-                if (result["version"].ToString().StartsWith("https://www.nuget.org/packages/Record/"))
-                {
-                    found = true;
-                }
-            }
+            var version = qResultSet.Results.Single(res => res["version"]
+                .ToString()
+                .Equals("https://github.com/equinor/records/commit/unknown", StringComparison.OrdinalIgnoreCase));
+            version.Should().NotBeNull();
         }
-
-        found.Should().BeTrue();
+        else
+        {
+            throw new Exception("qResults is not a SparqlResultSet");
+        }
     }
 
     private static string CreateRecordId(string id) => $"https://ssi.example.com/record/{id}";
