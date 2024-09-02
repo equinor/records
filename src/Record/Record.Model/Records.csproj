@@ -29,8 +29,14 @@
 		<PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Update="Properties\commit.url">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Properties\README.md">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
-	
+
 	<ItemGroup>
 	  <EmbeddedResource Include="..\..\..\schema\record-single-syntax.shacl.ttl">
 	    <Link>Schema\record-single-syntax.shacl.ttl</Link>
@@ -46,6 +52,11 @@
 		</EmbeddedResource>
 		<EmbeddedResource Include="..\..\..\schema\record-rules.ttl">
 			<Link>Schema\record-rules.ttl</Link>
+			<IncludeInPackage>true</IncludeInPackage>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<PackageCopyToOutput>true</PackageCopyToOutput>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Properties\commit.url">
 			<IncludeInPackage>true</IncludeInPackage>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<PackageCopyToOutput>true</PackageCopyToOutput>

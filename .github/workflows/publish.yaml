@@ -19,6 +19,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ./src/Record/Record.Model
 
+      - name: Setting git commit url
+        run: |
+          git_commit_url="${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}"
+          echo $git_commit_url > "./src/Record/Record.Model/Properties/commit.url"
+
       - name: Build solution
         run: dotnet build ./src/Record/Record.Model --no-restore --configuration Release
 

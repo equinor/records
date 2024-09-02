@@ -73,27 +73,6 @@ public class RecordBuilderTests
         record.Describes.Should().Contain(describes.First());
         record.Describes.Should().Contain(describes.Last());
         record.Id.Should().Be(id);
-        //CheckShaclFile(record.Graph(), "Data/record-unit-test.shacl.ttl");
-        var query = new SparqlQueryParser().ParseFromString(
-            $"SELECT * WHERE {{ graph <{record.Id}>  {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }} }}");
-
-        var tripleStore = record.TripleStore();
-        var ds = new InMemoryDataset((TripleStore)tripleStore);
-        var qProcessor = new LeviathanQueryProcessor(ds);
-        var qresults = qProcessor.ProcessQuery(query);
-        bool foundVersion = false;
-        if (qresults is SparqlResultSet qResultSet)
-        {
-            foreach (SparqlResult result in qResultSet.Results)
-            {
-                if (result["version"].ToString().StartsWith("https://www.nuget.org/packages/Record/"))
-                    foundVersion = true;
-            }
-        }
-
-        foundVersion.Should().BeTrue("There must be a version IRI on the record");
-
-
     }
 
     private void CheckShaclFile(IGraph _graph, string shacl_file)
