@@ -252,7 +252,7 @@ public class QuadTests
 
         quadProcess.Should().NotThrow();
 
-        quad.Object.Should().Be($"\"{o}\"^^<http://www.w3.org/2001/XMLSchema#string>");
+        quad!.Object.Should().Be($"\"{o}\"^^<http://www.w3.org/2001/XMLSchema#string>");
     }
 
     [Fact]
@@ -272,7 +272,7 @@ public class QuadTests
         var buildProcess = () => quad = builder.Build();
         buildProcess.Should().NotThrow();
 
-        quad.Subject.Should().Be(TestData.PutStringInAngleBrackets(s));
+        quad!.Subject.Should().Be(TestData.PutStringInAngleBrackets(s));
         quad.Predicate.Should().Be(TestData.PutStringInAngleBrackets(p));
         quad.Object.Should().Be($"\"{o}\"^^<http://www.w3.org/2001/XMLSchema#string>");
         quad.GraphLabel.Should().Be(TestData.PutStringInAngleBrackets(g));
@@ -287,7 +287,7 @@ public class QuadTests
         var quadProcess = () => quad = Quad.CreateSafe(s, p, o, g, objectLiteral: true);
         quadProcess.Should().NotThrow();
 
-        quad.Object.Should().Be($"\"{o}\"^^<http://www.w3.org/2001/XMLSchema#string>");
+        quad!.Object.Should().Be($"\"{o}\"^^<http://www.w3.org/2001/XMLSchema#string>");
     }
 
     [Fact]

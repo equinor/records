@@ -8,14 +8,10 @@ namespace Records;
 
 public record QuadBuilder
 {
-    private static readonly IGraph _graph;
-
     public INode? Subject { get; private set; }
     public INode? Predicate { get; private set; }
     public INode? Object { get; private set; }
     public Uri? GraphLabel { get; private set; }
-
-    public IGraph Graph => _graph;
 
     public QuadBuilder WithSubject(string subject) =>
         this with
