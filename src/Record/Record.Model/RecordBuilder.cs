@@ -346,7 +346,11 @@ public record RecordBuilder
 
         var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
         var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
-        var contentGraphChecksumTriples = CreateChecksumTriples(_storage.ContentGraphs.Append(contentGraph));
+        
+        var contentGraphs = _storage.ContentGraphs
+            .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples));
+            
+        var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs.Append(contentGraph));
         metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
