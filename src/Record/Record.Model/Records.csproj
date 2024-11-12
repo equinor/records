@@ -19,8 +19,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="dotNetRdf" Version="3.2.1" />
-		<PackageReference Include="IriTools" Version="1.1.0" />
+		<PackageReference Include="dotNetRdf" Version="3.3.0" />
+		<PackageReference Include="IriTools" Version="2.2.0" />
 		<PackageReference Include="json-ld.net" Version="1.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
