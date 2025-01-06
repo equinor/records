@@ -10,7 +10,8 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @base <https://rdf.equinor.com/ontology/record/> .
 
-<https://rdf.equinor.com/ontology/record-syntax/> rdf:type owl:Ontology ;
+<https://rdf.equinor.com/ontology/record-syntax> rdf:type owl:Ontology ;
+                                                    rdfs:label "Records ontology" ;
                                                    owl:versionIRI <https://rdf.equinor.com/ontology/record-syntax/2022-12-05> ;
                                                    owl:imports <http://www.w3.org/ns/prov-o> .
 
