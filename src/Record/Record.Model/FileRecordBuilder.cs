@@ -223,7 +223,7 @@ public record FileRecordBuilder
     private static byte[] ToByteArray(Stream content)
     {
         byte[] contentAsByteArray = new byte[content.Length];
-        content.Read(contentAsByteArray, 0, (int)content.Length);
+        content.ReadExactly(contentAsByteArray, 0, (int)content.Length);
         return contentAsByteArray;
     }
 
