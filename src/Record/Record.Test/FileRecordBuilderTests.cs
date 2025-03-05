@@ -108,33 +108,6 @@ public class FileRecordBuilderTests
     }
 
     [Fact]
-    public void FileRecordBuilder__SHouldThrowException__WhenSuperRecordIsMissing()
-    {
-        var fileRecord = default(Record);
-        var scopes = TestData.CreateObjectList(3, "scope");
-        var fileRecordBuilder = () =>
-        {
-            fileRecord = new FileRecordBuilder()
-            .WithId(TestData.CreateRecordId("fileRecordId"))
-            .WithFileExtension("xslx")
-            .WithFileName("filename")
-            .WithDocumentType("doctype")
-            .WithModelType("modeltype")
-            .WithLanguage("en-US")
-            .WithScopes(scopes)
-            .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
-            .Build();
-        };
-
-        fileRecordBuilder.Should()
-            .Throw<FileRecordException>()
-            .WithMessage("Failure in building file record. File record needs to have a subrecord relation.");
-
-        fileRecord.Should().BeNull();
-    }
-
-
-    [Fact]
     public void FileRecordBuilder__ShouldThrowException__WhenModelTypeIsMissing()
     {
         {

@@ -211,7 +211,6 @@ public record FileRecordBuilder
         if (_storage.FileExtension == null) exceptions.Add(new FileRecordException("File record needs the file extension."));
         if (_storage.DocumentType == null) exceptions.Add(new FileRecordException("File record needs the document type of the file."));
         if (_storage.Id == null) exceptions.Add(new FileRecordException("File record needs ID."));
-        if (_storage.IsSubRecordOf == null) exceptions.Add(new FileRecordException("File record needs to have a subrecord relation."));
         if (!_storage.Scopes.Any()) exceptions.Add(new FileRecordException("File record needs scopes."));
 
         if (exceptions.Any())
