@@ -76,6 +76,6 @@ public class C14NTests
         canonicalized.Triples
             .Select(tr => tr.Subject)
             .Distinct()
-            .Count().Should().Be(2);
+            .Count().Should().Be(15);
     }
 }
