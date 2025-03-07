@@ -278,20 +278,30 @@ public class RecordBuilderTests
         var contentrecordId = $"https://rdf.equinor.com/MCR-{Guid.NewGuid()}-Content";
 
         var graph = new Graph(new UriNode(new Uri(contentrecordId)));
+
+        var subjectsBefore = graph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount"))); 
+
+
         graph.LoadFromString(rdfString, new TurtleParser());
-        var scopes = new List<string>(){"https://example.com/scope/1", "https://example.com/scope/2"};
+        var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
+
         var record = new RecordBuilder()
             .WithId(recordId)
             .WithScopes(scopes)
             .WithContent(graph.Triples)
-            //.WithAdditionalMetadata(scopeTriples)
             .WithDescribes("https://example.com/desc/1")
             .Build();
 
-        var trigOut = record.ToString<TriGWriter>();
-        var empty = "";
+        var recordContentGraph = record.GetContentGraphs().First();
+        var  subjectsAfter = recordContentGraph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")))
+            .Select(q => q.Subject)
+            .Distinct()
+            .Count();
 
+        //subjectsAfter.Should().Be(subjectsBefore);
+        var lol = "";
     }
+
     [Fact]
     public void RecordBuilder_Can_Add_Triples()
     {
