@@ -178,9 +178,9 @@ public class RecordBuilderTests
     [Fact]
     public void RecordBuilder_Does_Not_Merge_Blank_Nodes()
     {
-        var originalGraph = new Graph();
+        var originalGraph = new Graph(new UriNode(new Uri("https://example.com/GraphName")));
         originalGraph.LoadFromString("""
-                                                 _:RK5U8KTX5f20255f025fReport5fActualAccumulatedCost <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/cost/AccumulatedCost> .
+                                      _:RK5U8KTX5f20255f025fReport5fActualAccumulatedCost <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/cost/AccumulatedCost> .
                                      _:RK5U8KTX5f20255f025fReport5fActualAccumulatedCost <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount> "4.253173875E7"^^<http://www.w3.org/2001/XMLSchema#float> .
                                      _:RK5U8KTX5f20255f025fReport5fActualAccumulatedCost <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency> <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
                                      _:RK5U8KTX5f20255f025fReport5fActualPeriodicCost <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://rdf.equinor.com/cost/PeriodicCost> .
@@ -248,10 +248,17 @@ public class RecordBuilderTests
         var builder = new RecordBuilder()
             .WithId(id0)
             .WithDescribes(desc)
-            .WithAdditionalContent(originalGraph)
+            .WithScopes(desc)
+            .WithContent(originalGraph)
             .Build();
 
         var jsonldOutput = builder.ToString<JsonLdWriter>();
+
+        var record2 = new Record(jsonldOutput);
+
+        var jsonLdOutput2 = record2.ToString<TriGWriter>();
+
+        var lol = "";
         
     }
     [Fact]
