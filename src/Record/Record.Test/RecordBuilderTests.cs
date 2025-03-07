@@ -283,7 +283,7 @@ public class RecordBuilderTests
         var record = new RecordBuilder()
             .WithId(recordId)
             .WithScopes(scopes)
-            .WithContent(graph)
+            .WithContent(graph.Triples)
             //.WithAdditionalMetadata(scopeTriples)
             .WithDescribes("https://example.com/desc/1")
             .Build();
