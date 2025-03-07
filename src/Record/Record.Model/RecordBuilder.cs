@@ -226,7 +226,6 @@ public record RecordBuilder
             ContentGraphs = graphs.ToList(),
             RdfStrings = new(),
             Triples = new(),
-            Quads = new()
         }
 
     };
@@ -237,9 +236,8 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                Quads = quads.ToList(),
                 RdfStrings = new(),
-                Triples = new(),
+                Triples = [.. quads.Select(q => q.ToTriple())],
                 ContentGraphs = new()
             }
         };
@@ -252,7 +250,6 @@ public record RecordBuilder
             _storage = _storage with
             {
                 Triples = triples.ToList(),
-                Quads = new(),
                 RdfStrings = new(),
                 ContentGraphs = new()
             }
@@ -266,7 +263,6 @@ public record RecordBuilder
             {
                 RdfStrings = rdfStrings.ToList(),
                 Triples = new(),
-                Quads = new(),
                 ContentGraphs = new()
             }
         };
@@ -337,7 +333,7 @@ public record RecordBuilder
 
         var metadataGraph = CreateMetadataGraph();
 
-        if (_storage.ContentGraphs.Count == 0 && _storage.Quads.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
+        if (_storage.ContentGraphs.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
         {
             var metaDataTs = new TripleStore();
             metaDataTs.Add(metadataGraph);
@@ -542,7 +538,7 @@ public record RecordBuilder
 
         if (tempStore.Graphs.Count != 1) throw new RecordException("Input can only contain one graph.");
 
-        var tempStoreGraph = tempStore.Graphs.FirstOrDefault();
+        var tempStoreGraph = tempStore.Graphs.FirstOrDefault() ;
         if (tempStoreGraph == null) throw new UnloadedRecordException();
 
         return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _storage.Id.ToString())).ToList();
@@ -592,7 +588,7 @@ public record RecordBuilder
         internal List<string> Scopes = new();
         internal List<string> Describes = new();
         internal List<string> RdfStrings = new();
-        internal List<Quad> Quads = new();
+
         internal List<Triple> Triples = new();
         internal List<IGraph> ContentGraphs = new();
         internal List<Triple> MetadataTriples = new();
