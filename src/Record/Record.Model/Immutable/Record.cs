@@ -257,30 +257,54 @@ public class Record : IEquatable<Record>
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value);
 
-
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubject(string subject) => QuadsWithSubject(new Uri(subject));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubject(Uri subject) => QuadsWithSubject(new UriNode(subject));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubject(INode subject)
         => _store
         .GetTriplesWithSubject(subject)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
-
+    public IEnumerable<Triple> TriplesWithSubject(string subject) => TriplesWithSubject(new Uri(subject));
+    public IEnumerable<Triple> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
+    public IEnumerable<Triple> TriplesWithSubject(INode subject)
+        => _store
+            .GetTriplesWithSubject(subject);
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithPredicate(string predicate) => QuadsWithPredicate(new Uri(predicate));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithPredicate(Uri predicate) => QuadsWithPredicate(new UriNode(predicate));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithPredicate(INode predicate)
       => _store
         .GetTriplesWithPredicate(predicate)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
-
+    public IEnumerable<Triple> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
+    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
+    public IEnumerable<Triple> TriplesWithPredicate(INode predicate)
+        => _store
+            .GetTriplesWithPredicate(predicate);
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithObject(string @object) => QuadsWithObject(new Uri(@object));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithObject(Uri @object) => QuadsWithObject(new UriNode(@object));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithObject(INode @object)
         => _store
         .GetTriplesWithObject(@object)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+    public IEnumerable<Triple> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
+    public IEnumerable<Triple> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
+    public IEnumerable<Triple> TriplesWithObject(INode @object)
+        => _store
+            .GetTriplesWithObject(@object);
 
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubjectPredicate(string subject, string predicate) => QuadsWithSubjectPredicate(new Uri(subject), new Uri(predicate));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubjectPredicate(Uri subject, Uri predicate) => QuadsWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubjectPredicate(INode subject, INode predicate)
         => _store
         .GetTriplesWithSubjectPredicate(subject, predicate)
@@ -292,14 +316,28 @@ public class Record : IEquatable<Record>
         => _store
         .GetTriplesWithPredicateObject(predicate, @object)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(INode predicate, INode @object)
+        => _store
+            .GetTriplesWithPredicateObject(predicate, @object);
 
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubjectObject(string subject, string @object) => QuadsWithSubjectObject(new Uri(subject), new Uri(@object));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubjectObject(Uri subject, Uri @object) => QuadsWithSubjectObject(new UriNode(subject), new UriNode(@object));
+    [Obsolete]
     public IEnumerable<Quad> QuadsWithSubjectObject(UriNode subject, UriNode @object)
         => _store
         .GetTriplesWithSubjectObject(subject, @object)
         .Select(t => Quad.CreateUnsafe(t, Id ?? throw new UnloadedRecordException()));
 
+    public IEnumerable<Triple> TriplesWithSubjectObject(string subject, string @object) => TriplesWithSubjectObject(new Uri(subject), new Uri(@object));
+    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));
+
+    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, UriNode @object)
+        => _store
+            .GetTriplesWithSubjectObject(subject, @object);
 
     public IEnumerable<Triple> Triples() => _store.Triples ?? throw new UnloadedRecordException();
     public IEnumerable<Triple> ContentAsTriples()

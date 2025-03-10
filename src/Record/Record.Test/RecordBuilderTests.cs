@@ -176,6 +176,133 @@ public class RecordBuilderTests
     }
 
     [Fact]
+    public void RecordBuilder_Does_Not_Merge_Blank_Nodes()
+    {
+        var rdfString = """
+
+                        _:1G272G93_2024_01_Report_ActualAccumulatedCost a <https://rdf.equinor.com/cost/AccumulatedCost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            67825958.89;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_ActualPeriodicCost a <https://rdf.equinor.com/cost/PeriodicCost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            61778094.56;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_ApprovedAdjustments a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            58334293.92;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_ApprovedVO a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            94259910.57;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_EAC a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            1291122.2;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_ExecutedOptions a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            96414707.12;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_Growth a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            41711528.06;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_OriginalContractValue a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            24762931.17;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_PendingVORs a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            29625533.71;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        _:1G272G93_2024_01_Report_PotentialVORs a <https://rdf.equinor.com/cost/Cost>;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount>
+                            74642027.39;
+                          <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasCurrency>
+                            <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/NOK> .
+
+                        <https://assetid.equinor.com/contract/1111000011> a <https://rdf.equinor.com/asset/Contract>;
+                          <http://www.w3.org/2000/01/rdf-schema#label> "1111000011" .
+
+                        <https://assetid.equinor.com/contractorsWbs/1111000012/V8FXP3TMSJ> a <https://rdf.equinor.com/asset/ContractorsCostWbs>;
+                          <http://www.w3.org/2000/01/rdf-schema#label> "V8FXP3TMSJ";
+                          <https://rdf.equinor.com/asset/contractorsCostWBSDescription> "It's my WBS, is what it is." .
+
+                        <https://assetid.equinor.com/project/1111000012> a <https://rdf.equinor.com/asset/Project>;
+                          <http://www.w3.org/2000/01/rdf-schema#label> "1111000012" .
+
+                        <https://assetid.equinor.com/workpack/1111000012/1G272G93> a <https://rdf.equinor.com/asset/Workpack>;
+                          <http://www.w3.org/2000/01/rdf-schema#comment> "1G272G93 @ EX.01234A.001!";
+                          <https://rdf.equinor.com/asset/partOfContract> <https://assetid.equinor.com/contract/1111000011>;
+                          <https://rdf.equinor.com/asset/partOfProject> <https://assetid.equinor.com/project/1111000012>;
+                          <https://rdf.equinor.com/asset/workpackId> "1G272G93";
+                          <https://rdf.equinor.com/cost/hasReport> <https://assetid.equinor.com/workpack/1111000012/1G272G93/Report/2024/01> .
+
+                        <https://assetid.equinor.com/workpack/1111000012/1G272G93/Report/2024/01> a <https://rdf.equinor.com/cost/Report>;
+                          <http://www.w3.org/2000/01/rdf-schema#comment> "This lineitem is lit";
+                          <http://www.w3.org/2000/01/rdf-schema#label> "Report for 1G272G93";
+                          <http://www.w3.org/2006/time#inXSDgYearMonth> "2024-01"^^<http://www.w3.org/2001/XMLSchema#gYearMonth>;
+                          <https://rdf.equinor.com/cost/hasContractorWbs> <https://assetid.equinor.com/contractorsWbs/1111000012/V8FXP3TMSJ>;
+                          <https://rdf.equinor.com/cost/reportedActualAccumulatedCost> _:1G272G93_2024_01_Report_ActualAccumulatedCost;
+                          <https://rdf.equinor.com/cost/reportedActualPeriodicCost> _:1G272G93_2024_01_Report_ActualPeriodicCost;
+                          <https://rdf.equinor.com/cost/reportedApprovedAdjustments> _:1G272G93_2024_01_Report_ApprovedAdjustments;
+                          <https://rdf.equinor.com/cost/reportedApprovedVariationOrder> _:1G272G93_2024_01_Report_ApprovedVO;
+                          <https://rdf.equinor.com/cost/reportedEstimateAtComplete> _:1G272G93_2024_01_Report_EAC;
+                          <https://rdf.equinor.com/cost/reportedExecutedOptions> _:1G272G93_2024_01_Report_ExecutedOptions;
+                          <https://rdf.equinor.com/cost/reportedGrowth> _:1G272G93_2024_01_Report_Growth;
+                          <https://rdf.equinor.com/cost/reportedOriginalContractValue> _:1G272G93_2024_01_Report_OriginalContractValue;
+                          <https://rdf.equinor.com/cost/reportedPendingVariationOrderRequests> _:1G272G93_2024_01_Report_PendingVORs;
+                          <https://rdf.equinor.com/cost/reportedPotentialVariationOrderRequests> _:1G272G93_2024_01_Report_PotentialVORs .
+
+                        """;
+        var recordId = $"https://rdf.equinor.com/MCR-{Guid.NewGuid()}";
+        var contentrecordId = $"https://rdf.equinor.com/MCR-{Guid.NewGuid()}-Content";
+
+        var graph = new Graph(new UriNode(new Uri(contentrecordId)));
+
+        var subjectsBefore = graph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")));
+
+
+        graph.LoadFromString(rdfString, new TurtleParser());
+        var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
+
+        var record = new RecordBuilder()
+            .WithId(recordId)
+            .WithScopes(scopes)
+            .WithContent(graph.Triples)
+            .WithDescribes("https://example.com/desc/1")
+            .Build();
+
+        var recordContentGraph = record.GetContentGraphs().First();
+        var subjectsAfter = recordContentGraph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")))
+            .Select(q => q.Subject)
+            .Distinct()
+            .Count();
+
+        //subjectsAfter.Should().Be(subjectsBefore);
+        var lol = "";
+    }
+
+    [Fact]
     public void RecordBuilder_Can_Add_Triples()
     {
         var graph = new Graph();

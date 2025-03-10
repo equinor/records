@@ -5,7 +5,7 @@ using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 
 namespace Records;
-
+[Obsolete("Will be removed soon. Please use DotNetRdf Graphs in stead")]
 public record QuadBuilder
 {
     public INode? Subject { get; private set; }

@@ -226,39 +226,54 @@ public record RecordBuilder
             ContentGraphs = graphs.ToList(),
             RdfStrings = new(),
             Triples = new(),
-            Quads = new()
         }
 
     };
     public RecordBuilder WithContent(IEnumerable<IGraph> graphs) => WithContent(graphs.ToArray());
-
+    [Obsolete]
     public RecordBuilder WithContent(params Quad[] quads) =>
         this with
         {
             _storage = _storage with
             {
-                Quads = quads.ToList(),
                 RdfStrings = new(),
-                Triples = new(),
+                Triples = [.. quads.Select(q => q.ToTriple())],
                 ContentGraphs = new()
             }
         };
-
+    [Obsolete]
     public RecordBuilder WithContent(IEnumerable<Quad> quads) => WithContent(quads.ToArray());
 
+    /// <summary>
+    /// Adds triples to the record content graph.
+    /// Note that the triples are assumed to be in the same graph, so blank nodes are not changed.
+    /// </summary>
+    /// <param name="triples"></param>
+    /// <returns></returns>
     public RecordBuilder WithContent(params Triple[] triples) =>
         this with
         {
             _storage = _storage with
             {
                 Triples = triples.ToList(),
-                Quads = new(),
                 RdfStrings = new(),
                 ContentGraphs = new()
             }
         };
+    /// <summary>
+    /// Adds triples to the record content graph.
+    /// Note that the triples are assumed to be in the same graph, so blank nodes are not changed.
+    /// </summary>
+    /// <param name="triples"></param>
+    /// <returns></returns>
     public RecordBuilder WithContent(IEnumerable<Triple> triples) => WithContent(triples.ToArray());
-
+    /// <summary>
+    /// Adds triples as rdf strings to the record content graph.
+    /// Only triples are allowed, no named graphs in the input here.
+    /// Note that the triples are assumed to be in the same graph, so blank nodes are not changed.
+    /// </summary>
+    /// <param name="triples"></param>
+    /// <returns></returns>
     public RecordBuilder WithContent(params string[] rdfStrings) =>
         this with
         {
@@ -266,7 +281,6 @@ public record RecordBuilder
             {
                 RdfStrings = rdfStrings.ToList(),
                 Triples = new(),
-                Quads = new(),
                 ContentGraphs = new()
             }
         };
@@ -280,7 +294,6 @@ public record RecordBuilder
         _storage = _storage with
         {
             ContentGraphs = _storage.ContentGraphs.Concat(graphs).ToList(),
-            Quads = _storage.Quads.ToList(),
             Triples = _storage.Triples.ToList(),
             RdfStrings = _storage.RdfStrings.ToList()
         }
@@ -294,25 +307,23 @@ public record RecordBuilder
             _storage = _storage with
             {
                 Triples = _storage.Triples.Concat(triples).ToList(),
-                Quads = _storage.Quads.ToList(),
                 RdfStrings = _storage.RdfStrings.ToList(),
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
-
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params Quad[] quads) =>
         this with
         {
             _storage = _storage with
             {
-                Quads = _storage.Quads.Concat(quads).ToList(),
-                Triples = _storage.Triples.ToList(),
+                Triples = _storage.Triples.Concat(quads.Select(q => q.ToTriple())).ToList(),
                 RdfStrings = _storage.RdfStrings.ToList(),
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
-
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<Quad> quads) => WithAdditionalContent(quads.ToArray());
 
     public RecordBuilder WithAdditionalContent(params string[] rdfStrings) =>
@@ -321,7 +332,6 @@ public record RecordBuilder
             _storage = _storage with
             {
                 RdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
-                Quads = _storage.Quads.ToList(),
                 Triples = _storage.Triples.ToList(),
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
@@ -337,7 +347,7 @@ public record RecordBuilder
 
         var metadataGraph = CreateMetadataGraph();
 
-        if (_storage.ContentGraphs.Count == 0 && _storage.Quads.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
+        if (_storage.ContentGraphs.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
         {
             var metaDataTs = new TripleStore();
             metaDataTs.Add(metadataGraph);
@@ -383,8 +393,8 @@ public record RecordBuilder
 
         var recordPredicates = GetRecordPredicates();
 
-        var metadataTripleString = GetMetadataTripleString(recordPredicates);
-        metadataGraph.LoadFromString(metadataTripleString);
+        var metadataTripleList = GetMetadataTripleList(recordPredicates);
+        metadataGraph.Assert(metadataTripleList);
 
         CheckMetadataGraph(recordPredicates);
 
@@ -399,8 +409,8 @@ public record RecordBuilder
     {
         var contentGraph = new Graph(contentGraphId);
 
-        var tripleString = CreateContentTripleString();
-        contentGraph.LoadFromString(tripleString);
+        var tripleList = CreateContentTripleString();
+        contentGraph.Assert(tripleList);
 
         CheckContentGraph();
 
@@ -435,43 +445,45 @@ public record RecordBuilder
                 throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
     }
 
-    private string GetMetadataTripleString(IEnumerable<string> recordPredicates)
+    private List<Triple> GetMetadataTripleList(IEnumerable<string> recordPredicates)
     {
-        var metadataQuads = CreateMetadataQuads();
-        var additionalMetadataQuads = CreateAdditionalMetadataQuads(recordPredicates);
-        metadataQuads.AddRange(additionalMetadataQuads);
-        var metadataTripleString = string.Join("\n", metadataQuads.Select(q => q.ToTripleString()));
-        return metadataTripleString;
+        var metadataTriples = CreateMetadataTriples();
+        var additionalMetadataTriples = CreateAdditionalMetadataTriples(recordPredicates);
+        metadataTriples.AddRange(additionalMetadataTriples);
+        return metadataTriples;
+        ;
     }
 
-    private List<SafeQuad> CreateAdditionalMetadataQuads(IEnumerable<string> recordPredicates)
+    private List<Triple> CreateAdditionalMetadataTriples(IEnumerable<string> recordPredicates)
     {
         ArgumentNullException.ThrowIfNull(_storage.Id);
 
-        var additionalMetadataQuads = new List<SafeQuad>();
-        additionalMetadataQuads.AddRange(_storage.MetadataTriples.Select(CreateQuadFromTriple));
-        additionalMetadataQuads.AddRange(_storage.MetadataRdfStrings.SelectMany(SafeQuadListFromRdfString));
+        var additionalMetadataTriples = new List<Triple>();
+        additionalMetadataTriples.AddRange(_storage.MetadataTriples);
+        additionalMetadataTriples.AddRange(_storage.MetadataRdfStrings.SelectMany(TripleListFromRdfString));
 
-        if (additionalMetadataQuads.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordPredicates.Contains(q.Predicate)))
+        if (additionalMetadataTriples.Any(q =>
+                !q.Subject.ToString().Equals(_storage.Id.ToString())
+                && recordPredicates.Contains($"<{q.Predicate.ToString()}>")))
             throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
 
-        return additionalMetadataQuads;
+        return additionalMetadataTriples;
     }
 
-    private List<SafeQuad> CreateMetadataQuads()
+    private List<Triple> CreateMetadataTriples()
     {
-        var metadataQuads = new List<SafeQuad>();
-        var typeQuad = CreateQuadWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.Record.RecordType);
-        metadataQuads.Add(typeQuad);
+        var metadataTriples = new List<Triple>();
+        var typeQuad = new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Rdf.Type)), new UriNode(new Uri(Namespaces.Record.RecordType)));
+        metadataTriples.Add(typeQuad);
 
         if (_storage.IsSubRecordOf != null)
-            metadataQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf));
+            metadataTriples.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf).ToTriple());
 
-        metadataQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad));
-        metadataQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad));
-        metadataQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad));
+        metadataTriples.AddRange(_storage.Replaces.Select(CreateReplacesQuad).Select(q => q.ToTriple()));
+        metadataTriples.AddRange(_storage.Scopes.Select(CreateScopeQuad).Select(q => q.ToTriple()));
+        metadataTriples.AddRange(_storage.Describes.Select(CreateDescribesQuad).Select(q => q.ToTriple()));
 
-        return metadataQuads;
+        return metadataTriples;
     }
 
     private static IEnumerable<string> GetRecordPredicates()
@@ -491,30 +503,15 @@ public record RecordBuilder
                 throw new RecordException("Content may not make metadata statements.");
     }
 
-    private string CreateContentTripleString()
+    private IEnumerable<Triple> CreateContentTripleString()
     {
-        ArgumentNullException.ThrowIfNull(_storage.Id);
 
-        var contentQuads = new List<SafeQuad>();
-        contentQuads.AddRange(_storage.Quads.Select(quad =>
-        {
-            return quad switch
-            {
-                SafeQuad safeQuad => safeQuad,
-                UnsafeQuad unsafeQuad => unsafeQuad.MakeSafe(),
-                _ => throw new QuadException($"You cannot use {nameof(Quad)} directly.")
-            };
-        }));
-
-        contentQuads.AddRange(_storage.Triples.Select(CreateQuadFromTriple));
-        contentQuads.AddRange(_storage.RdfStrings.SelectMany(SafeQuadListFromRdfString));
-
-        if (contentQuads.Any(q => q.Subject.Equals($"<{_storage.Id.ToString()}>")))
+        var triples = _storage.Triples.Concat(_storage.RdfStrings.SelectMany(TripleListFromRdfString)).ToList();
+        if (triples.Any(q => q.Subject.ToString().Equals(_storage.Id?.ToString())))
             throw new RecordException("Content may not make metadata statements.");
-
-        var tripleString = string.Join("\n", contentQuads.Select(q => q.ToTripleString()));
-        return tripleString;
+        return triples;
     }
+
     #endregion
 
     #region Private-Helper-Methods
@@ -532,7 +529,7 @@ public record RecordBuilder
         return new RecordException(string.Join('\n', errorMessages));
     }
 
-    private List<SafeQuad> SafeQuadListFromRdfString(string rdfString)
+    private IEnumerable<Triple> TripleListFromRdfString(string rdfString)
     {
         ArgumentNullException.ThrowIfNull(_storage.Id);
 
@@ -545,7 +542,7 @@ public record RecordBuilder
         var tempStoreGraph = tempStore.Graphs.FirstOrDefault();
         if (tempStoreGraph == null) throw new UnloadedRecordException();
 
-        return tempStore.Graphs.First().Triples.Select(triple => Quad.CreateSafe(triple, _storage.Id.ToString())).ToList();
+        return tempStore.Graphs.First().Triples;
     }
 
     private string CreateRecordVersionUri()
@@ -592,7 +589,7 @@ public record RecordBuilder
         internal List<string> Scopes = new();
         internal List<string> Describes = new();
         internal List<string> RdfStrings = new();
-        internal List<Quad> Quads = new();
+
         internal List<Triple> Triples = new();
         internal List<IGraph> ContentGraphs = new();
         internal List<Triple> MetadataTriples = new();
