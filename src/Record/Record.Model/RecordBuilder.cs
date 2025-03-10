@@ -230,7 +230,7 @@ public record RecordBuilder
 
     };
     public RecordBuilder WithContent(IEnumerable<IGraph> graphs) => WithContent(graphs.ToArray());
-
+    [Obsolete]
     public RecordBuilder WithContent(params Quad[] quads) =>
         this with
         {
@@ -241,7 +241,7 @@ public record RecordBuilder
                 ContentGraphs = new()
             }
         };
-
+    [Obsolete]
     public RecordBuilder WithContent(IEnumerable<Quad> quads) => WithContent(quads.ToArray());
 
     public RecordBuilder WithContent(params Triple[] triples) =>
@@ -294,7 +294,7 @@ public record RecordBuilder
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
-
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params Quad[] quads) =>
         this with
         {
@@ -305,7 +305,7 @@ public record RecordBuilder
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
-
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<Quad> quads) => WithAdditionalContent(quads.ToArray());
 
     public RecordBuilder WithAdditionalContent(params string[] rdfStrings) =>
@@ -454,18 +454,18 @@ public record RecordBuilder
 
     private List<Triple> CreateMetadataTriples()
     {
-        var metadataQuads = new List<Triple>();
+        var metadataTriples = new List<Triple>();
         var typeQuad = new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Rdf.Type)), new UriNode(new Uri(Namespaces.Record.RecordType)));
-        metadataQuads.Add(typeQuad);
+        metadataTriples.Add(typeQuad);
 
         if (_storage.IsSubRecordOf != null)
-            metadataQuads.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf).ToTriple());
+            metadataTriples.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf).ToTriple());
 
-        metadataQuads.AddRange(_storage.Replaces.Select(CreateReplacesQuad).Select(q => q.ToTriple()));
-        metadataQuads.AddRange(_storage.Scopes.Select(CreateScopeQuad).Select(q => q.ToTriple()));
-        metadataQuads.AddRange(_storage.Describes.Select(CreateDescribesQuad).Select(q => q.ToTriple()));
+        metadataTriples.AddRange(_storage.Replaces.Select(CreateReplacesQuad).Select(q => q.ToTriple()));
+        metadataTriples.AddRange(_storage.Scopes.Select(CreateScopeQuad).Select(q => q.ToTriple()));
+        metadataTriples.AddRange(_storage.Describes.Select(CreateDescribesQuad).Select(q => q.ToTriple()));
 
-        return metadataQuads;
+        return metadataTriples;
     }
 
     private static IEnumerable<string> GetRecordPredicates()
