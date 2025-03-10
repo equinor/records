@@ -72,7 +72,7 @@ public class C14NTests
                                      
                                      """);
         var canonicalized = CanonicalisationExtensions.Canonicalise(originalGraph);
-        
+
         canonicalized.Triples
             .Select(tr => tr.Subject)
             .Distinct()

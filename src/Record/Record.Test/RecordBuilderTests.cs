@@ -279,7 +279,7 @@ public class RecordBuilderTests
 
         var graph = new Graph(new UriNode(new Uri(contentrecordId)));
 
-        var subjectsBefore = graph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount"))); 
+        var subjectsBefore = graph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")));
 
 
         graph.LoadFromString(rdfString, new TurtleParser());
@@ -293,7 +293,7 @@ public class RecordBuilderTests
             .Build();
 
         var recordContentGraph = record.GetContentGraphs().First();
-        var  subjectsAfter = recordContentGraph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")))
+        var subjectsAfter = recordContentGraph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")))
             .Select(q => q.Subject)
             .Distinct()
             .Count();
