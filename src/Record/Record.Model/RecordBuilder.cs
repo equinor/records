@@ -244,6 +244,12 @@ public record RecordBuilder
     [Obsolete]
     public RecordBuilder WithContent(IEnumerable<Quad> quads) => WithContent(quads.ToArray());
 
+    /// <summary>
+    /// Adds triples to the record content graph.
+    /// Note that the triples are assumed to be in the same graph, so blank nodes are not changed.
+    /// </summary>
+    /// <param name="triples"></param>
+    /// <returns></returns>
     public RecordBuilder WithContent(params Triple[] triples) =>
         this with
         {
@@ -254,8 +260,20 @@ public record RecordBuilder
                 ContentGraphs = new()
             }
         };
+    /// <summary>
+    /// Adds triples to the record content graph.
+    /// Note that the triples are assumed to be in the same graph, so blank nodes are not changed.
+    /// </summary>
+    /// <param name="triples"></param>
+    /// <returns></returns>
     public RecordBuilder WithContent(IEnumerable<Triple> triples) => WithContent(triples.ToArray());
-
+    /// <summary>
+    /// Adds triples as rdf strings to the record content graph.
+    /// Only triples are allowed, no named graphs in the input here.
+    /// Note that the triples are assumed to be in the same graph, so blank nodes are not changed.
+    /// </summary>
+    /// <param name="triples"></param>
+    /// <returns></returns>
     public RecordBuilder WithContent(params string[] rdfStrings) =>
         this with
         {
@@ -391,8 +409,8 @@ public record RecordBuilder
     {
         var contentGraph = new Graph(contentGraphId);
 
-        var tripleString = CreateContentTripleString();
-        contentGraph.Assert(tripleString);
+        var tripleList = CreateContentTripleString();
+        contentGraph.Assert(tripleList);
 
         CheckContentGraph();
 
