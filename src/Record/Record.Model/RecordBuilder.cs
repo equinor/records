@@ -444,7 +444,9 @@ public record RecordBuilder
         additionalMetadataTriples.AddRange(_storage.MetadataTriples);
         additionalMetadataTriples.AddRange(_storage.MetadataRdfStrings.SelectMany(TripleListFromRdfString));
 
-        if (additionalMetadataTriples.Any(q => !q.Subject.Equals($"<{_storage.Id.ToString()}>") && recordPredicates.Contains(q.Predicate.ToString())))
+        if (additionalMetadataTriples.Any(q => 
+                !q.Subject.ToString().Equals(_storage.Id.ToString()) 
+                && recordPredicates.Contains($"<{q.Predicate.ToString()}>")))
             throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
 
         return additionalMetadataTriples;
@@ -487,7 +489,7 @@ public record RecordBuilder
     {
 
         var triples = _storage.Triples.Concat(_storage.RdfStrings.SelectMany(TripleListFromRdfString)).ToList();
-        if (triples.Any(q => q.Subject.Equals($"<{_storage.Id.ToString()}>")))
+        if (triples.Any(q => q.Subject.ToString().Equals(_storage.Id.ToString())))
             throw new RecordException("Content may not make metadata statements.");
         return triples;
     }

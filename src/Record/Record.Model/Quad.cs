@@ -1,7 +1,7 @@
 ﻿using VDS.RDF;
 
 namespace Records;
-
+[Obsolete("Will be removed soon. Please use DotNetRdf Graphs in stead")]
 public abstract class Quad : IEquatable<Quad>
 {
     public string Subject { get; internal init; } = null!;
