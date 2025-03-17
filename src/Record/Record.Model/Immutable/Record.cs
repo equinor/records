@@ -20,10 +20,10 @@ public class Record : IEquatable<Record>
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
 
-    public List<Quad>? Metadata { get; private set; }
+    public List<Quad> Metadata { get; private set; }
     public HashSet<string> Scopes { get; private set; }
     public HashSet<string> Describes { get; private set; }
-    public List<string>? Replaces { get; private set; }
+    public List<string> Replaces { get; private set; }
 
     public string? IsSubRecordOf { get; set; }
 
