@@ -279,10 +279,10 @@ public class RecordBuilderTests
 
         var graph = new Graph(new UriNode(new Uri(contentrecordId)));
 
+        graph.LoadFromString(rdfString, new TurtleParser());
+
         var subjectsBefore = graph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")));
 
-
-        graph.LoadFromString(rdfString, new TurtleParser());
         var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
 
         var record = new RecordBuilder()
@@ -298,8 +298,7 @@ public class RecordBuilderTests
             .Distinct()
             .Count();
 
-        //subjectsAfter.Should().Be(subjectsBefore);
-        var lol = "";
+        subjectsAfter.Should().Be(subjectsBefore.Count());
     }
 
     [Fact]
