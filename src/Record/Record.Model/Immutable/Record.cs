@@ -370,7 +370,7 @@ public class Record : IEquatable<Record>
     }
 
 
-    public string ToNonCanonString(IStoreWriter writer)
+    public string ToCanonString(IStoreWriter writer)
     {
         var canon = new RdfCanonicalizer().Canonicalize(_store);
         var canonStore = canon.OutputDataset;
