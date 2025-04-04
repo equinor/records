@@ -360,18 +360,17 @@ public class Record : IEquatable<Record>
     public bool ContainsQuad(Quad quad) => _store.Contains(quad.ToTriple());
 
     public override string ToString() => _nQuadsString;
-    public string ToNonCanonString()
+    public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
+    public string ToString(IStoreWriter writer)
     {
-        var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
         var stringWriter = new StringWriter();
         writer.Save(_store, stringWriter);
 
         return stringWriter.ToString();
     }
 
-    public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
 
-    public string ToString(IStoreWriter writer)
+    public string ToNonCanonString(IStoreWriter writer)
     {
         var canon = new RdfCanonicalizer().Canonicalize(_store);
         var canonStore = canon.OutputDataset;
