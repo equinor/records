@@ -18,9 +18,13 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder()
+    public RecordBuilder(bool canon = false)
     {
-        _storage = new Storage();
+        _storage = new Storage
+        {
+            Canon = canon
+        };
+
         _metadataProvenance =
             WithAdditionalTool(CreateRecordVersionUri())
             (WithAdditionalComments("This is the process that generated the record metadata/provenance")
@@ -360,8 +364,11 @@ public record RecordBuilder
         var contentGraphs = _storage.ContentGraphs
             .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples));
 
-        var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs.Append(contentGraph));
-        metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
+        if(_storage.Canon)
+        {
+            var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs.Append(contentGraph));
+            metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
+        }
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
@@ -595,5 +602,7 @@ public record RecordBuilder
         internal List<Triple> MetadataTriples = new();
         internal List<string> MetadataRdfStrings = new();
         internal List<IGraph> MetadataGraphs = new();
+
+        internal bool Canon = false;
     }
 }
