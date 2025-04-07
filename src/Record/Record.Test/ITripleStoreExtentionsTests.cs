@@ -103,10 +103,10 @@ public class ITripleStoreExtentionsTests
 
         recordIds.Should().Contain(firstId);
         foundRecords.Should().Contain(firstRecord);
-        foundFirstRecord.SameCanonAs(firstRecord).Should().BeTrue();
+        foundFirstRecord.SameTriplesAs(firstRecord).Should().BeTrue();
 
         recordIds.Should().Contain(secondId);
         foundRecords.Should().Contain(secondRecord);
-        foundSecondRecord.SameCanonAs(secondRecord).Should().BeTrue();
+        foundSecondRecord.SameTriplesAs(secondRecord).Should().BeTrue();
     }
 }

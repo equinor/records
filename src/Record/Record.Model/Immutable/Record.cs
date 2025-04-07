@@ -404,16 +404,17 @@ public class Record : IEquatable<Record>
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
 
+        var myTriples = _store.Triples.ToList();
+        var otherTriples = other._store.Triples.ToList();
+
+        foreach(var myTriple in myTriples)
+        {
+            if(!otherTriples.Contains(myTriple)) 
+                return false;
+        }
+        return true;
+
         return _store.Triples.SequenceEqual(other._store.Triples);
-    }
-
-    public bool SameCanonAs(Record? other)
-    {
-        if (other is null) return false;
-
-        var thisString = _nQuadsString;
-        var otherString = other._nQuadsString;
-        return thisString.Equals(otherString);
     }
 
     public override int GetHashCode()
