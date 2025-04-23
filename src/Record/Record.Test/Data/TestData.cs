@@ -37,14 +37,14 @@ public static class TestData
     }
 
     public static RecordBuilder RecordBuilderWithProvenanceAndWithoutContent(string? id = null, int numberScopes = 5,
-    int numberDescribes = 5, int numberQuads = 10)
+    int numberDescribes = 5, int numberQuads = 10, RecordCanonicalisation canon = RecordCanonicalisation.dotNetRdf)
     {
         id ??= CreateRecordId("1");
 
         var scopes = CreateObjectList(numberScopes, "scope");
         var describes = CreateObjectList(numberDescribes, "describes");
 
-        return new RecordBuilder()
+        return new RecordBuilder(canon)
             .WithId(id)
             .WithScopes(scopes)
             .WithDescribes(describes)

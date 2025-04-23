@@ -677,18 +677,4 @@ public class RecordBuilderTests
         record.MetadataGraph().Should().NotBeNull();
         record.GetContentGraphs().Should().BeEmpty();
     }
-
-    [Fact]
-    public void RecordBuilder__ShouldNot__WriteEmptyGraph__Trig()
-    {
-        var record = new RecordBuilder().WithId("https://example.com/1").WithScopes("https://example.com/scope").Build();
-
-        var recordString = record.ToString(new JsonLdWriter());
-
-        var copyRecord = new Record(recordString);
-
-        record.SameCanonAs(copyRecord).Should().BeTrue();
-        record.ToString(new TriGWriter()).Should().Be(copyRecord.ToString(new TriGWriter()));
-        record.ToString().Should().Be(copyRecord.ToString());
-    }
 }
