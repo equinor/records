@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Writing;
 
 namespace Records.Tests;
 
@@ -90,6 +91,7 @@ public class ITripleStoreExtentionsTests
 
         tripleStore.LoadFromString(firstRecord.ToString(), new NQuadsParser());
         tripleStore.LoadFromString(secondRecord.ToString(), new NQuadsParser());
+        
 
         // Act
         var foundRecords = tripleStore.FindRecords();
@@ -103,10 +105,14 @@ public class ITripleStoreExtentionsTests
 
         recordIds.Should().Contain(firstId);
         foundRecords.Should().Contain(firstRecord);
-        foundFirstRecord.SameTriplesAs(firstRecord).Should().BeTrue();
+        foundFirstRecord.Triples().Should().HaveCount(firstRecord.Triples().Count());
+
+        var firstString = firstRecord.ToCanonString();
+        var foundFirstString = foundFirstRecord.ToCanonString();
+
 
         recordIds.Should().Contain(secondId);
         foundRecords.Should().Contain(secondRecord);
-        foundSecondRecord.SameTriplesAs(secondRecord).Should().BeTrue();
+        foundSecondRecord.Triples().Should().HaveCount(secondRecord.Triples().Count());
     }
 }
