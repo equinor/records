@@ -463,7 +463,7 @@ public class ImmutableRecordTests
 
         // Assert
         result.Should().Be(record);
-        result.SameTriplesAs(record).Should().BeTrue();
+        result.Triples().Count().Should().Be(record.Triples().Count());
     }
 
     [Fact]

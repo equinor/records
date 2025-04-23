@@ -400,24 +400,6 @@ public class Record : IEquatable<Record>
         return Equals((Record)obj);
     }
 
-    public bool SameTriplesAs(Record? other)
-    {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        var myTriples = _store.Triples.ToList();
-        var otherTriples = other._store.Triples.ToList();
-
-        foreach(var myTriple in myTriples)
-        {
-            if(!otherTriples.Contains(myTriple)) 
-                return false;
-        }
-        return true;
-
-        return _store.Triples.SequenceEqual(other._store.Triples);
-    }
-
     public override int GetHashCode()
     {
         return HashCode.Combine(Scopes, Describes);

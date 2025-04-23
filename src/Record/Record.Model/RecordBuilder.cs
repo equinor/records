@@ -18,7 +18,7 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder(bool canon = false)
+    public RecordBuilder(RecordCanonicalization canon = RecordCanonicalization.None)
     {
         _storage = new Storage
         {
@@ -364,7 +364,7 @@ public record RecordBuilder
         var contentGraphs = _storage.ContentGraphs
             .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples));
 
-        if(_storage.Canon)
+        if(_storage.Canon is RecordCanonicalization.dotNetRdf)
         {
             var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs.Append(contentGraph));
             metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
@@ -603,6 +603,6 @@ public record RecordBuilder
         internal List<string> MetadataRdfStrings = new();
         internal List<IGraph> MetadataGraphs = new();
 
-        internal bool Canon = false;
+        internal RecordCanonicalization Canon = RecordCanonicalization.None;
     }
 }
