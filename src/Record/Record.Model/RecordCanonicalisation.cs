@@ -1,6 +1,6 @@
 ﻿namespace Records;
 
-public enum RecordCanonicalization
+public enum RecordCanonicalisation
 {
     None,
     dotNetRdf
