@@ -91,7 +91,7 @@ public class ITripleStoreExtentionsTests
 
         tripleStore.LoadFromString(firstRecord.ToString(), new NQuadsParser());
         tripleStore.LoadFromString(secondRecord.ToString(), new NQuadsParser());
-        
+
 
         // Act
         var foundRecords = tripleStore.FindRecords();

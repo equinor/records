@@ -364,7 +364,7 @@ public record RecordBuilder
         var contentGraphs = _storage.ContentGraphs
             .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples));
 
-        if(_storage.Canon is RecordCanonicalisation.dotNetRdf)
+        if (_storage.Canon is RecordCanonicalisation.dotNetRdf)
         {
             var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs.Append(contentGraph));
             metadataGraph.Assert(contentGraphChecksumTriples.Append(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)));
