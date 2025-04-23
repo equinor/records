@@ -20,7 +20,7 @@ public class Record : IEquatable<Record>
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
 
-    public List<Quad>? Metadata { get; private set; }
+    public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
@@ -49,15 +49,14 @@ public class Record : IEquatable<Record>
         _metadataGraph = FindMetadataGraph();
         Id = _metadataGraph.BaseUri?.ToString() ?? throw new RecordException("Metadata graph must have a base URI.");
 
-        Metadata = QuadsWithSubject(Id).ToList();
+        Metadata = [.. TriplesWithSubject(Id)];
 
-        Scopes = QuadsWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object).OrderBy(s => s).ToHashSet();
-        Describes = QuadsWithPredicate(Namespaces.Record.Describes).Select(q => q.Object).OrderBy(d => d).ToHashSet();
+        Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object.ToString()).OrderBy(s => s)];
+        Describes = [.. TriplesWithPredicate(Namespaces.Record.Describes).Select(q => q.Object.ToString()).OrderBy(d => d)];
 
-        var replaces = QuadsWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object).ToArray();
-        Replaces = replaces.ToList();
+        Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object.ToString())];
 
-        var subRecordOf = QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).ToArray();
+        var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
 
