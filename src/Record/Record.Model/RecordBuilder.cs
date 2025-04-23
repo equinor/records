@@ -366,7 +366,7 @@ public record RecordBuilder
             .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples))
             .ToList();
 
-        if (!contentGraph.IsEmpty) 
+        if (!contentGraph.IsEmpty)
             contentGraphs.Add(contentGraph);
 
         metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId));
