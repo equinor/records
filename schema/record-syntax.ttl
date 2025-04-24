@@ -59,6 +59,12 @@ rec:replaces rdf:type owl:ObjectProperty ;
              rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record. Note that subrecords are inherited from the replaced record" .
 
 
+### https://rdf.equinor.com/ontology/record/hasContent
+rec:hasContent rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf skos:related ;
+               rdfs:domain rec:Record ;
+               rdfs:comment: "A relation between a record, and its metadata, and some named graph that contains the content." .
+
 #################################################################
 #    Classes
 #################################################################
