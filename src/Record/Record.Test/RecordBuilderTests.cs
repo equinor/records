@@ -584,14 +584,18 @@ public class RecordBuilderTests
         var additionalMetadata = new Triple(subject, predicate, @object);
 
         var record = TestData.ValidRecordBeforeBuildComplete()
-        //    .WithAdditionalMetadata(additionalMetadata)
+            .WithAdditionalMetadata(additionalMetadata)
             .Build();
-        var stringRecord = record.ToString<TriGWriter>();
+
+        var recordString = record.ToString<TriGWriter>();
 
         var metadataTriples = record.MetadataAsTriples();
         var contentTriples = record.ContentAsTriples();
 
         metadataTriples.Should().Contain(additionalMetadata);
+        contentTriples.Should().NotBeNull();
+
+        metadataTriples.Should().NotContain(contentTriples);
         contentTriples.Should().NotContain(additionalMetadata);
     }
 
