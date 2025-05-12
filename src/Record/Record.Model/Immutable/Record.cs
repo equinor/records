@@ -344,7 +344,7 @@ public class Record : IEquatable<Record>
         var parser = new SparqlQueryParser();
         var metadata = MetadataAsTriples();
 
-        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
+        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?rec <https://rdf.equinor.com/ontology/record/hasContent> ?content . } GRAPH ?content { ?s ?p ?o . } }");
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
         var contentQuery = parser.ParseFromString(contentQueryString);
