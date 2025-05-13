@@ -11,9 +11,11 @@
 exdata:Record1 {
     exdata:Record1 a rec:Record;
         rdfs:comment "This is a parsed, structured record";
+        
         rec:isInScope exdata:Scope1;
         rec:describes exdata:object1;
         rec:hasMember exdata:Content1 ;
+
         prov:generatedAtTime [
             a time:GeneralDateTimeDescription ;
             time:year "2025" ;
