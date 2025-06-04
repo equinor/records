@@ -30,7 +30,7 @@ skos:relatedProperty rdf:type owl:AnnotationProperty .
 ###  https://rdf.equinor.com/ontology/record/describes
 rec:describes rdf:type owl:ObjectProperty ;
               rdfs:domain rec:Record ;
-              rdfs:comment "This relates a record to all the objects described in it. All IRIs desribed must occur in the content, and for any IRI occurring in the content/dataset, there must be a path between that IRI and one of the describes IRIs using only triples occurring in the content/dataset." ;
+              rdfs:comment "This relates a record to all the objects described in its member graphs. All IRIs desribed must occur in some of the content, and for any IRI occurring in the content/dataset, there must be a path between that IRI and one of the describes IRIs using only triples occurring in the content/dataset." ;
               rdfs:label "describes" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000219> .
 
@@ -39,7 +39,7 @@ rec:describes rdf:type owl:ObjectProperty ;
 rec:hasMember rdf:type owl:ObjectProperty ;
               rdfs:subPropertyOf prov:hadMember ;
               rdfs:domain rec:Record ;
-              rdfs:comment "A relation between some record graph and some other named graph." .
+              rdfs:comment "A relation between some record and some other named graph. This means that the metadata available in the record is applicable to the member graph." .
 
 
 ###  https://rdf.equinor.com/ontology/record/isInScope
@@ -54,7 +54,8 @@ rec:isInScope rdf:type owl:ObjectProperty ;
 rec:related rdf:type owl:ObjectProperty ;
             rdfs:subPropertyOf skos:related ;
             rdfs:domain rec:Record ;
-            rdfs:comment "A relation between a record and some IRI. These IRIs are related to the record in some undefined manner. The IRIs are used as a type of soft scoping." .
+            rdfs:comment "A relation between a record and some IRI. These IRIs are related to the record in some undefined manner. The IRIs are used as a type of soft scoping." ;
+            rdfs:seeAlso rec:isInScope .
 
 
 ###  https://rdf.equinor.com/ontology/record/replaces
@@ -69,10 +70,24 @@ rec:replaces rdf:type owl:ObjectProperty ;
 #    Classes
 #################################################################
 
+###  https://rdf.equinor.com/ontology/record/BlankRecord
+rec:BlankRecord rdf:type owl:Class ;
+                rdfs:subClassOf prov:Collection ;
+                rdfs:comment "A blank record has no real meaning on its own, it is up to any system implementing the type to determine how it is interpreted." ;
+                rdfs:label "Blank record" .
+
+
+###  https://rdf.equinor.com/ontology/record/DeletionRecord
+rec:DeletionRecord rdf:type owl:Class ;
+                   rdfs:subClassOf rec:BlankRecord ;
+                   rdfs:comment "A deletion record has no members. This implies that there exists no information about the set of scopes and describes." ;
+                   rdfs:label "Deletion record" .
+
+
 ###  https://rdf.equinor.com/ontology/record/Record
 rec:Record rdf:type owl:Class ;
-           rdfs:subClassOf prov:Collection ;
-           rdfs:comment "A record is an RDF dataset where there exists at least one named graph, the record metadata, which has other named graphs as its members." ;
+           rdfs:subClassOf rec:BlankRecord ;
+           rdfs:comment "A record is an RDF dataset where there exists at least two named graphs. 1) The record metadata and 2) at least one other named graph as its member." ;
            rdfs:label "Record" ;
            rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000027> .
 
