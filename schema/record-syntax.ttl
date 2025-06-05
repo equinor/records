@@ -39,7 +39,8 @@ rec:describes rdf:type owl:ObjectProperty ;
 rec:hasMember rdf:type owl:ObjectProperty ;
               rdfs:subPropertyOf prov:hadMember ;
               rdfs:domain rec:Record ;
-              rdfs:comment "A relation between some record and some other named graph. This means that the metadata available in the record is applicable to the member graph." .
+              rdfs:comment "A relation between some record and some other named graph. This means that the metadata available in the record is applicable to the member graph." ;
+              rdfs:label "has member" .
 
 
 ###  https://rdf.equinor.com/ontology/record/isInScope
@@ -55,6 +56,7 @@ rec:related rdf:type owl:ObjectProperty ;
             rdfs:subPropertyOf skos:related ;
             rdfs:domain rec:Record ;
             rdfs:comment "A relation between a record and some IRI. These IRIs are related to the record in some undefined manner. The IRIs are used as a type of soft scoping." ;
+            rdfs:label "related" ;
             rdfs:seeAlso rec:isInScope .
 
 
@@ -63,6 +65,7 @@ rec:replaces rdf:type owl:ObjectProperty ;
              rdfs:subPropertyOf prov:wasRevisionOf ;
              rdfs:domain rec:Record ;
              rdfs:range rec:Record ;
+             rdfs:label "replaces" ;
              rdfs:comment "A record replaces the \"previous version\" of the record. The semantics is a full replace, that is, all the triples in the replaced version are removed and replaced by the present record. Note that subrecords are inherited from the replaced record" .
 
 

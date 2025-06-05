@@ -57,6 +57,7 @@ rec:hasRecordMember rdf:type owl:ObjectProperty ;
                rdfs:subPropertyOf rec:hasMember ;
                rdfs:domain rec:Record ;
                rdfs:range rec:Record ;
+               rdfs:label "has record member" ;
                rdfs:comment "A relation between a record and some other record." .
 
 ###  https://rdf.equinor.com/ontology/record/ReplacedRecord

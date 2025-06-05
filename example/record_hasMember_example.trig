@@ -5,7 +5,9 @@
 @prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix time: <http://www.w3.org/2006/time#> .
 @prefix exdata: <https://example.com/data/>.
-@base <https://example.com> .
+@prefix greg: <http://www.w3.org/ns/time/gregorian/> .
+
+@base <https://example.com/> .
 
 exdata:Record1 {
     exdata:Record1 a rec:Record;
