@@ -30,7 +30,7 @@ skos:relatedProperty rdf:type owl:AnnotationProperty .
 ###  https://rdf.equinor.com/ontology/record/describes
 rec:describes rdf:type owl:ObjectProperty ;
               rdfs:domain rec:Record ;
-              rdfs:comment "This relates a record to all the objects described in its member graphs. All IRIs desribed must occur in some of the content, and for any IRI occurring in the content/dataset, there must be a path between that IRI and one of the describes IRIs using only triples occurring in the content/dataset." ;
+              rdfs:comment "This relates a record to all the objects described in its member graphs. All IRIs described must occur in some of the content, and for any IRI occurring in the content/dataset, there must be a path between that IRI and one of the describes IRIs using only triples occurring in the content/dataset." ;
               rdfs:label "describes" ;
               rdfs:seeAlso <http://purl.obolibrary.org/obo/IAO_0000219> .
 
