@@ -58,7 +58,7 @@ rec:hasRecordMember rdf:type owl:ObjectProperty ;
                rdfs:domain rec:Record ;
                rdfs:range rec:Record ;
                rdfs:label "has record member" ;
-               rdfs:comment "A relation between a record and some other record." .
+               rdfs:comment "Used when a record has content which is another record. This nesting of records could f.ex. be used to group records into a transaction. " .
 
 ###  https://rdf.equinor.com/ontology/record/ReplacedRecord
 rec:ReplacedRecord rdf:type owl:Class ;
