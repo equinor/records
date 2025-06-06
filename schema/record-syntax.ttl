@@ -55,7 +55,7 @@ rec:isInScope rdf:type owl:ObjectProperty ;
 rec:related rdf:type owl:ObjectProperty ;
             rdfs:subPropertyOf skos:related ;
             rdfs:domain rec:Record ;
-            rdfs:comment "A relation between a record and some IRI. These IRIs are related to the record in some undefined manner. The IRIs are used as a type of soft scoping." ;
+            rdfs:comment "A relation between a record and some IRI. These IRIs are related to the content of the record in some undefined manner. This can be used as a less strict version of rec:isInScope, f.e.x when indexing is needed but branching is not wanted." ;
             rdfs:label "related" ;
             rdfs:seeAlso rec:isInScope .
 
