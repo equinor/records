@@ -83,7 +83,7 @@ rec:BlankRecord rdf:type owl:Class ;
 ###  https://rdf.equinor.com/ontology/record/DeletionRecord
 rec:DeletionRecord rdf:type owl:Class ;
                    rdfs:subClassOf rec:BlankRecord ;
-                   rdfs:comment "A deletion record has no members. This implies that there exists no information about the set of scopes and describes." ;
+                   rdfs:comment "A deletion record has no members. This is used for the situation where, in the given scopes, the elements described no longer exist or are no longer relevant." ;
                    rdfs:label "Deletion record" .
 
 
