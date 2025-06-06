@@ -52,6 +52,14 @@ rec:replacedBy rdf:type owl:ObjectProperty ,
 ###  https://rdf.equinor.com/ontology/record/replaces
 rec:replaces rdfs:subPropertyOf [ owl:inverseOf rec:replacedBy ] .
 
+### https://rdf.equinor.com/ontology/record/hasRecordMember
+rec:hasRecordMember rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf rec:hasMember ;
+               rdfs:domain rec:Record ;
+               rdfs:range rec:Record ;
+               rdfs:label "has record member" ;
+               rdfs:comment "Used when a record has content which is another record. This nesting of records could f.ex. be used to group records into a transaction. " .
+
 ###  https://rdf.equinor.com/ontology/record/ReplacedRecord
 rec:ReplacedRecord rdf:type owl:Class ;
                    rdfs:subClassOf rec:Record ;
