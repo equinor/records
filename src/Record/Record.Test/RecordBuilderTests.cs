@@ -75,22 +75,6 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
     }
 
-    private void CheckShaclFile(IGraph _graph, string shacl_file)
-    {
-        var shapes = new Graph();
-        shapes.LoadFromFile(shacl_file);
-        var _processor = new ShapesGraph(shapes);
-
-        var report = _processor.Validate(_graph);
-        if (!report.Conforms)
-        {
-            foreach (var result in report.Results)
-                _outputHelper.WriteLine(result.Message.ToString());
-        }
-
-        report.Conforms.Should().BeTrue();
-    }
-
     [Fact]
     public void RecordBuilder_With()
     {
@@ -112,6 +96,65 @@ public class RecordBuilderTests
         record2.Scopes.Should().Contain(scope1);
         record1.Id.Should().Be(record2.Id);
     }
+
+
+    [Fact]
+    public void RecordBuilder__DoesNotThrowIfDescribedObjectIsPresentInContentGrapg__WhenEncorceDescribesIsTrue()
+    {
+        // Arrange
+        var describes = Enumerable.Range(1, 10)
+            .Select(i => TestData.CreateRecordIri("describes", i.ToString()));
+
+        var content = describes.Select((desc, i)
+            => new Triple(
+                    new UriNode(new Uri(desc)),
+                    new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                    new LiteralNode(i.ToString())
+                ));
+
+        var recordBuilder = new RecordBuilder(enforceDescribes: true)
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+
+        // Assert
+        buildAction.Should().NotThrow<Exception>();
+    }
+
+
+    [Fact]
+    public void RecordBuilder__ThrowsIfDescribedObjectIsMissingFromContentGraph__WhenEnforceDescribesIsTrue()
+    {
+        // Arrange
+        var describes = Enumerable.Range(1, 3)
+            .Select(i => TestData.CreateRecordIri("describes", i.ToString())).ToList();
+
+        var content = Enumerable.Range(4, 3).Select(i =>
+            new Triple(
+                    new UriNode(new Uri(TestData.CreateRecordIri("describes", i.ToString()))),
+                    new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                    new LiteralNode(i.ToString())
+                )).ToList();
+
+        var recordBuilder = new RecordBuilder(enforceDescribes: true)
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+
+        // Assert
+        buildAction.Should()
+            .Throw<Exception>()
+            .WithMessage("The meta data graph describes one or several objects that is not included as a subject on the content graph");
+    }
+
 
     [Fact]
     public void RecordBuilder_Fluent()

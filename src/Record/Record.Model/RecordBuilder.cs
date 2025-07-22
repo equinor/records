@@ -18,7 +18,7 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool enforceDescribes = true)
+    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool enforceDescribes = false)
     {
         _storage = new Storage
         {
@@ -398,7 +398,7 @@ public record RecordBuilder
             .Select(triple => triple.Subject)
             .Distinct();
 
-        var describesExistAsSubjectOnContentGraph = describedObjectsIncludedAsSubjects.All(subject => describedObjects.Contains(subject));
+        var describesExistAsSubjectOnContentGraph = describedObjects.All(obj => describedObjectsIncludedAsSubjects.Contains(obj));
         if (!describesExistAsSubjectOnContentGraph)
             throw new RecordException("The meta data graph describes one or several objects that is not included as a subject on the content graph");
     }
@@ -632,7 +632,7 @@ public record RecordBuilder
         internal List<IGraph> MetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
-        internal bool EnforceDescribes = true;
+        internal bool EnforceDescribes = false;
     }
 #pragma warning restore IDE1006 // Naming Styles
 }
