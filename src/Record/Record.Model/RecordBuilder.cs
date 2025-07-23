@@ -18,12 +18,11 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool ignoreDescribesConstraint = false)
+    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None)
     {
         _storage = new Storage
         {
             Canon = canon,
-            IgnoreDescribesConstraint = ignoreDescribesConstraint
         };
 
         _metadataProvenance =
@@ -612,7 +611,6 @@ public record RecordBuilder
         internal List<IGraph> MetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
-        internal bool IgnoreDescribesConstraint = false;
     }
 #pragma warning restore IDE1006 // Naming Styles
 }
