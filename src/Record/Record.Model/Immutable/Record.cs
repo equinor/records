@@ -19,7 +19,7 @@ public class Record : IEquatable<Record>
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
-    private readonly bool _ignoreConstraint;
+    private readonly bool _ignoreDescribesConstraint;
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
@@ -29,25 +29,25 @@ public class Record : IEquatable<Record>
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public Record(ITripleStore store, bool ignoreDescribesConstraint = false)
     {
-        _ignoreConstraint = ignoreDescribesConstraint;
+        _ignoreDescribesConstraint = ignoreDescribesConstraint;
         LoadFromTripleStore(store);
     }
 
     public Record(IGraph graph, bool ignoreDescribesConstraint = false)
     {
-        _ignoreConstraint = ignoreDescribesConstraint;
+        _ignoreDescribesConstraint = ignoreDescribesConstraint;
         LoadFromGraph(graph);
     }
 
     public Record(string rdfString, bool ignoreDescribesConstraint = false)
     {
-        _ignoreConstraint = ignoreDescribesConstraint;
+        _ignoreDescribesConstraint = ignoreDescribesConstraint;
         LoadFromString(rdfString);
     }
 
     public Record(string rdfString, IStoreReader reader, bool ignoreDescribesConstraint = false)
     {
-        _ignoreConstraint = ignoreDescribesConstraint;
+        _ignoreDescribesConstraint = ignoreDescribesConstraint;
         LoadFromString(rdfString, reader);
     }
 
@@ -81,7 +81,8 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        AssertDescribesConstraint();
+        if(!_ignoreDescribesConstraint)
+            AssertDescribesConstraint();
 
         var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
         var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
@@ -142,10 +143,10 @@ public class Record : IEquatable<Record>
     private void AssertDescribesConstraint()
     {
         if (!AskIfDescribedObjectExistOnContentGraph())
-            throw new RecordException("One or several subjects on the content graph is unreachable from the metadata graph. All described objects on the content graph must exist as subjects on the content graph.");
+            throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All described objects on the content graph must exist as subjects on the content graph.");
 
-        if(AskIfContentSubjectIsUnreachableFromMetadata())
-            throw new RecordException("One or several subjects on the content graph is unreachable from the metadata graph. All subjects on the content graph must be reachable through the describes predicate on the metadata graph." );
+        //if(AskIfContentSubjectIsUnreachableFromMetadata())
+          //  throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All entities on the content graph must be reachable through the describes predicate on the metadata graph." );
     }
 
     private bool AskIfDescribedObjectExistOnContentGraph()
@@ -170,9 +171,8 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var result = (bool)_queryProcessor.ProcessQuery(query);
-
-        return result;
+        var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
+        return queryResult.Result;
     }
 
     private bool AskIfContentSubjectIsUnreachableFromMetadata()
@@ -180,15 +180,18 @@ public class Record : IEquatable<Record>
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
                 GRAPH ?metaGraph {
-                    ?meta a @Record>;
-                    @describes ?describedObject;
-                    @hasContent ?content.}
-                    
-                    { GRAPH ?content {?unreachableIRI ?P ?O.} }
+                    ?metaGraph a @Record ;
+                            @describes ?describedObject;
+                            @hasContent ?content. 
+                    }
+
+                    { GRAPH ?content {?unreachable ?P ?O. } }
                     UNION
-                    { GRAPH ?content {?S ?P ?unreachableIRI.} }
+                    { GRAPH ?content {?S ?P ?unreachable . } }
+
                     FILTER NOT EXISTS {
-                    GRAPH ?content {?describedObject (^<>|<>)* ?unreachableIRI .}
+                        GRAPH ?content {?describedObject ?anyPredicate ?unreachable . }
+                        GRAPH ?content {?unreachable ?anyPredicate ?describedObject . }
                     }
             }");
 
@@ -201,9 +204,8 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var result = (bool)_queryProcessor.ProcessQuery(query);
-
-        return result;
+        var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
+        return queryResult.Result;
     }
 
     private IGraph FindMetadataGraph()

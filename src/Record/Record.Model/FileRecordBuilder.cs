@@ -161,12 +161,9 @@ public record FileRecordBuilder
 
     #endregion
 
-
-
     public Record Build()
     {
-        if (_storage.FileId == null)
-            _storage.FileId = new Uri($"{Namespaces.FileContent.Att}/file/{Guid.NewGuid()}");
+        _storage.FileId ??= new Uri($"{Namespaces.FileContent.Att}/file/{Guid.NewGuid()}");
 
         VerifyBuild();
 

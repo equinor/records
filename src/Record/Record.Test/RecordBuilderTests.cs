@@ -326,6 +326,34 @@ public class RecordBuilderTests
     }
 
     [Fact]
+    public void RecordBuilder__DoesNotThrowIfDescribedObjectIsPresentInContentGrapg__WhenEncorceDescribesIsTrue()
+    {
+        // Arrange
+        var describes = Enumerable.Range(1, 10)
+            .Select(i => TestData.CreateRecordIri("describes", i.ToString()));
+
+        var content = describes.Select((desc, i)
+        => new Triple(
+                new UriNode(new Uri(desc)),
+                new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                new LiteralNode(i.ToString())
+            ));
+
+    var recordBuilder = new RecordBuilder()
+        .WithId(TestData.CreateRecordId(0))
+        .WithDescribes(describes)
+        .WithScopes(TestData.CreateRecordIri("scope", "0"))
+        .WithContent(content);
+
+        var recprd = recordBuilder.Build();
+    // Act
+     var buildAction = () => recordBuilder.Build();
+     buildAction.Should().NotThrow<Exception>();
+
+
+    }
+
+    [Fact]
     public void RecordBuilder_With_RdfString()
     {
         var rdfString =
@@ -341,7 +369,7 @@ public class RecordBuilderTests
             .WithContent(rdfString)
             .WithScopes(scope)
             .WithId(g)
-            .WithDescribes(desc)
+            .WithDescribes("desc")
             .Build();
 
         record.Id.Should().Be(g);

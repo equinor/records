@@ -18,10 +18,11 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None)
+    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool ignoreDescribesConstraint = false)
     {
         _storage = new Storage
         {
+            IgnoreDescribesConstraint = ignoreDescribesConstraint,
             Canon = canon,
         };
 
@@ -355,7 +356,7 @@ public record RecordBuilder
         {
             var metadataTs = new TripleStore();
             metadataTs.Add(metadataGraph);
-            return new Record(metadataTs);
+            return new Record(metadataTs, ignoreDescribesConstraint: true);
         }
 
         var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
@@ -379,7 +380,7 @@ public record RecordBuilder
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
-        return new Record(ts);
+        return new Record(ts, _storage.IgnoreDescribesConstraint);
     }
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
@@ -611,6 +612,7 @@ public record RecordBuilder
         internal List<IGraph> MetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
+        internal bool IgnoreDescribesConstraint = false;
     }
 #pragma warning restore IDE1006 // Naming Styles
 }
