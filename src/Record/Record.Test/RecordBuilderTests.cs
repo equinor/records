@@ -99,7 +99,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__DoesNotThrowIfDescribedObjectIsPresentInContentGrapg__WhenEncorceDescribesIsTrue()
+    public void RecordBuilder__DoesNotThrowIfDescribedObjectIsPresentInContentGraph__WhenEncorceDescribesIsTrue()
     {
         // Arrange
         var describes = Enumerable.Range(1, 10)
