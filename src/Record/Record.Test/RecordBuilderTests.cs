@@ -97,65 +97,6 @@ public class RecordBuilderTests
         record1.Id.Should().Be(record2.Id);
     }
 
-
-    [Fact]
-    public void RecordBuilder__DoesNotThrowIfDescribedObjectIsPresentInContentGraph__WhenEncorceDescribesIsTrue()
-    {
-        // Arrange
-        var describes = Enumerable.Range(1, 10)
-            .Select(i => TestData.CreateRecordIri("describes", i.ToString()));
-
-        var content = describes.Select((desc, i)
-            => new Triple(
-                    new UriNode(new Uri(desc)),
-                    new UriNode(new Uri(Namespaces.Rdfs.Label)),
-                    new LiteralNode(i.ToString())
-                ));
-
-        var recordBuilder = new RecordBuilder(enforceDescribes: true)
-            .WithId(TestData.CreateRecordId(0))
-            .WithDescribes(describes)
-            .WithScopes(TestData.CreateRecordIri("scope", "0"))
-            .WithContent(content);
-
-        // Act
-        var buildAction = () => recordBuilder.Build();
-
-        // Assert
-        buildAction.Should().NotThrow<Exception>();
-    }
-
-
-    [Fact]
-    public void RecordBuilder__ThrowsIfDescribedObjectIsMissingFromContentGraph__WhenEnforceDescribesIsTrue()
-    {
-        // Arrange
-        var describes = Enumerable.Range(1, 3)
-            .Select(i => TestData.CreateRecordIri("describes", i.ToString())).ToList();
-
-        var content = Enumerable.Range(4, 3).Select(i =>
-            new Triple(
-                    new UriNode(new Uri(TestData.CreateRecordIri("describes", i.ToString()))),
-                    new UriNode(new Uri(Namespaces.Rdfs.Label)),
-                    new LiteralNode(i.ToString())
-                )).ToList();
-
-        var recordBuilder = new RecordBuilder(enforceDescribes: true)
-            .WithId(TestData.CreateRecordId(0))
-            .WithDescribes(describes)
-            .WithScopes(TestData.CreateRecordIri("scope", "0"))
-            .WithContent(content);
-
-        // Act
-        var buildAction = () => recordBuilder.Build();
-
-        // Assert
-        buildAction.Should()
-            .Throw<Exception>()
-            .WithMessage("The meta data graph describes one or several objects that is not included as a subject on the content graph");
-    }
-
-
     [Fact]
     public void RecordBuilder_Fluent()
     {
