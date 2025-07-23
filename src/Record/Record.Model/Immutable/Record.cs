@@ -19,19 +19,38 @@ public class Record : IEquatable<Record>
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
-
+    private readonly bool _ignoreConstraint;
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
-
     public string? IsSubRecordOf { get; set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-    public Record(ITripleStore store) => LoadFromTripleStore(store);
-    public Record(IGraph graph) => LoadFromGraph(graph);
-    public Record(string rdfString) => LoadFromString(rdfString);
-    public Record(string rdfString, IStoreReader reader) => LoadFromString(rdfString, reader);
+    public Record(ITripleStore store, bool ignoreDescribesConstraint = false)
+    {
+        _ignoreConstraint = ignoreDescribesConstraint;
+        LoadFromTripleStore(store);
+    }
+
+    public Record(IGraph graph, bool ignoreDescribesConstraint = false)
+    {
+        _ignoreConstraint = ignoreDescribesConstraint;
+        LoadFromGraph(graph);
+    }
+
+    public Record(string rdfString, bool ignoreDescribesConstraint = false)
+    {
+        _ignoreConstraint = ignoreDescribesConstraint;
+        LoadFromString(rdfString);
+    }
+
+    public Record(string rdfString, IStoreReader reader, bool ignoreDescribesConstraint = false)
+    {
+        _ignoreConstraint = ignoreDescribesConstraint;
+        LoadFromString(rdfString, reader);
+    }
+
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     private void LoadFromTripleStore(ITripleStore store)
@@ -40,13 +59,13 @@ public class Record : IEquatable<Record>
 
         if (store.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
 
-        foreach (var graph in store.Graphs) _store.Add(graph);
+        foreach (var graph in store.Graphs) _store.Add(graph); 
 
         _dataset = new InMemoryDataset(_store, false);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
-
         _metadataGraph = FindMetadataGraph();
+
         Id = _metadataGraph.BaseUri?.ToString() ?? throw new RecordException("Metadata graph must have a base URI.");
 
         Metadata = [.. TriplesWithSubject(Id)];
@@ -61,6 +80,8 @@ public class Record : IEquatable<Record>
             throw new RecordException("A record can at most be the subrecord of one other record.");
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
+
+        AssertDescribesConstraint();
 
         var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
         var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
@@ -116,6 +137,73 @@ public class Record : IEquatable<Record>
         var tempGraph = new Graph(_metadataGraph.BaseUri);
         tempGraph.Merge(_metadataGraph);
         return tempGraph;
+    }
+
+    private void AssertDescribesConstraint()
+    {
+        if (!AskIfDescribedObjectExistOnContentGraph())
+            throw new RecordException("One or several subjects on the content graph is unreachable from the metadata graph. All described objects on the content graph must exist as subjects on the content graph.");
+
+        if(AskIfContentSubjectIsUnreachableFromMetadata())
+            throw new RecordException("One or several subjects on the content graph is unreachable from the metadata graph. All subjects on the content graph must be reachable through the describes predicate on the metadata graph." );
+    }
+
+    private bool AskIfDescribedObjectExistOnContentGraph()
+    {
+        var parameterizedQuery = new SparqlParameterizedString(@"
+            ASK {
+                GRAPH ?metaGraph {
+                    ?meta a @Record; 
+                         @describes ?object;
+                         @hasContent ?content.}
+                { GRAPH ?content {?desc ?P ?O.} }
+                    UNION 
+                { GRAPH ?content {?S ?P ?desc} }
+            }");
+
+        parameterizedQuery.SetUri("Record", new Uri(Namespaces.Record.RecordType));
+        parameterizedQuery.SetUri("describes", new Uri(Namespaces.Record.Describes));
+        parameterizedQuery.SetUri("hasContent", new Uri(Namespaces.Record.HasContent));
+
+
+        var parser = new SparqlQueryParser();
+        var queryString = parameterizedQuery.ToString();
+        var query = parser.ParseFromString(queryString);
+
+        var result = (bool)_queryProcessor.ProcessQuery(query);
+
+        return result;
+    }
+
+    private bool AskIfContentSubjectIsUnreachableFromMetadata()
+    {
+        var parameterizedQuery = new SparqlParameterizedString(@"
+            ASK {
+                GRAPH ?metaGraph {
+                    ?meta a @Record>;
+                    @describes ?describedObject;
+                    @hasContent ?content.}
+                    
+                    { GRAPH ?content {?unreachableIRI ?P ?O.} }
+                    UNION
+                    { GRAPH ?content {?S ?P ?unreachableIRI.} }
+                    FILTER NOT EXISTS {
+                    GRAPH ?content {?describedObject (^<>|<>)* ?unreachableIRI .}
+                    }
+            }");
+
+        parameterizedQuery.SetUri("Record", new Uri(Namespaces.Record.RecordType));
+        parameterizedQuery.SetUri("describes", new Uri(Namespaces.Record.Describes));
+        parameterizedQuery.SetUri("hasContent", new Uri(Namespaces.Record.HasContent));
+
+
+        var parser = new SparqlQueryParser();
+        var queryString = parameterizedQuery.ToString();
+        var query = parser.ParseFromString(queryString);
+
+        var result = (bool)_queryProcessor.ProcessQuery(query);
+
+        return result;
     }
 
     private IGraph FindMetadataGraph()

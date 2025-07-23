@@ -18,12 +18,12 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool enforceDescribes = false)
+    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool ignoreDescribesConstraint = false)
     {
         _storage = new Storage
         {
             Canon = canon,
-            EnforceDescribes = enforceDescribes
+            IgnoreDescribesConstraint = ignoreDescribesConstraint
         };
 
         _metadataProvenance =
@@ -350,17 +350,17 @@ public record RecordBuilder
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
-        var metaDataGraph = CreateMetadataGraph();
+        var metadataGraph = CreateMetadataGraph();
 
         if (_storage.ContentGraphs.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
         {
-            var metaDataTs = new TripleStore();
-            metaDataTs.Add(metaDataGraph);
-            return new Record(metaDataTs);
+            var metadataTs = new TripleStore();
+            metadataTs.Add(metadataGraph);
+            return new Record(metadataTs);
         }
 
         var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
-        var contentGraph = CreateContentGraph(contentGraphId, metaDataGraph);
+        var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
 
 
         var contentGraphs = _storage.ContentGraphs
@@ -370,37 +370,17 @@ public record RecordBuilder
         if (!contentGraph.IsEmpty)
             contentGraphs.Add(contentGraph);
 
-        metaDataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId));
+        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId));
 
         if (_storage.Canon is RecordCanonicalisation.dotNetRdf)
         {
             var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs);
-            metaDataGraph.Assert(contentGraphChecksumTriples);
+            metadataGraph.Assert(contentGraphChecksumTriples);
         }
 
-        if (_storage.EnforceDescribes)
-            AssertDescribesExistsAsSubjectOnContentGraph(metaDataGraph, contentGraph);
-
-        var ts = CreateTripleStore(metaDataGraph, contentGraph);
+        var ts = CreateTripleStore(metadataGraph, contentGraph);
 
         return new Record(ts);
-    }
-
-    private static void AssertDescribesExistsAsSubjectOnContentGraph(Graph metaDataGraph, Graph contentGraph)
-    {
-        var describedObjects = metaDataGraph.Triples
-            .WithPredicate(new UriNode(new Uri(Namespaces.Record.Describes)))
-            .Select(triple => triple.Object)
-            .Distinct();
-
-        var describedObjectsIncludedAsSubjects = contentGraph.Triples
-            .Where(triple => describedObjects.Contains(triple.Subject))
-            .Select(triple => triple.Subject)
-            .Distinct();
-
-        var describesExistAsSubjectOnContentGraph = describedObjects.All(obj => describedObjectsIncludedAsSubjects.Contains(obj));
-        if (!describesExistAsSubjectOnContentGraph)
-            throw new RecordException("The meta data graph describes one or several objects that is not included as a subject on the content graph");
     }
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
@@ -632,7 +612,7 @@ public record RecordBuilder
         internal List<IGraph> MetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
-        internal bool EnforceDescribes = false;
+        internal bool IgnoreDescribesConstraint = false;
     }
 #pragma warning restore IDE1006 // Naming Styles
 }
