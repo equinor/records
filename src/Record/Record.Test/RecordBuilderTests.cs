@@ -116,7 +116,7 @@ public class RecordBuilderTests
             quads.Add(quad);
         }
 
-        var record = new RecordBuilder()
+        var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id1)
             .WithScopes(scope)
             .WithDescribes(desc)
@@ -270,7 +270,7 @@ public class RecordBuilderTests
 
         var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
 
-        var record = new RecordBuilder()
+        var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(recordId)
             .WithScopes(scopes)
             .WithContent(graph.Triples)
@@ -308,7 +308,7 @@ public class RecordBuilderTests
         }
 
         var record = default(Record);
-        var result = () => record = new RecordBuilder()
+        var result = () => record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id0)
             .WithScopes(scope)
             .WithDescribes(desc)

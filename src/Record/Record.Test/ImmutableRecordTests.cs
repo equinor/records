@@ -14,7 +14,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Has_Metadata()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);
@@ -23,7 +23,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Finds_Id()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -35,7 +35,7 @@ public class ImmutableRecordTests
         ITripleStore store = new TripleStore();
         var graph = TestData.ValidRecord().GetMergedGraphs();
 
-        var record = new Record(graph);
+        var record = new Record(graph, ignoreDescribesConstraint: true);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -44,7 +44,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Can_Do_Queries()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
         var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
         var result = queryResult.Count();
         result.Should().Be(5);
@@ -73,7 +73,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Can_Be_Serialised_Nquad()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
 
         var result = record.ToString<NQuadsWriter>().Split("\n").Length;
 
@@ -84,7 +84,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Can_Be_Serialised_Nquad_With_Direct_Writer()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
 
         var result = record.ToString(new NQuadsWriter()).Split("\n").Length;
 
@@ -97,7 +97,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Can_Produce_Quads()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
         var result = record.Quads().Count();
 
         // This is how many quads should be extraced from the JSON-LD
@@ -107,7 +107,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Has_Scopes_And_Describes()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
 
         var scopes = record.Scopes;
         var describes = record.Describes;
@@ -125,8 +125,8 @@ public class ImmutableRecordTests
         var rdfString1 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
         var rdfString2 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
 
-        var record = new Record(rdfString1);
-        var record2 = new Record(rdfString2);
+        var record = new Record(rdfString1, ignoreDescribesConstraint: true);
+        var record2 = new Record(rdfString2, ignoreDescribesConstraint: true);
 
         record.Should().Be(record2);
     }
@@ -140,22 +140,22 @@ public class ImmutableRecordTests
         var rdfString1 = TestData.ValidNQuadRecordString(id1, 3, 2);
         var rdfString2 = TestData.ValidNQuadRecordString(id2, 3, 2);
 
-        var record = new Record(rdfString1);
-        var record2 = new Record(rdfString2);
+        var record = new Record(rdfString1, ignoreDescribesConstraint: true);
+        var record2 = new Record(rdfString2, ignoreDescribesConstraint: true);
 
         record.Should().Be(record2);
 
         var id3 = TestData.CreateRecordId("3");
         var rdfString3 = TestData.ValidNQuadRecordString(id3, 2, 2);
 
-        var record3 = new Record(rdfString3);
+        var record3 = new Record(rdfString3, ignoreDescribesConstraint: true);
         record.Should().NotBe(record3);
     }
 
     [Fact]
     public void Record_Can_Write_To_JsonLd()
     {
-        var record = new Record(TestData.ValidNQuadRecordString());
+        var record = new Record(TestData.ValidNQuadRecordString(), ignoreDescribesConstraint: true);
 
         var jsonLdString = record.ToString<JsonLdWriter>();
 
@@ -195,7 +195,7 @@ public class ImmutableRecordTests
     public void Record_Does_Not_Need_SubRecordOf()
     {
         var record = default(Record);
-        var loadResult = () => record = new Record(TestData.ValidJsonLdRecordString());
+        var loadResult = () => record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
         loadResult.Should().NotThrow();
 
         record.Should().NotBeNull();
@@ -387,7 +387,7 @@ public class ImmutableRecordTests
 
         var loadResult = () =>
         {
-            var record = new Record(recordString, reader);
+            var record = new Record(recordString, reader, ignoreDescribesConstraint: true);
         };
 
         loadResult.Should().NotThrow();
@@ -420,7 +420,7 @@ public class ImmutableRecordTests
 
         var loadResult = () =>
         {
-            record = new Record(store);
+            record = new Record(store, ignoreDescribesConstraint: true);
         };
 
         loadResult.Should().NotThrow();
@@ -459,7 +459,7 @@ public class ImmutableRecordTests
         var graph = record.GetMergedGraphs();
 
         // Act
-        var result = new Record(graph);
+        var result = new Record(graph, ignoreDescribesConstraint: true);
 
         // Assert
         result.Should().Be(record);
