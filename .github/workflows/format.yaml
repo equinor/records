@@ -1,4 +1,6 @@
 name: "Dotnet format"
+permissions:
+  contents: read
 on:
   - push
 jobs:
@@ -15,4 +17,3 @@ jobs:
       run: dotnet restore ./src/Record/Record.sln
     - name: Format
       run: dotnet format ./src/Record/Record.sln --verify-no-changes --verbosity diagnostic --no-restore
-    
