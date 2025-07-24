@@ -44,7 +44,7 @@ public static class TestData
         var scopes = CreateObjectList(numberScopes, "scope");
         var describes = CreateObjectList(numberDescribes, "describes");
 
-        return new RecordBuilder(canon)
+        return new RecordBuilder(canon, ignoreDescribesConstraint: true)
             .WithId(id)
             .WithScopes(scopes)
             .WithDescribes(describes)

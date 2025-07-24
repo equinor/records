@@ -1,10 +1,6 @@
 ﻿using FluentAssertions;
-using Newtonsoft.Json.Linq;
-using Records;
 using Records.Exceptions;
-using System.Text.Json;
 using VDS.RDF;
-using VDS.RDF.Writing.Formatting;
 
 namespace Records.Tests;
 

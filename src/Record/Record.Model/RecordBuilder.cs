@@ -18,11 +18,12 @@ public record RecordBuilder
     private ProvenanceBuilder _contentProvenance;
     private ShapesGraph _processor;
 
-    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None)
+    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, bool ignoreDescribesConstraint = false)
     {
         _storage = new Storage
         {
-            Canon = canon
+            IgnoreDescribesConstraint = ignoreDescribesConstraint,
+            Canon = canon,
         };
 
         _metadataProvenance =
@@ -353,9 +354,9 @@ public record RecordBuilder
 
         if (_storage.ContentGraphs.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
         {
-            var metaDataTs = new TripleStore();
-            metaDataTs.Add(metadataGraph);
-            return new Record(metaDataTs);
+            var metadataTs = new TripleStore();
+            metadataTs.Add(metadataGraph);
+            return new Record(metadataTs, ignoreDescribesConstraint: true);
         }
 
         var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
@@ -377,10 +378,9 @@ public record RecordBuilder
             metadataGraph.Assert(contentGraphChecksumTriples);
         }
 
-
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
-        return new Record(ts);
+        return new Record(ts, _storage.IgnoreDescribesConstraint);
     }
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
@@ -595,22 +595,24 @@ public record RecordBuilder
 
 
     #endregion
-
+#pragma warning disable IDE1006 // Naming Styles
     private record Storage
     {
         internal Uri? Id;
         internal string? IsSubRecordOf;
-        internal List<string> Replaces = new();
-        internal List<string> Scopes = new();
-        internal List<string> Describes = new();
-        internal List<string> RdfStrings = new();
+        internal List<string> Replaces = [];
+        internal List<string> Scopes = [];
+        internal List<string> Describes = [];
+        internal List<string> RdfStrings = [];
 
-        internal List<Triple> Triples = new();
-        internal List<IGraph> ContentGraphs = new();
-        internal List<Triple> MetadataTriples = new();
-        internal List<string> MetadataRdfStrings = new();
-        internal List<IGraph> MetadataGraphs = new();
+        internal List<Triple> Triples = [];
+        internal List<IGraph> ContentGraphs = [];
+        internal List<Triple> MetadataTriples = [];
+        internal List<string> MetadataRdfStrings = [];
+        internal List<IGraph> MetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
+        internal bool IgnoreDescribesConstraint = false;
     }
+#pragma warning restore IDE1006 // Naming Styles
 }
