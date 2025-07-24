@@ -339,17 +339,16 @@ public class RecordBuilderTests
                 new LiteralNode(i.ToString())
             ));
 
-    var recordBuilder = new RecordBuilder()
-        .WithId(TestData.CreateRecordId(0))
-        .WithDescribes(describes)
-        .WithScopes(TestData.CreateRecordIri("scope", "0"))
-        .WithContent(content);
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
 
-        var recprd = recordBuilder.Build();
-    // Act
-     var buildAction = () => recordBuilder.Build();
-     buildAction.Should().NotThrow<Exception>();
-
+        var record = recordBuilder.Build().ToString<TriGWriter>();
+        // Act
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().NotThrow<Exception>();
 
     }
 

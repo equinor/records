@@ -59,7 +59,7 @@ public class Record : IEquatable<Record>
 
         if (store.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
 
-        foreach (var graph in store.Graphs) _store.Add(graph); 
+        foreach (var graph in store.Graphs) _store.Add(graph);
 
         _dataset = new InMemoryDataset(_store, false);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
@@ -81,7 +81,7 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        if(!_ignoreDescribesConstraint)
+        if (!_ignoreDescribesConstraint)
             AssertDescribesConstraint();
 
         var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
@@ -145,8 +145,8 @@ public class Record : IEquatable<Record>
         if (!AskIfDescribedObjectExistOnContentGraph())
             throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All described objects on the content graph must exist as subjects on the content graph.");
 
-        //if(AskIfContentSubjectIsUnreachableFromMetadata())
-          //  throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All entities on the content graph must be reachable through the describes predicate on the metadata graph." );
+        if (AskIfContentSubjectIsUnreachableFromMetadata())
+            throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All entities on the content graph must be reachable through the describes predicate on the metadata graph.");
     }
 
     private bool AskIfDescribedObjectExistOnContentGraph()
@@ -180,25 +180,23 @@ public class Record : IEquatable<Record>
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
                 GRAPH ?metaGraph {
-                    ?metaGraph a @Record ;
-                            @describes ?describedObject;
-                            @hasContent ?content. 
-                    }
-
-                    { GRAPH ?content {?unreachable ?P ?O. } }
+                    ?recId a @Record ;
+                    @hasContent ?content. 
+                }
+                { GRAPH ?content {?unreachable ?P ?O. } }
                     UNION
-                    { GRAPH ?content {?S ?P ?unreachable . } }
-
-                    FILTER NOT EXISTS {
-                        GRAPH ?content {?describedObject ?anyPredicate ?unreachable . }
-                        GRAPH ?content {?unreachable ?anyPredicate ?describedObject . }
-                    }
+                { GRAPH ?content {?S ?P ?unreachable . } }
+                
+                FILTER NOT EXISTS {
+                    GRAPH ?metaGraph { ?recId @describes ?describedObject. }
+                    GRAPH ?content {?describedObject !@notConnected* ?unreachable . }
+                }
             }");
 
         parameterizedQuery.SetUri("Record", new Uri(Namespaces.Record.RecordType));
         parameterizedQuery.SetUri("describes", new Uri(Namespaces.Record.Describes));
         parameterizedQuery.SetUri("hasContent", new Uri(Namespaces.Record.HasContent));
-
+        parameterizedQuery.SetUri("notConnected", new Uri(Namespaces.Record.NotConnected));
 
         var parser = new SparqlQueryParser();
         var queryString = parameterizedQuery.ToString();
