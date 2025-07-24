@@ -143,10 +143,10 @@ public class Record : IEquatable<Record>
     private void AssertDescribesConstraint()
     {
         if (!AskIfDescribedObjectExistOnContentGraph())
-            throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All described objects on the content graph must exist as subjects on the content graph.");
+            throw new RecordException("All described objects on the metadata graph must exist as subjects on the content graph.");
 
         if (AskIfContentSubjectIsUnreachableFromMetadata())
-            throw new RecordException("One or several entities on the content graph is unreachable from the metadata graph. All entities on the content graph must be reachable through the describes predicate on the metadata graph.");
+            throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
     }
 
     private bool AskIfDescribedObjectExistOnContentGraph()

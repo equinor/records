@@ -279,7 +279,7 @@ public class ImmutableRecordTests
 
         record.Triples().Should().Contain(tripleStore.Triples);
 
-        var newRecord = new Record(tripleStore);
+        var newRecord = new Record(tripleStore, ignoreDescribesConstraint: true);
         newRecord.Should().Be(record);
         newRecord.Id.Should().Be(record.Id);
         newRecord.Triples().Should().Contain(record.Triples());
