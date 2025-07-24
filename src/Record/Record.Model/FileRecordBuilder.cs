@@ -181,7 +181,7 @@ public record FileRecordBuilder
 
         fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!));
 
-        var fileRecord = new RecordBuilder() 
+        var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)
                              .WithDescribes(_storage.FileId)
                              .WithScopes(_storage.Scopes)
