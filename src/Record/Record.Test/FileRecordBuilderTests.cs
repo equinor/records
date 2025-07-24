@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Records.Exceptions;
 using VDS.RDF;
+using VDS.RDF.Writing;
 using Record = Records.Immutable.Record;
 namespace Records.Tests;
 
@@ -10,12 +11,13 @@ public class FileRecordBuilderTests
     [Fact]
     public void FileRecordBuilder_ShouldCreate_ValidRecordWithFileContent()
     {
-        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+
+        var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
-            .WithIsSubRecordOf(superRecord.Id)
+            .WithIsSubRecordOf(superRecordId)
             .WithFileExtension("xslx")
             .WithFileName("filename")
             .WithScopes(scopes)
@@ -25,8 +27,10 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
+        var recstring = fileRecord.ToString<TriGWriter>();
+
         fileRecord.Should().NotBeNull();
-        fileRecord.QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).Single().Should().Be(superRecord.Id);
+        fileRecord.QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).Single().Should().Be(superRecordId);
         fileRecord.QuadsWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
         fileRecord.QuadsWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(2);
     }
@@ -35,12 +39,13 @@ public class FileRecordBuilderTests
     [Fact]
     public void FileRecordBuilder__ShouldCreateUriNode__WhenObjectIsFileType()
     {
-        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+        var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
+
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
-            .WithIsSubRecordOf(superRecord.Id)
+            .WithIsSubRecordOf(superRecordId)
             .WithFileExtension("xslx")
             .WithFileName("filename")
             .WithScopes(scopes)
@@ -58,13 +63,14 @@ public class FileRecordBuilderTests
     [Fact]
     public void FileRecordBuilder__ShouldCreateDervivedFrom()
     {
-        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+        var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
+
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithDerivedFrom("https://example.com/derivedFrom")
-            .WithIsSubRecordOf(superRecord.Id)
+            .WithIsSubRecordOf(superRecordId)
             .WithFileExtension("xslx")
             .WithFileName("filename")
             .WithScopes(scopes)
@@ -76,22 +82,21 @@ public class FileRecordBuilderTests
 
         var derivedFromNode = fileRecord.QuadsWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object).First();
         derivedFromNode.Should().Be("https://example.com/derivedFrom");
-
-
     }
 
 
     [Fact]
     public void FileRecordBuilder__ShouldCreateDerivedFrom__FromUri()
     {
-        var superRecord = new Record(TestData.ValidJsonLdRecordString());
+        var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
         var httpsExampleComDescribes = new Uri("https://example.com/derivedFrom");
+
         var fileRecord = new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithDerivedFrom(httpsExampleComDescribes)
-            .WithIsSubRecordOf(superRecord.Id)
+            .WithIsSubRecordOf(superRecordId)
             .WithFileExtension("xslx")
             .WithFileName("filename")
             .WithScopes(scopes)
@@ -103,8 +108,6 @@ public class FileRecordBuilderTests
 
         var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object).First();
         describesNode.Should().Be(httpsExampleComDescribes.ToString());
-
-
     }
 
     [Fact]
