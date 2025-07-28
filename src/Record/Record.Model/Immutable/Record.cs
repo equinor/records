@@ -142,24 +142,25 @@ public class Record : IEquatable<Record>
 
     private void AssertDescribesConstraint()
     {
-        if (!AskIfDescribedObjectExistOnContentGraph())
-            throw new RecordException("All described objects on the metadata graph must exist as subjects on the content graph.");
+        if (AskIfNotAllDescribesNodesExistInMetadata())
+            throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
 
         if (AskIfContentSubjectIsUnreachableFromMetadata())
             throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
     }
 
-    private bool AskIfDescribedObjectExistOnContentGraph()
+    private bool AskIfNotAllDescribesNodesExistInMetadata()
     {
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
                 GRAPH ?metaGraph {
                     ?meta a @Record; 
-                         @describes ?object;
-                         @hasContent ?content.}
+                         @describes ?desc;
+                         @hasContent ?content. }
+                FILTER NOT EXISTS {
                 { GRAPH ?content {?desc ?P ?O.} }
                     UNION 
-                { GRAPH ?content {?S ?P ?desc} }
+                { GRAPH ?content {?S ?P ?desc} } }
             }");
 
         parameterizedQuery.SetUri("Record", new Uri(Namespaces.Record.RecordType));
@@ -189,7 +190,7 @@ public class Record : IEquatable<Record>
                 
                 FILTER NOT EXISTS {
                     GRAPH ?metaGraph { ?recId @describes ?describedObject. }
-                    GRAPH ?content {?describedObject !@notConnected* ?unreachable . }
+                    GRAPH ?content {?describedObject ^!@notConnected* ?unreachable . }
                 }
             }");
 

@@ -346,10 +346,89 @@ public class RecordBuilderTests
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
             .WithContent(content);
 
-        var record = recordBuilder.Build().ToString<TriGWriter>();
         // Act
         var buildAction = () => recordBuilder.Build();
         buildAction.Should().NotThrow<Exception>();
+    }
+
+
+    [Fact]
+    public void RecordBuilder__ShouldNotThrow__WhenOnlyObjectNodesAreReachable()
+    {
+        // Arrange 
+         var describes = Enumerable.Range(1, 3)
+            .Select(i => TestData.CreateRecordIri("object", i.ToString()));
+
+        var content = describes.Select((desc, i)
+            => new Triple(
+                    new UriNode(new Uri(TestData.CreateRecordIri("subject", i.ToString()))),
+                    Namespaces.Prov.UriNodes.WasAssociatedWith,
+                    new UriNode(new Uri(desc))
+                ));
+
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().NotThrow<Exception>();
+    }
+
+
+    [Fact]
+    public void RecordBuilder__ShouldThrow__WhenNotAllNodesIsReachableFromDescribes()
+    {
+        // Arrange 
+        var describes = Enumerable.Range(1, 3)
+           .Select(i => TestData.CreateRecordIri("describes", i.ToString()));
+
+        var content = Enumerable.Range(1, 10).Select(i
+            => new Triple(
+                    new UriNode(new Uri(TestData.CreateRecordIri("describes", i.ToString()))),
+                    new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                    new LiteralNode(i.ToString())
+                ));
+
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().Throw<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
+    }
+
+
+
+    [Fact]
+    public void RecordBuilder__SHouldThrow__WhenNotAllDescribesAreMentionedInContent()
+    {
+        // Arrange 
+        var describes = Enumerable.Range(1, 10)
+           .Select(i => TestData.CreateRecordIri("describes", i.ToString())).ToList();
+
+        var content = describes.Take(5).Select((desc, i)
+         => new Triple(
+                new UriNode(new Uri(TestData.CreateRecordIri("describes", i.ToString()))),
+                new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                new LiteralNode(i.ToString())
+        )).ToList();
+
+        // Act
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Assert
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().Throw<Exception>().WithMessage("All described nodes on the metadata graph must exist as nodes on the content graph.");
     }
 
 
