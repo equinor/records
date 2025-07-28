@@ -190,7 +190,8 @@ public class Record : IEquatable<Record>
                 
                 FILTER NOT EXISTS {
                     GRAPH ?metaGraph { ?recId @describes ?describedObject. }
-                    GRAPH ?content {?describedObject ^!@notConnected* ?unreachable . }
+                    GRAPH ?content {?describedObject !@notConnected* ?unreachable . }
+                    GRAPH ?content {?unreachable !@notConnected* ?describedObject . }
                 }
             }");
 
