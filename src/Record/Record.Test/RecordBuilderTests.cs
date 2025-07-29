@@ -356,8 +356,8 @@ public class RecordBuilderTests
     public void RecordBuilder__ShouldNotThrow__WhenOnlyObjectNodesAreReachable()
     {
         // Arrange 
-         var describes = Enumerable.Range(1, 3)
-            .Select(i => TestData.CreateRecordIri("object", i.ToString()));
+        var describes = Enumerable.Range(1, 3)
+           .Select(i => TestData.CreateRecordIri("object", i.ToString()));
 
         var content = describes.Select((desc, i)
             => new Triple(
@@ -406,7 +406,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__SHouldThrow__WhenNotAllDescribesAreMentionedInContent()
+    public void RecordBuilder__ShouldThrow__WhenNotAllDescribesAreMentionedInContent()
     {
         // Arrange 
         var describes = Enumerable.Range(1, 10)

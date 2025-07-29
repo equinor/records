@@ -143,14 +143,14 @@ public class Record : IEquatable<Record>
 
     private void AssertDescribesConstraint()
     {
-        if (AskIfNotAllDescribesNodesExistInMetadata())
+        if (AskIfNotAllDescribesNodesExistInContent())
             throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
 
         if (AskIfContentSubjectIsUnreachableFromMetadata())
             throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
     }
 
-    private bool AskIfNotAllDescribesNodesExistInMetadata()
+    private bool AskIfNotAllDescribesNodesExistInContent()
     {
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
@@ -159,9 +159,9 @@ public class Record : IEquatable<Record>
                          @describes ?desc;
                          @hasContent ?content. }
                 FILTER NOT EXISTS {
-                { GRAPH ?content {?desc ?P ?O.} }
+                { GRAPH ?content {?desc ?P ?O. } }
                     UNION 
-                { GRAPH ?content {?S ?P ?desc} } }
+                { GRAPH ?content {?S ?P ?desc. } } }
             }");
 
         parameterizedQuery.SetUri("Record", new Uri(Namespaces.Record.RecordType));
