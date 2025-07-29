@@ -63,6 +63,7 @@ public class Record : IEquatable<Record>
 
         _dataset = new InMemoryDataset(_store, false);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
+        _queryProcessor = new LeviathanQueryProcessor(_dataset);
 
         _metadataGraph = FindMetadataGraph();
 
@@ -190,8 +191,8 @@ public class Record : IEquatable<Record>
                 
                 FILTER NOT EXISTS {
                     GRAPH ?metaGraph { ?recId @describes ?describedObject. }
-                    GRAPH ?content {?describedObject !@notConnected* ?unreachable . }
-                    GRAPH ?content {?unreachable !@notConnected* ?describedObject . }
+                    GRAPH ?content { ?describedObject (^!@notConnected | !@notConnected)* ?unreachable . }
+                    
                 }
             }");
 
