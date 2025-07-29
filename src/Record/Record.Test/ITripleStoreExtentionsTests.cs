@@ -94,7 +94,7 @@ public class ITripleStoreExtentionsTests
 
 
         // Act
-        var foundRecords = tripleStore.FindRecords();
+        var foundRecords = tripleStore.FindRecords(ignoreDescribesConstraint: true);
         var recordIds = foundRecords.Select(r => r.Id);
 
         var foundFirstRecord = foundRecords.Where(r => r.Id.Equals(firstId)).Single();

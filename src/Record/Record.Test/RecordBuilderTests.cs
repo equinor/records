@@ -11,6 +11,7 @@ using VDS.RDF.Writing;
 using static Records.ProvenanceBuilder;
 using Xunit.Abstractions;
 using Records.Utils;
+using VDS.RDF.Nodes;
 
 namespace Records.Tests;
 public class RecordBuilderTests
@@ -75,22 +76,6 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
     }
 
-    private void CheckShaclFile(IGraph _graph, string shacl_file)
-    {
-        var shapes = new Graph();
-        shapes.LoadFromFile(shacl_file);
-        var _processor = new ShapesGraph(shapes);
-
-        var report = _processor.Validate(_graph);
-        if (!report.Conforms)
-        {
-            foreach (var result in report.Results)
-                _outputHelper.WriteLine(result.Message.ToString());
-        }
-
-        report.Conforms.Should().BeTrue();
-    }
-
     [Fact]
     public void RecordBuilder_With()
     {
@@ -131,7 +116,7 @@ public class RecordBuilderTests
             quads.Add(quad);
         }
 
-        var record = new RecordBuilder()
+        var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id1)
             .WithScopes(scope)
             .WithDescribes(desc)
@@ -285,7 +270,7 @@ public class RecordBuilderTests
 
         var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
 
-        var record = new RecordBuilder()
+        var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(recordId)
             .WithScopes(scopes)
             .WithContent(graph.Triples)
@@ -323,7 +308,7 @@ public class RecordBuilderTests
         }
 
         var record = default(Record);
-        var result = () => record = new RecordBuilder()
+        var result = () => record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id0)
             .WithScopes(scope)
             .WithDescribes(desc)
@@ -342,13 +327,144 @@ public class RecordBuilderTests
     }
 
     [Fact]
+    public void RecordBuilder__ShouldNotThrow__WhenAllNodesAreReachable()
+    {
+        // Arrange
+        var describes = Enumerable.Range(1, 10)
+            .Select(i => TestData.CreateRecordIri("describes", i.ToString()));
+
+        var content = describes.Select((desc, i)
+        => new Triple(
+                new UriNode(new Uri(desc)),
+                new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                new LiteralNode(i.ToString())
+            ));
+
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().NotThrow<Exception>();
+    }
+
+
+    [Fact]
+    public void RecordBuilder__ShouldNotThrow__WhenOnlyObjectNodesAreReachable()
+    {
+        // Arrange 
+        var describes = Enumerable.Range(1, 3)
+           .Select(i => TestData.CreateRecordIri("object", i.ToString()));
+
+        var content = describes.Select((desc, i)
+            => new Triple(
+                    new UriNode(new Uri(TestData.CreateRecordIri("subject", i.ToString()))),
+                    Namespaces.Prov.UriNodes.WasAssociatedWith,
+                    new UriNode(new Uri(desc))
+                ));
+
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().NotThrow<Exception>();
+    }
+
+
+    [Fact]
+    public void RecordBuilder__ShouldThrow__WhenNotAllNodesIsReachableFromDescribes()
+    {
+        // Arrange 
+        var describes = Enumerable.Range(1, 3)
+           .Select(i => TestData.CreateRecordIri("describes", i.ToString()));
+
+        var content = Enumerable.Range(1, 10).Select(i
+            => new Triple(
+                    new UriNode(new Uri(TestData.CreateRecordIri("describes", i.ToString()))),
+                    new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                    new LiteralNode(i.ToString())
+                ));
+
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().Throw<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
+    }
+
+
+
+    [Fact]
+    public void RecordBuilder__ShouldThrow__WhenNotAllDescribesAreMentionedInContent()
+    {
+        // Arrange 
+        var describes = Enumerable.Range(1, 10)
+           .Select(i => TestData.CreateRecordIri("describes", i.ToString())).ToList();
+
+        var content = describes.Take(5).Select((desc, i)
+         => new Triple(
+                new UriNode(new Uri(TestData.CreateRecordIri("describes", i.ToString()))),
+                new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                new LiteralNode(i.ToString())
+        )).ToList();
+
+        // Act
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(describes)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithContent(content);
+
+        // Assert
+        var buildAction = () => recordBuilder.Build();
+        buildAction.Should().Throw<Exception>().WithMessage("All described nodes on the metadata graph must exist as nodes on the content graph.");
+    }
+
+
+    [Fact]
+    public void RecordBuilder__ShouldThrow__WhenNodesAreUnreachable()
+    {
+        // Arrange 
+        static Triple CreateTriple(int i) => new(
+                new UriNode(new Uri(TestData.CreateRecordIri("content", i.ToString()))),
+                new UriNode(new Uri(TestData.CreateRecordIri("related", i.ToString()))),
+                new UriNode(new Uri(TestData.CreateRecordIri("content", (i + 1).ToString()))));
+
+        var connectedContent = Enumerable.Range(1, 10).Select(CreateTriple);
+        var disconnectedContent = Enumerable.Range(12, 5).Select(CreateTriple);
+
+        var recordBuilder = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithDescribes(connectedContent.First().Subject.ToString())
+            .WithContent(connectedContent.Concat(disconnectedContent));
+
+        // Act
+        var buildAction = () => recordBuilder.Build();
+
+        // Assert
+        buildAction.Should().Throw<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
+    }
+
+
+    [Fact]
     public void RecordBuilder_With_RdfString()
     {
         var rdfString =
             @"<http://example.com/object/version/1234/5678> <http://www.w3.org/ns/prov#atLocation> <http://example.com/object/version/1234/5678/738499902> .
-<http://example.com/object/version/1234/5678/738499902> <https://rdf.equinor.com/ontology/bravo-api#attachmentName> ""/scopeId=7f7bcbf0-b166-483e-8fd0-065991978824/year=2022/month=08/day=09/hour=13/minute=18/revisjon.png"" .
-<http://example.com/object/version/1234/5678/738499902> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Location> .
-";
+              <http://example.com/object/version/1234/5678/738499902> <https://rdf.equinor.com/ontology/bravo-api#attachmentName> ""/scopeId=7f7bcbf0-b166-483e-8fd0-065991978824/year=2022/month=08/day=09/hour=13/minute=18/revisjon.png"" .
+              <http://example.com/object/version/1234/5678/738499902> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Location> .";
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("0");
         var scope = TestData.CreateRecordIri("scope", "0");
         var desc = TestData.CreateRecordIri("describes", "0");
@@ -357,7 +473,7 @@ public class RecordBuilderTests
             .WithContent(rdfString)
             .WithScopes(scope)
             .WithId(g)
-            .WithDescribes(desc)
+            .WithDescribes("http://example.com/object/version/1234/5678")
             .Build();
 
         record.Id.Should().Be(g);
@@ -387,7 +503,7 @@ public class RecordBuilderTests
 
         var halfMark = numberOfQuads / 2;
 
-        var builder = new RecordBuilder()
+        var builder = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id1)
             .WithDescribes(desc)
             .WithScopes(scope)
@@ -429,7 +545,7 @@ public class RecordBuilderTests
             })
             .ToList();
 
-        var builder = new RecordBuilder()
+        var builder = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id)
             .WithScopes(scope)
             .WithDescribes(describes)
@@ -467,7 +583,7 @@ public class RecordBuilderTests
             })
             .ToList();
 
-        var builder = new RecordBuilder()
+        var builder = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id)
             .WithScopes(scope)
             .WithDescribes(describes)
@@ -510,7 +626,7 @@ public class RecordBuilderTests
 
         var scopes = TestData.CreateObjectList(2, "scope");
 
-        var record = new RecordBuilder()
+        var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(g)
             .WithScopes(scopes)
             .WithContent(quads)
