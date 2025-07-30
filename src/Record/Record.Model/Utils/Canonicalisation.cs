@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using VDS.RDF;
 using VDS.RDF.Writing;

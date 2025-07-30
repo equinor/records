@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using FluentAssertions;
 using Records.Exceptions;
-using VDS.RDF;
 using VDS.RDF.Writing;
 using Record = Records.Immutable.Record;
 namespace Records.Tests;
