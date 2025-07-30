@@ -98,7 +98,7 @@ public class ImmutableRecordTests
     public void Record_Can_Produce_Quads()
     {
         var record = new Record(TestData.ValidJsonLdRecordString(), ignoreDescribesConstraint: true);
-        var result = record.Quads().Count();
+        var result = record.Triples().Count();
 
         // This is how many quads should be extraced from the JSON-LD
         result.Should().Be(31);
@@ -361,22 +361,22 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var labelTriples = record!.QuadsWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
+        var labelTriples = record!.TriplesWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
         labelTriples.Count().Should().Be(1);
-        labelTriples.Single().Should().Be(Quad.CreateUnsafe(labelTriple, recordId));
+        labelTriples.Single().Should().Be(labelTriple);
 
 
-        var typeTriples = record.QuadsWithSubjectPredicate(subjectExample, Namespaces.Rdf.UriNodes.Type);
+        var typeTriples = record.TriplesWithSubjectPredicate(subjectExample, Namespaces.Rdf.UriNodes.Type);
 
         typeTriples.Count().Should().Be(1);
-        typeTriples.Single().Should().Be(Quad.CreateUnsafe(typeTriple, recordId));
+        typeTriples.Single().Should().Be(typeTriple);
 
 
-        var recordTriples = record.QuadsWithSubjectObject(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.RecordType);
+        var recordTriples = record.TriplesWithSubjectObject(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.RecordType);
 
         recordTriples.Count().Should().Be(1);
-        recordTriples.Single().Should().Be(Quad.CreateUnsafe(recordId, Namespaces.Rdf.Type, Namespaces.Record.RecordType, recordId));
+        recordTriples.Single().Should().Be(new Triple(new UriNode(new Uri(recordId)), Namespaces.Rdf.UriNodes.Type, Namespaces.Record.UriNodes.RecordType));
     }
 
     [Fact]

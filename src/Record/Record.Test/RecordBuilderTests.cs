@@ -1,17 +1,15 @@
 ﻿using FluentAssertions;
-using Records.Exceptions;
-using Record = Records.Immutable.Record;
-using VDS.RDF;
 using Newtonsoft.Json.Linq;
+using Records.Exceptions;
+using Records.Utils;
+using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
-using VDS.RDF.Shacl;
 using VDS.RDF.Writing;
-using static Records.ProvenanceBuilder;
 using Xunit.Abstractions;
-using Records.Utils;
-using VDS.RDF.Nodes;
+using static Records.ProvenanceBuilder;
+using Record = Records.Immutable.Record;
 
 namespace Records.Tests;
 public class RecordBuilderTests
@@ -107,20 +105,19 @@ public class RecordBuilderTests
         var scope = TestData.CreateRecordIri("scope", "0");
         var desc = TestData.CreateRecordIri("describes", "0");
 
-        var quads = new List<SafeQuad>();
+        var triples = new List<Triple>();
         var numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
-            var quad = Quad.CreateSafe(subject, predicate, @object, id1);
-            quads.Add(quad);
+            var triple = TestData.CreateRecordTriple(i.ToString());
+            triples.Add(triple);
         }
 
         var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id1)
             .WithScopes(scope)
             .WithDescribes(desc)
-            .WithAdditionalContent(quads)
+            .WithAdditionalContent(triples)
             .WithReplaces(id0)
             .Build();
 
@@ -128,7 +125,7 @@ public class RecordBuilderTests
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(desc);
         record.Replaces.Should().Contain(id0);
-        record.Quads().ToList().Should().Contain(quads);
+        record.Triples().ToList().Should().Contain(triples);
     }
 
     [Fact]
@@ -140,19 +137,18 @@ public class RecordBuilderTests
         var scope = TestData.CreateRecordIri("scope", "0");
         var desc = TestData.CreateRecordIri("describes", "0");
 
-        var quads = new List<SafeQuad>();
+        var triples = new List<Triple>();
         var numberOfQuads = 10;
         for (var i = 0; i < numberOfQuads; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
-            var quad = Quad.CreateSafe(subject, predicate, @object, id1);
-            quads.Add(quad);
+            var triple = TestData.CreateRecordTriple(i.ToString());
+            triples.Add(triple);
         }
 
         var builder = new RecordBuilder()
             .WithId(id1)
             .WithDescribes(desc)
-            .WithAdditionalContent(quads)
+            .WithAdditionalContent(triples)
             .WithReplaces(id0);
 
         var result = () => builder.Build();
@@ -320,9 +316,8 @@ public class RecordBuilderTests
         record.Should().NotBeNull();
         for (var i = 0; i < numberOfTriples; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
-            var quad = Quad.CreateSafe(subject, predicate, @object, id0);
-            record!.ContainsQuad(quad).Should().BeTrue();
+            var triple = TestData.CreateRecordTriple(i.ToString());
+            record!.ContainsTriple(triple).Should().BeTrue();
         }
     }
 
@@ -478,7 +473,7 @@ public class RecordBuilderTests
 
         record.Id.Should().Be(g);
         record
-            .QuadsWithSubject("http://example.com/object/version/1234/5678")
+            .TriplesWithSubject("http://example.com/object/version/1234/5678")
             .Count()
             .Should()
             .Be(1);
@@ -492,40 +487,39 @@ public class RecordBuilderTests
         var scope = TestData.CreateRecordIri("scope", "0");
         var desc = TestData.CreateRecordIri("describes", "0");
 
-        var quads = new List<SafeQuad>();
-        const int numberOfQuads = 10;
-        for (var i = 0; i < numberOfQuads; i++)
+        var triples = new List<Triple>();
+        const int numberOfTriples = 10;
+        for (var i = 0; i < numberOfTriples; i++)
         {
-            var (subject, predicate, @object) = TestData.CreateRecordTripleStringTuple(i.ToString());
-            var quad = Quad.CreateSafe(subject, predicate, @object, id1);
-            quads.Add(quad);
+            var triple = TestData.CreateRecordTriple(i.ToString());
+            triples.Add(triple);
         }
 
-        var halfMark = numberOfQuads / 2;
+        var halfMark = numberOfTriples / 2;
 
         var builder = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(id1)
             .WithDescribes(desc)
             .WithScopes(scope)
-            .WithContent(quads.GetRange(0, halfMark));
+            .WithContent(triples.GetRange(0, halfMark));
 
         var record1 = builder
-            .WithContent(quads.GetRange(halfMark, numberOfQuads - halfMark))
+            .WithContent(triples.GetRange(halfMark, numberOfTriples - halfMark))
             .Build();
 
         var record2 = builder
-            .WithAdditionalContent(quads.GetRange(halfMark, numberOfQuads - halfMark))
+            .WithAdditionalContent(triples.GetRange(halfMark, numberOfTriples - halfMark))
             .Build();
 
         record1
-            .Quads()
+            .Triples()
             .Should()
-            .NotContain(quads.GetRange(0, halfMark));
+            .NotContain(triples.GetRange(0, halfMark));
 
         record2
-            .Quads()
+            .Triples()
             .Should()
-            .Contain(quads);
+            .Contain(triples);
     }
 
     [Fact]
@@ -538,11 +532,7 @@ public class RecordBuilderTests
         var superRecordId = TestData.CreateRecordId("super");
 
         var content = Enumerable.Range(0, 10)
-            .Select(i =>
-            {
-                var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
-                return Quad.CreateSafe(s, p, o, id);
-            })
+            .Select(i => TestData.CreateRecordTriple(i.ToString()))
             .ToList();
 
         var builder = new RecordBuilder(ignoreDescribesConstraint: true)
@@ -562,7 +552,7 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
-        record.Quads().Should().Contain(content);
+        record.Triples().Should().Contain(content);
     }
 
     [Fact]
@@ -576,11 +566,7 @@ public class RecordBuilderTests
         var superRecordId2 = TestData.CreateRecordId("superer");
 
         var content = Enumerable.Range(0, 10)
-            .Select(i =>
-            {
-                var (s, p, o) = TestData.CreateRecordTripleStringTuple(i.ToString());
-                return Quad.CreateSafe(s, p, o, id);
-            })
+            .Select(i => TestData.CreateRecordTriple(i.ToString()))
             .ToList();
 
         var builder = new RecordBuilder(ignoreDescribesConstraint: true)
@@ -601,7 +587,7 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
-        record.Quads().Should().Contain(content);
+        record.Triples().Should().Contain(content);
     }
 
     [Fact]
@@ -622,14 +608,14 @@ public class RecordBuilderTests
         graph.Assert(new Triple(subject, predicate, @object1));
         graph.Assert(new Triple(subject, predicate, @object2));
 
-        var quads = graph.Triples.Select(triple => Quad.CreateSafe(triple, graph.BaseUri));
+        var triples = graph.Triples.ToList();
 
         var scopes = TestData.CreateObjectList(2, "scope");
 
         var record = new RecordBuilder(ignoreDescribesConstraint: true)
             .WithId(g)
             .WithScopes(scopes)
-            .WithContent(quads)
+            .WithContent(triples)
             .Build();
 
         record.Id.Should().Be(graph.BaseUri.ToString());
@@ -665,7 +651,7 @@ public class RecordBuilderTests
             record = new RecordBuilder()
               .WithId(recordId)
               .WithIsSubRecordOf(superRecord)
-              .WithContent(Quad.CreateSafe(recordId, Namespaces.Record.IsSubRecordOf, superDuperRecord, recordId))
+              .WithContent(new Triple(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.IsSubRecordOf, new UriNode(new Uri(superDuperRecord))))
               .Build();
         };
 

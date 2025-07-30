@@ -234,20 +234,7 @@ public record RecordBuilder
         }
 
     };
-    public RecordBuilder WithContent(IEnumerable<IGraph> graphs) => WithContent(graphs.ToArray());
-    [Obsolete]
-    public RecordBuilder WithContent(params Quad[] quads) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                RdfStrings = new(),
-                Triples = [.. quads.Select(q => q.ToTriple())],
-                ContentGraphs = new()
-            }
-        };
-    [Obsolete]
-    public RecordBuilder WithContent(IEnumerable<Quad> quads) => WithContent(quads.ToArray());
+
 
     /// <summary>
     /// Adds triples to the record content graph.
@@ -317,19 +304,7 @@ public record RecordBuilder
             }
         };
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
-    [Obsolete]
-    public RecordBuilder WithAdditionalContent(params Quad[] quads) =>
-        this with
-        {
-            _storage = _storage with
-            {
-                Triples = _storage.Triples.Concat(quads.Select(q => q.ToTriple())).ToList(),
-                RdfStrings = _storage.RdfStrings.ToList(),
-                ContentGraphs = _storage.ContentGraphs.ToList()
-            }
-        };
-    [Obsolete]
-    public RecordBuilder WithAdditionalContent(IEnumerable<Quad> quads) => WithAdditionalContent(quads.ToArray());
+
 
     public RecordBuilder WithAdditionalContent(params string[] rdfStrings) =>
         this with
@@ -492,11 +467,11 @@ public record RecordBuilder
         metadataTriples.Add(typeQuad);
 
         if (_storage.IsSubRecordOf != null)
-            metadataTriples.Add(CreateIsSubRecordOfQuad(_storage.IsSubRecordOf).ToTriple());
+            metadataTriples.Add(CreateIsSubRecordOfTriple(_storage.IsSubRecordOf));
 
-        metadataTriples.AddRange(_storage.Replaces.Select(CreateReplacesQuad).Select(q => q.ToTriple()));
-        metadataTriples.AddRange(_storage.Scopes.Select(CreateScopeQuad).Select(q => q.ToTriple()));
-        metadataTriples.AddRange(_storage.Describes.Select(CreateDescribesQuad).Select(q => q.ToTriple()));
+        metadataTriples.AddRange(_storage.Replaces.Select(CreateReplacesTriple).Select(q => q));
+        metadataTriples.AddRange(_storage.Scopes.Select(CreateScopeTriple).Select(q => q));
+        metadataTriples.AddRange(_storage.Describes.Select(CreateDescribesTriple).Select(q => q));
 
         return metadataTriples;
     }
@@ -568,30 +543,23 @@ public record RecordBuilder
         var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
         return shapeString;
     }
-
-    private SafeQuad CreateQuadWithPredicateAndObject(string predicate, string @object)
+    private Triple CreateTripleWithPredicateAndObject(string predicate, string @object)
     {
         if (_storage.Id == null) throw new RecordException("Record ID must be added first.");
-        return Quad.CreateSafe(_storage.Id.ToString(), predicate, @object, _storage.Id.ToString());
+        return new Triple(new UriNode(_storage.Id), new UriNode(new Uri(predicate)), new UriNode(new Uri(@object)));
     }
 
-    private SafeQuad CreateQuadFromTriple(Triple triple)
-    {
-        if (_storage.Id == null) throw new RecordException("Record ID must be added first.");
-        return Quad.CreateSafe(triple, _storage.Id.ToString());
-    }
+    private Triple CreateIsSubRecordOfTriple(string subRecordOf) =>
+        CreateTripleWithPredicateAndObject(Namespaces.Record.IsSubRecordOf, subRecordOf);
 
-    private SafeQuad CreateIsSubRecordOfQuad(string subRecordOf) =>
-        CreateQuadWithPredicateAndObject(Namespaces.Record.IsSubRecordOf, subRecordOf);
+    private Triple CreateScopeTriple(string scope) =>
+        CreateTripleWithPredicateAndObject(Namespaces.Record.IsInScope, scope);
 
-    private SafeQuad CreateScopeQuad(string scope) =>
-        CreateQuadWithPredicateAndObject(Namespaces.Record.IsInScope, scope);
+    private Triple CreateDescribesTriple(string describes) =>
+        CreateTripleWithPredicateAndObject(Namespaces.Record.Describes, describes);
 
-    private SafeQuad CreateDescribesQuad(string describes) =>
-        CreateQuadWithPredicateAndObject(Namespaces.Record.Describes, describes);
-
-    private SafeQuad CreateReplacesQuad(string replaces) =>
-        CreateQuadWithPredicateAndObject(Namespaces.Record.Replaces, replaces);
+    private Triple CreateReplacesTriple(string replaces) =>
+        CreateTripleWithPredicateAndObject(Namespaces.Record.Replaces, replaces);
 
 
     #endregion
