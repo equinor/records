@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using FluentAssertions;
 using Records.Exceptions;
-using VDS.RDF;
 using VDS.RDF.Writing;
 using Record = Records.Immutable.Record;
 namespace Records.Tests;
@@ -30,9 +29,9 @@ public class FileRecordBuilderTests
         var recstring = fileRecord.ToString<TriGWriter>();
 
         fileRecord.Should().NotBeNull();
-        fileRecord.QuadsWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object).Single().Should().Be(superRecordId);
-        fileRecord.QuadsWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
-        fileRecord.QuadsWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(2);
+        fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
+        fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
+        fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(2);
     }
 
 
@@ -55,7 +54,7 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var fileTypeNode = fileRecord.QuadsWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
+        var fileTypeNode = fileRecord.TriplesWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
         fileTypeNode.Should().NotBeNull("The variable fileTypeNode is null which means that it is not an uri node.");
 
     }
@@ -80,7 +79,7 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var derivedFromNode = fileRecord.QuadsWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object).First();
+        var derivedFromNode = fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object.ToString()).First();
         derivedFromNode.Should().Be("https://example.com/derivedFrom");
     }
 
@@ -106,7 +105,7 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var describesNode = fileRecord.QuadsWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object).First();
+        var describesNode = fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object.ToString()).First();
         describesNode.Should().Be(httpsExampleComDescribes.ToString());
     }
 

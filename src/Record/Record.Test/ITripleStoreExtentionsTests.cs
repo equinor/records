@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
-using VDS.RDF.Writing;
 
 namespace Records.Tests;
 

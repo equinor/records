@@ -31,7 +31,7 @@ public static class TestData
     {
         id ??= CreateRecordId("1");
 
-        var content = CreateQuadList(numberQuads, id);
+        var content = CreateTripleList(numberQuads, id);
         return RecordBuilderWithProvenanceAndWithoutContent(id, numberScopes, numberDescribes, numberQuads)
             .WithContent(content);
     }
@@ -67,12 +67,12 @@ public static class TestData
             .Select(i => CreateRecordIri(subset, i.ToString()))
             .ToList();
 
-    public static List<SafeQuad> CreateQuadList(int numberOfQuads, string graphLabel)
+    public static List<Triple> CreateTripleList(int numberOfQuads, string graphLabel)
         => Enumerable.Range(1, numberOfQuads)
             .Select(i =>
             {
                 var (s, p, o) = CreateRecordTripleStringTuple(i.ToString());
-                return Quad.CreateSafe(s, p, o, graphLabel);
+                return new Triple(new UriNode(new Uri(s)), new UriNode(new Uri(p)), new UriNode(new Uri(o)));
             })
             .ToList();
 
@@ -85,6 +85,12 @@ public static class TestData
     public static string CreateRecordPredicate(string predicate) => CreateRecordIri("predicate", predicate);
     public static string CreateRecordObject(string @object) => CreateRecordIri("object", @object);
     public static string CreateRecordBlankNode(string blankNode) => $"_:{blankNode}";
+
+    public static Triple CreateRecordTriple(string id)
+    {
+        var (s, p, o) = CreateRecordTripleStringTuple(id);
+        return new Triple(new UriNode(new Uri(s)), new UriNode(new Uri(p)), new UriNode(new Uri(o)));
+    }
 
     public static (string subject, string predicate, string @object) CreateRecordTripleStringTuple(string id)
     {
