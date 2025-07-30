@@ -242,5 +242,114 @@ public struct Namespaces
             public readonly static UriNode Used = new(Uris.Used);
         }
     }
-}
 
+    public struct Time
+    {
+        public const string BaseUrl = "http://www.w3.org/2006/time#";
+
+        public const string HasTime = $"{BaseUrl}hasTime";
+        public const string Year = $"{BaseUrl}year";
+        public const string Month = $"{BaseUrl}month";
+        public const string Day = $"{BaseUrl}day";
+
+        public const string DateTimeDescription = $"{BaseUrl}DateTimeDescription ";
+
+        public static class Uris
+        {
+            public readonly static Uri BaseUrl = new(Time.BaseUrl);
+
+            public readonly static Uri HasTime = new(Time.HasTime);
+            public readonly static Uri Year = new(Time.Year);
+            public readonly static Uri Month = new(Time.Month);
+            public readonly static Uri Day = new(Time.Day);
+
+            public readonly static Uri DateTimeDescription = new(Time.DateTimeDescription);
+        }
+
+        public static class UriNodes
+        {
+            public readonly static UriNode BaseUrl = new(Uris.BaseUrl);
+
+            public readonly static UriNode HasTime = new(Uris.HasTime);
+            public readonly static UriNode Year = new(Uris.Year);
+            public readonly static UriNode Month = new(Uris.Month);
+            public readonly static UriNode Day = new(Uris.Day);
+            
+            public readonly static UriNode DateTimeDescription = new(Uris.DateTimeDescription);
+        }
+    }
+
+    public struct Greg
+    {
+        public const string BaseUrl = "https://www.w3.org/ns/time/gregorian#";
+
+        public const string January = $"{BaseUrl}January";
+        public const string February = $"{BaseUrl}February";
+        public const string March = $"{BaseUrl}March";
+        public const string April = $"{BaseUrl}April";
+        public const string May = $"{BaseUrl}May";
+        public const string June = $"{BaseUrl}June";
+        public const string July = $"{BaseUrl}July";
+        public const string August = $"{BaseUrl}August";
+        public const string September = $"{BaseUrl}September";
+        public const string October = $"{BaseUrl}October";
+        public const string November = $"{BaseUrl}November";
+        public const string December = $"{BaseUrl}December";
+
+        public static class Uris
+        {
+            public readonly static Uri BaseUrl = new(Greg.BaseUrl);
+
+            public readonly static Uri January = new(Greg.January);
+            public readonly static Uri February = new(Greg.February);
+            public readonly static Uri March = new(Greg.March);
+            public readonly static Uri April = new(Greg.April);
+            public readonly static Uri May = new(Greg.May);
+            public readonly static Uri June = new(Greg.June);
+            public readonly static Uri July = new (Greg.July);
+            public readonly static Uri August = new(Greg.August);
+            public readonly static Uri September = new(Greg.September);
+            public readonly static Uri October = new(Greg.October);
+            public readonly static Uri November = new(Greg.November);
+            public readonly static Uri December = new(Greg.December);
+        }
+
+        public static class UriNodes
+        {
+            public readonly static UriNode BaseUrl = new(Uris.BaseUrl);
+
+            public readonly static UriNode January = new(Uris.January);
+            public readonly static UriNode February = new(Uris.February);
+            public readonly static UriNode March = new(Uris.March);
+            public readonly static UriNode April = new(Uris.April);
+            public readonly static UriNode May = new(Uris.May);
+            public readonly static UriNode June = new(Uris.June);
+            public readonly static UriNode July = new(Uris.July);
+            public readonly static UriNode August = new(Uris.August);
+            public readonly static UriNode September = new(Uris.September);
+            public readonly static UriNode October = new(Uris.October);
+            public readonly static UriNode November = new(Uris.November);
+            public readonly static UriNode December = new(Uris.December);
+
+            public static UriNode GetUriNode(string month)
+            {
+                return month.ToLower() switch
+                {
+                    "january" => January,
+                    "february" => February,
+                    "march" => March,
+                    "april" => April,
+                    "may" => May,
+                    "june" => June,
+                    "july" => July,
+                    "august" => August,
+                    "september" => September,
+                    "october" => October,
+                    "november" => November,
+                    "december" => December,
+                    _ => throw new ArgumentException("Not a valid month."),
+                };
+            }
+        }
+    }
+}

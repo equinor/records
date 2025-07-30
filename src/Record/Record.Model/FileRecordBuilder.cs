@@ -1,8 +1,10 @@
-﻿using VDS.RDF;
-using System.Security.Cryptography;
-using IriTools;
-using Records.Exceptions;
+﻿using IriTools;
 using Microsoft.AspNetCore.Http;
+using Records.Exceptions;
+using System.Globalization;
+using System.Security.Cryptography;
+using VDS.RDF;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Record = Records.Immutable.Record;
 
 namespace Records;
@@ -234,5 +236,30 @@ public record FileRecordBuilder
                         new LiteralNode(@object, new Uri(literalNodeDataType)));
     }
 
+    private List<Triple?> CreateHasTimeTriples(DateTime dateTime)
+    {        
+        var blankNode = new BlankNode(dateTime.ToString());
+
+        var gYear = new LiteralNode(
+            dateTime.Year.ToString("yyyy", CultureInfo.InvariantCulture), 
+            UriFactory.Create("http://www.w3.org/2001/XMLSchema#gYear")
+        );
+
+        var gDay = new LiteralNode(
+            $"----{dateTime.Day:dd}", 
+            UriFactory.Create("http://www.w3.org/2001/XMLSchema#gDay")
+        );
+
+        var gregMonth = Namespaces.Greg.UriNodes.GetUriNode(dateTime.Month.ToString("MMMM", CultureInfo.InvariantCulture));
+
+        return
+        [
+            new(blankNode, Namespaces.Rdf.UriNodes.Type, Namespaces.Time.UriNodes.DateTimeDescription),
+            new(blankNode, Namespaces.Time.UriNodes.Year, gYear),
+            new(blankNode, Namespaces.Time.UriNodes.Month, gregMonth),
+            new(blankNode, Namespaces.Time.UriNodes.Day, gDay),
+            CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date)
+        ];
+    }
 }
 
