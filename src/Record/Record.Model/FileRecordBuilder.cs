@@ -242,12 +242,12 @@ public record FileRecordBuilder
         var blankNode = new BlankNode(dateTime.ToString());
 
         var gYear = new LiteralNode(
-            dateTime.ToString("yyyy", CultureInfo.InvariantCulture), 
+            dateTime.ToString("yyyy", CultureInfo.InvariantCulture),
             Namespaces.DataType.Uris.GYear
         );
 
         var gDay = new LiteralNode(
-            FormatGregorianDayIso8601String(dateTime), 
+            FormatGregorianDayIso8601String(dateTime),
             Namespaces.DataType.Uris.GDay
         );
 
@@ -264,6 +264,7 @@ public record FileRecordBuilder
         ];
     }
 
-    private static string FormatGregorianDayIso8601String(DateTime dateTime) => $"---{dateTime:dd}";
+    private static string FormatGregorianDayIso8601String(DateTime dateTime)
+        => $"---{dateTime:dd}";
 }
 

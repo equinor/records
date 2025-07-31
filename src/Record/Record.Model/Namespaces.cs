@@ -281,7 +281,7 @@ public struct Namespaces
             public readonly static UriNode Year = new(Uris.Year);
             public readonly static UriNode Month = new(Uris.Month);
             public readonly static UriNode Day = new(Uris.Day);
-            
+
             public readonly static UriNode DateTimeDescription = new(Uris.DateTimeDescription);
         }
     }
@@ -313,7 +313,7 @@ public struct Namespaces
             public readonly static Uri April = new(Greg.April);
             public readonly static Uri May = new(Greg.May);
             public readonly static Uri June = new(Greg.June);
-            public readonly static Uri July = new (Greg.July);
+            public readonly static Uri July = new(Greg.July);
             public readonly static Uri August = new(Greg.August);
             public readonly static Uri September = new(Greg.September);
             public readonly static Uri October = new(Greg.October);
