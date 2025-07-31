@@ -1,5 +1,5 @@
-﻿using VDS.RDF;
-using static System.Net.WebRequestMethods;
+﻿using System.Globalization;
+using VDS.RDF;
 
 namespace Records;
 
@@ -283,6 +283,21 @@ public struct Namespaces
             public readonly static UriNode Day = new(Uris.Day);
 
             public readonly static UriNode DateTimeDescription = new(Uris.DateTimeDescription);
+
+            public static LiteralNode GetYearLiteralNode(DateTime dateTime)
+                => new(
+                    literal: dateTime.ToString("yyyy", CultureInfo.InvariantCulture), 
+                    datatype: DataType.Uris.GYear
+                    );
+
+            public static LiteralNode GetDayLiteralNode(DateTime dateTime)
+                => new(
+                    literal: FormatGregorianDayIso8601String(dateTime), 
+                    datatype: DataType.Uris.GDay
+                    );
+
+            private static string FormatGregorianDayIso8601String(DateTime dateTime)
+                => $"---{dateTime:dd}";
         }
     }
 
@@ -338,9 +353,12 @@ public struct Namespaces
             public readonly static UriNode November = new(Uris.November);
             public readonly static UriNode December = new(Uris.December);
 
-            public static UriNode GetUriNode(string month)
+            public static UriNode GetGregorianMonthUriNode(DateTime dateTime)
+                => GetGregorianMonthUriNode(dateTime.ToString("MMMM", CultureInfo.InvariantCulture));
+
+            public static UriNode GetGregorianMonthUriNode(string monthName)
             {
-                return month.ToLower() switch
+                return monthName.ToLower() switch
                 {
                     "january" => January,
                     "february" => February,

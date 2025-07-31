@@ -1,10 +1,9 @@
 ﻿using IriTools;
 using Microsoft.AspNetCore.Http;
 using Records.Exceptions;
-using System.Globalization;
+using Records.Utils;
 using System.Security.Cryptography;
 using VDS.RDF;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Record = Records.Immutable.Record;
 
 namespace Records;
@@ -182,8 +181,8 @@ public record FileRecordBuilder
         }.Where(t => t is not null);
 
         fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!));
-        fileRecordTriples = fileRecordTriples.Concat(CreateHasTimeTriples(new UriNode(_storage.FileId), DateTime.Now.Date));
-
+        fileRecordTriples = fileRecordTriples.Concat(TimeUtils.CreateHasTimeTriples(new UriNode(_storage.FileId), DateTime.Now.Date));
+        
         var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)
                              .WithDescribes(_storage.FileId)
@@ -237,34 +236,5 @@ public record FileRecordBuilder
                         new LiteralNode(@object, new Uri(literalNodeDataType)));
     }
 
-    private List<Triple?> CreateHasTimeTriples(UriNode timeHaver, DateTime dateTime)
-    {
-        var blankNode = new BlankNode(dateTime.ToString());
-
-        var gYear = new LiteralNode(
-            dateTime.ToString("yyyy", CultureInfo.InvariantCulture),
-            Namespaces.DataType.Uris.GYear
-        );
-
-        var gDay = new LiteralNode(
-            FormatGregorianDayIso8601String(dateTime),
-            Namespaces.DataType.Uris.GDay
-        );
-
-        var gregMonth = Namespaces.Greg.UriNodes.GetUriNode(dateTime.ToString("MMMM", CultureInfo.InvariantCulture));
-
-        return
-        [
-            new(timeHaver, Namespaces.Time.UriNodes.HasTime, blankNode),
-            new(blankNode, Namespaces.Rdf.UriNodes.Type, Namespaces.Time.UriNodes.DateTimeDescription),
-            new(blankNode, Namespaces.Time.UriNodes.Year, gYear),
-            new(blankNode, Namespaces.Time.UriNodes.Month, gregMonth),
-            new(blankNode, Namespaces.Time.UriNodes.Day, gDay),
-            CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date)
-        ];
-    }
-
-    private static string FormatGregorianDayIso8601String(DateTime dateTime)
-        => $"---{dateTime:dd}";
 }
 
