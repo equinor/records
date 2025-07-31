@@ -110,14 +110,14 @@ public struct Namespaces
 
     public struct DataType
     {
-        internal const string XsdPrefix = "http://www.w3.org/2001/XMLSchema#";
-        internal const string String = $"{XsdPrefix}string";
-        internal const string Decimal = $"{XsdPrefix}decimal";
-        internal const string Date = $"{XsdPrefix}date";
-        internal const string HexBinary = $"{XsdPrefix}hexBinary";
-        internal const string Language = $"{XsdPrefix}language";
-        internal const string GYear = $"{XsdPrefix}gYear";
-        internal const string GDay = $"{XsdPrefix}gDay";
+        public const string XsdPrefix = "http://www.w3.org/2001/XMLSchema#";
+        public const string String = $"{XsdPrefix}string";
+        public const string Decimal = $"{XsdPrefix}decimal";
+        public const string Date = $"{XsdPrefix}date";
+        public const string HexBinary = $"{XsdPrefix}hexBinary";
+        public const string Language = $"{XsdPrefix}language";
+        public const string GYear = $"{XsdPrefix}gYear";
+        public const string GDay = $"{XsdPrefix}gDay";
 
         public static class Uris
         {
@@ -286,13 +286,13 @@ public struct Namespaces
 
             public static LiteralNode GetYearLiteralNode(DateTime dateTime)
                 => new(
-                    literal: dateTime.ToString("yyyy", CultureInfo.InvariantCulture), 
+                    literal: dateTime.ToString("yyyy", CultureInfo.InvariantCulture),
                     datatype: DataType.Uris.GYear
                     );
 
             public static LiteralNode GetDayLiteralNode(DateTime dateTime)
                 => new(
-                    literal: FormatGregorianDayIso8601String(dateTime), 
+                    literal: FormatGregorianDayIso8601String(dateTime),
                     datatype: DataType.Uris.GDay
                     );
 

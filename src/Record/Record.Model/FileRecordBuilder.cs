@@ -182,7 +182,7 @@ public record FileRecordBuilder
 
         fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!));
         fileRecordTriples = fileRecordTriples.Concat(TimeUtils.CreateHasTimeTriples(new UriNode(_storage.FileId), DateTime.Now.Date));
-        
+
         var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)
                              .WithDescribes(_storage.FileId)

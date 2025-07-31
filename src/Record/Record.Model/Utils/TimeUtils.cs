@@ -4,9 +4,9 @@ namespace Records.Utils;
 
 public static class TimeUtils
 {
-    public static List<Triple?> CreateHasTimeTriples(UriNode timeHaver, DateTime dateTime)
+    public static List<Triple?> CreateHasTimeTriples(INode timeHaver, DateTime dateTime)
     {
-        var blankNode = new BlankNode(dateTime.ToString());
+        var blankNode = new BlankNode(Guid.NewGuid().ToString());
 
         var gYear = Namespaces.Time.UriNodes.GetYearLiteralNode(dateTime);
         var gregMonth = Namespaces.Greg.UriNodes.GetGregorianMonthUriNode(dateTime);
