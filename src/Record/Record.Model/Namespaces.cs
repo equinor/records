@@ -1,4 +1,5 @@
 ﻿using VDS.RDF;
+using static System.Net.WebRequestMethods;
 
 namespace Records;
 
@@ -115,6 +116,8 @@ public struct Namespaces
         internal const string Date = $"{XsdPrefix}date";
         internal const string HexBinary = $"{XsdPrefix}hexBinary";
         internal const string Language = $"{XsdPrefix}language";
+        internal const string GYear = $"{XsdPrefix}gYear";
+        internal const string GDay = $"{XsdPrefix}gDay";
 
         public static class Uris
         {
@@ -124,6 +127,8 @@ public struct Namespaces
             public readonly static Uri Date = new(DataType.Date);
             public readonly static Uri HexBinary = new(DataType.HexBinary);
             public readonly static Uri Language = new(DataType.Language);
+            public readonly static Uri GYear = new(DataType.GYear);
+            public readonly static Uri GDay = new(DataType.GDay);
         }
 
         public class UriNodes
@@ -134,6 +139,8 @@ public struct Namespaces
             public readonly static UriNode Date = new(Uris.Date);
             public readonly static UriNode HexBinary = new(Uris.HexBinary);
             public readonly static UriNode Language = new(Uris.Language);
+            public readonly static UriNode GYear = new(Uris.GYear);
+            public readonly static UriNode GDay = new(Uris.GDay);
         }
 
     }

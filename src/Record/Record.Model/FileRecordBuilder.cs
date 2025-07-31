@@ -179,9 +179,10 @@ public record FileRecordBuilder
             CreateDocumentTypeTriple(_storage.DocumentType),
             CreateTripleWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.FileContent.Type),
             CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date),
-        }.Where(q => q is not null);
+        }.Where(t => t is not null);
 
         fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!));
+        fileRecordTriples = fileRecordTriples.Concat(CreateHasTimeTriples(new UriNode(_storage.FileId), DateTime.Now.Date));
 
         var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)
@@ -236,24 +237,25 @@ public record FileRecordBuilder
                         new LiteralNode(@object, new Uri(literalNodeDataType)));
     }
 
-    private List<Triple?> CreateHasTimeTriples(DateTime dateTime)
-    {        
+    private List<Triple?> CreateHasTimeTriples(UriNode timeHaver, DateTime dateTime)
+    {
         var blankNode = new BlankNode(dateTime.ToString());
 
         var gYear = new LiteralNode(
-            dateTime.Year.ToString("yyyy", CultureInfo.InvariantCulture), 
-            UriFactory.Create("http://www.w3.org/2001/XMLSchema#gYear")
+            dateTime.ToString("yyyy", CultureInfo.InvariantCulture), 
+            Namespaces.DataType.Uris.GYear
         );
 
         var gDay = new LiteralNode(
-            $"----{dateTime.Day:dd}", 
-            UriFactory.Create("http://www.w3.org/2001/XMLSchema#gDay")
+            FormatGregorianDayIso8601String(dateTime), 
+            Namespaces.DataType.Uris.GDay
         );
 
-        var gregMonth = Namespaces.Greg.UriNodes.GetUriNode(dateTime.Month.ToString("MMMM", CultureInfo.InvariantCulture));
+        var gregMonth = Namespaces.Greg.UriNodes.GetUriNode(dateTime.ToString("MMMM", CultureInfo.InvariantCulture));
 
         return
         [
+            new(timeHaver, Namespaces.Time.UriNodes.HasTime, blankNode),
             new(blankNode, Namespaces.Rdf.UriNodes.Type, Namespaces.Time.UriNodes.DateTimeDescription),
             new(blankNode, Namespaces.Time.UriNodes.Year, gYear),
             new(blankNode, Namespaces.Time.UriNodes.Month, gregMonth),
@@ -261,5 +263,7 @@ public record FileRecordBuilder
             CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date)
         ];
     }
+
+    private static string FormatGregorianDayIso8601String(DateTime dateTime) => $"---{dateTime:dd}";
 }
 
