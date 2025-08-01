@@ -13,7 +13,7 @@ public record ProvenanceBuilder
             {
                 _storage = builder._storage with
                 {
-                    Using = builder._storage.Using.Concat(used).ToList()
+                    Using = [.. builder._storage.Using, .. used]
                 }
             };
     public static Func<ProvenanceBuilder, ProvenanceBuilder> WithAdditionalLocation(IEnumerable<string> locations) => WithAdditionalLocation(locations.ToArray());
@@ -23,7 +23,7 @@ public record ProvenanceBuilder
             {
                 _storage = builder._storage with
                 {
-                    AtLocation = builder._storage.AtLocation.Concat(locations).ToList()
+                    AtLocation = [.. builder._storage.AtLocation, .. locations]
                 }
             };
 
@@ -34,7 +34,7 @@ public record ProvenanceBuilder
             {
                 _storage = builder._storage with
                 {
-                    Comments = builder._storage.Comments.Concat(comments).ToList()
+                    Comments = [.. builder._storage.Comments, .. comments]
                 }
             };
 
@@ -45,7 +45,7 @@ public record ProvenanceBuilder
         {
             _storage = builder._storage with
             {
-                With = builder._storage.With.Concat(tools).ToList()
+                With = [.. builder._storage.With, .. tools]
             }
         };
 
@@ -53,13 +53,12 @@ public record ProvenanceBuilder
     {
         IRefNode activity = graph.CreateBlankNode();
 
-        var provenanceTriples = new List<Triple>();
-        provenanceTriples.Add(
-            new Triple(
-                rootObject,
+        var provenanceTriples = new List<Triple>
+        {
+            new(rootObject,
                 Namespaces.Prov.UriNodes.WasGeneratedBy,
                 activity)
-        );
+        };
         foreach (var (objectList, property) in new (List<string>, Uri)[]
                  {
                      (_storage.Using, new Uri(Namespaces.Prov.Used)),
@@ -95,10 +94,10 @@ public record ProvenanceBuilder
 
     internal record Storage
     {
-        internal List<string> Using = new();
-        internal List<string> With = new();
-        internal List<string> AtLocation = new();
-        internal List<string> Comments = new();
+        internal List<string> Using = [];
+        internal List<string> With = [];
+        internal List<string> AtLocation = [];
+        internal List<string> Comments = [];
     };
 }
 

@@ -1,8 +1,9 @@
-﻿using VDS.RDF;
-using System.Security.Cryptography;
-using IriTools;
-using Records.Exceptions;
+﻿using IriTools;
 using Microsoft.AspNetCore.Http;
+using Records.Exceptions;
+using Records.Utils;
+using System.Security.Cryptography;
+using VDS.RDF;
 using Record = Records.Immutable.Record;
 
 namespace Records;
@@ -177,9 +178,10 @@ public record FileRecordBuilder
             CreateDocumentTypeTriple(_storage.DocumentType),
             CreateTripleWithPredicateAndObject(Namespaces.Rdf.Type, Namespaces.FileContent.Type),
             CreateTripleWithPredicateAndObject(Namespaces.FileContent.generatedAtTime, $"{DateTime.Now.Date:yyyy-MM-dd}", Namespaces.DataType.Date),
-        }.Where(q => q is not null);
+        }.Where(t => t is not null);
 
         fileRecordTriples = fileRecordTriples.Concat(CreateChecksumTriples(_storage.Checksum!));
+        fileRecordTriples = fileRecordTriples.Concat(TimeUtils.CreateHasTimeTriples(new UriNode(_storage.FileId), DateTime.Now.Date));
 
         var fileRecord = new RecordBuilder()
                              .WithId(_storage.Id!)

@@ -31,7 +31,7 @@ public class FileRecordBuilderTests
         fileRecord.Should().NotBeNull();
         fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
         fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
-        fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(2);
+        fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(3);
     }
 
 
