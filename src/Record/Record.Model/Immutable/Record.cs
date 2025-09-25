@@ -19,7 +19,7 @@ public class Record : IEquatable<Record>
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
-    private readonly bool _ignoreDescribesConstraint;
+    private readonly DescribesConstraintMode _describesConstraintMode;
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Describes { get; private set; }
@@ -27,27 +27,27 @@ public class Record : IEquatable<Record>
     public string? IsSubRecordOf { get; set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-    public Record(ITripleStore store, bool ignoreDescribesConstraint = false)
+    public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        _ignoreDescribesConstraint = ignoreDescribesConstraint;
+        _describesConstraintMode = describesConstraintMode;
         LoadFromTripleStore(store);
     }
 
-    public Record(IGraph graph, bool ignoreDescribesConstraint = false)
+    public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        _ignoreDescribesConstraint = ignoreDescribesConstraint;
+        _describesConstraintMode = describesConstraintMode;
         LoadFromGraph(graph);
     }
 
-    public Record(string rdfString, bool ignoreDescribesConstraint = false)
+    public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        _ignoreDescribesConstraint = ignoreDescribesConstraint;
+        _describesConstraintMode = describesConstraintMode;
         LoadFromString(rdfString);
     }
 
-    public Record(string rdfString, IStoreReader reader, bool ignoreDescribesConstraint = false)
+    public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        _ignoreDescribesConstraint = ignoreDescribesConstraint;
+        _describesConstraintMode = describesConstraintMode;
         LoadFromString(rdfString, reader);
     }
 
@@ -82,13 +82,28 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        if (!_ignoreDescribesConstraint)
-            AssertDescribesConstraint();
+        ValidateDescribes();
 
         var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
         var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
 
         _nQuadsString = sortedTriples;
+    }
+
+
+    private void ValidateDescribes()
+    {
+        switch (_describesConstraintMode)
+        {
+            case DescribesConstraintMode.None:
+                break;
+            case DescribesConstraintMode.Lazy:
+                ValidateDescribesLazy();
+                break;
+            case DescribesConstraintMode.Strict:
+                ValidateDescribesStrict();
+                break;
+        }
     }
 
     private void LoadFromString(string rdfString, IStoreReader reader)
@@ -141,7 +156,13 @@ public class Record : IEquatable<Record>
         return tempGraph;
     }
 
-    private void AssertDescribesConstraint()
+    private void ValidateDescribesLazy()
+    {
+        if (AskIfNotAllDescribesNodesExistInContent())
+            throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
+    }
+
+    private void ValidateDescribesStrict()
     {
         if (AskIfNotAllDescribesNodesExistInContent())
             throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
@@ -167,7 +188,6 @@ public class Record : IEquatable<Record>
         parameterizedQuery.SetUri("Record", new Uri(Namespaces.Record.RecordType));
         parameterizedQuery.SetUri("describes", new Uri(Namespaces.Record.Describes));
         parameterizedQuery.SetUri("hasContent", new Uri(Namespaces.Record.HasContent));
-
 
         var parser = new SparqlQueryParser();
         var queryString = parameterizedQuery.ToString();
