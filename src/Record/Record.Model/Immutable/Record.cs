@@ -216,7 +216,7 @@ public class Record : IEquatable<Record>
 
         var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
 
-        if(queryResult.Result)
+        if (queryResult.Result)
             throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
 
     }
