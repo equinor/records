@@ -2,7 +2,7 @@
 
 public enum DescribesConstraintMode
 {
-    None, 
-    Lazy, 
+    None,
+    Lazy,
     Strict
 }

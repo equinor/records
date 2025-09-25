@@ -415,7 +415,7 @@ public class RecordBuilderTests
         )).ToList();
 
         // Act
-        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.Strict)
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.Lazy)
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(describes)
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
