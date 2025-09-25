@@ -387,7 +387,7 @@ public class RecordBuilderTests
                     new LiteralNode(i.ToString())
                 ));
 
-        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.Strict)
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.AllContentReachableFromDescribes)
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(describes)
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
@@ -415,7 +415,7 @@ public class RecordBuilderTests
         )).ToList();
 
         // Act
-        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.Lazy)
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.DescribesIsInContent)
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(describes)
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
@@ -439,7 +439,7 @@ public class RecordBuilderTests
         var connectedContent = Enumerable.Range(1, 10).Select(CreateTriple);
         var disconnectedContent = Enumerable.Range(12, 5).Select(CreateTriple);
 
-        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.Strict)
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.AllContentReachableFromDescribes)
             .WithId(TestData.CreateRecordId(0))
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
             .WithDescribes(connectedContent.First().Subject.ToString())

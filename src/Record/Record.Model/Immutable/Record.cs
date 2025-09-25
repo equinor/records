@@ -97,10 +97,10 @@ public class Record : IEquatable<Record>
         {
             case DescribesConstraintMode.None:
                 break;
-            case DescribesConstraintMode.Lazy:
+            case DescribesConstraintMode.DescribesIsInContent:
                 ValidateDescribesLazy();
                 break;
-            case DescribesConstraintMode.Strict:
+            case DescribesConstraintMode.AllContentReachableFromDescribes:
                 ValidateDescribesStrict();
                 break;
         }

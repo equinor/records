@@ -3,6 +3,6 @@
 public enum DescribesConstraintMode
 {
     None,
-    Lazy,
-    Strict
+    DescribesIsInContent,
+    AllContentReachableFromDescribes
 }
