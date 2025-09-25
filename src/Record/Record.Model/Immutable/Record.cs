@@ -98,10 +98,11 @@ public class Record : IEquatable<Record>
             case DescribesConstraintMode.None:
                 break;
             case DescribesConstraintMode.DescribesIsInContent:
-                ValidateDescribesLazy();
+                AskIfNotAllDescribesNodesExistInContent();
                 break;
             case DescribesConstraintMode.AllContentReachableFromDescribes:
-                ValidateDescribesStrict();
+                AskIfNotAllDescribesNodesExistInContent();
+                AskIfContentSubjectIsUnreachableFromMetadata();
                 break;
         }
     }
@@ -156,22 +157,7 @@ public class Record : IEquatable<Record>
         return tempGraph;
     }
 
-    private void ValidateDescribesLazy()
-    {
-        if (AskIfNotAllDescribesNodesExistInContent())
-            throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
-    }
-
-    private void ValidateDescribesStrict()
-    {
-        if (AskIfNotAllDescribesNodesExistInContent())
-            throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
-
-        if (AskIfContentSubjectIsUnreachableFromMetadata())
-            throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
-    }
-
-    private bool AskIfNotAllDescribesNodesExistInContent()
+    private void AskIfNotAllDescribesNodesExistInContent()
     {
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
@@ -194,10 +180,13 @@ public class Record : IEquatable<Record>
         var query = parser.ParseFromString(queryString);
 
         var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
-        return queryResult.Result;
+        if (queryResult.Result)
+        {
+            throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
+        }
     }
 
-    private bool AskIfContentSubjectIsUnreachableFromMetadata()
+    private void AskIfContentSubjectIsUnreachableFromMetadata()
     {
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
@@ -226,7 +215,10 @@ public class Record : IEquatable<Record>
         var query = parser.ParseFromString(queryString);
 
         var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
-        return queryResult.Result;
+
+        if(queryResult.Result)
+            throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
+
     }
 
     private IGraph FindMetadataGraph()
