@@ -113,7 +113,7 @@ public class RecordBuilderTests
             triples.Add(triple);
         }
 
-        var record = new RecordBuilder(ignoreDescribesConstraint: true)
+        var record = new RecordBuilder()
             .WithId(id1)
             .WithScopes(scope)
             .WithDescribes(desc)
@@ -266,7 +266,7 @@ public class RecordBuilderTests
 
         var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
 
-        var record = new RecordBuilder(ignoreDescribesConstraint: true)
+        var record = new RecordBuilder()
             .WithId(recordId)
             .WithScopes(scopes)
             .WithContent(graph.Triples)
@@ -304,7 +304,7 @@ public class RecordBuilderTests
         }
 
         var record = default(Record);
-        var result = () => record = new RecordBuilder(ignoreDescribesConstraint: true)
+        var result = () => record = new RecordBuilder()
             .WithId(id0)
             .WithScopes(scope)
             .WithDescribes(desc)
@@ -387,7 +387,7 @@ public class RecordBuilderTests
                     new LiteralNode(i.ToString())
                 ));
 
-        var recordBuilder = new RecordBuilder()
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.AllContentReachableFromDescribes)
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(describes)
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
@@ -415,7 +415,7 @@ public class RecordBuilderTests
         )).ToList();
 
         // Act
-        var recordBuilder = new RecordBuilder()
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.DescribesIsInContent)
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(describes)
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
@@ -439,7 +439,7 @@ public class RecordBuilderTests
         var connectedContent = Enumerable.Range(1, 10).Select(CreateTriple);
         var disconnectedContent = Enumerable.Range(12, 5).Select(CreateTriple);
 
-        var recordBuilder = new RecordBuilder()
+        var recordBuilder = new RecordBuilder(describesConstraintMode: DescribesConstraintMode.AllContentReachableFromDescribes)
             .WithId(TestData.CreateRecordId(0))
             .WithScopes(TestData.CreateRecordIri("scope", "0"))
             .WithDescribes(connectedContent.First().Subject.ToString())
@@ -497,7 +497,7 @@ public class RecordBuilderTests
 
         var halfMark = numberOfTriples / 2;
 
-        var builder = new RecordBuilder(ignoreDescribesConstraint: true)
+        var builder = new RecordBuilder()
             .WithId(id1)
             .WithDescribes(desc)
             .WithScopes(scope)
@@ -535,7 +535,7 @@ public class RecordBuilderTests
             .Select(i => TestData.CreateRecordTriple(i.ToString()))
             .ToList();
 
-        var builder = new RecordBuilder(ignoreDescribesConstraint: true)
+        var builder = new RecordBuilder()
             .WithId(id)
             .WithScopes(scope)
             .WithDescribes(describes)
@@ -569,7 +569,7 @@ public class RecordBuilderTests
             .Select(i => TestData.CreateRecordTriple(i.ToString()))
             .ToList();
 
-        var builder = new RecordBuilder(ignoreDescribesConstraint: true)
+        var builder = new RecordBuilder()
             .WithId(id)
             .WithScopes(scope)
             .WithDescribes(describes)
@@ -612,7 +612,7 @@ public class RecordBuilderTests
 
         var scopes = TestData.CreateObjectList(2, "scope");
 
-        var record = new RecordBuilder(ignoreDescribesConstraint: true)
+        var record = new RecordBuilder()
             .WithId(g)
             .WithScopes(scopes)
             .WithContent(triples)

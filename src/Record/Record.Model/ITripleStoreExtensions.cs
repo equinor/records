@@ -63,7 +63,7 @@ public static class ITripleStoreExtensions
             foreach (var contentGraph in localContentGraphs)
                 recordStore.Add(contentGraph);
 
-            records.Add(new Immutable.Record(recordStore, ignoreDescribesConstraint));
+            records.Add(new Immutable.Record(recordStore));
         }
 
         return records;
