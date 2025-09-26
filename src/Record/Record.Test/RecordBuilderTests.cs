@@ -60,7 +60,7 @@ public class RecordBuilderTests
             ));
 
         var content = Enumerable.Range(1, 5)
-            .Select( i => new Triple(
+            .Select(i => new Triple(
                 new UriNode(new Uri(TestData.CreateRecordIri("content", i.ToString()))),
                 new UriNode(new Uri(Namespaces.Rdfs.Label)),
                 new LiteralNode(i.ToString())));
