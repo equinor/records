@@ -43,6 +43,48 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
     }
 
+
+    [Fact]
+    public void WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph()
+    {
+        // Arrange
+        var scopes = Enumerable.Range(1, 3)
+            .Select(i => TestData.CreateRecordIri("scope", i.ToString()));
+
+        var additionalMetadata = scopes.Select((scope, i) =>
+            new Triple
+            (
+                new UriNode(new Uri(scope)),
+                new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                new LiteralNode(i.ToString())
+            ));
+
+        var content = Enumerable.Range(1, 5)
+            .Select(i => new Triple(
+                new UriNode(new Uri(TestData.CreateRecordIri("content", i.ToString()))),
+                new UriNode(new Uri(Namespaces.Rdfs.Label)),
+                new LiteralNode(i.ToString())));
+
+        var record = new RecordBuilder()
+            .WithId(TestData.CreateRecordId(0))
+            .WithDescribes(TestData.CreateRecordIri("describes", Guid.NewGuid().ToString()))
+            .WithScopes(scopes)
+            .WithContent(content)
+            .WithAdditionalMetadata(additionalMetadata)
+            .Build();
+
+        // Act
+        var additionalMetadataIsIncludedOnMetadataGraph = additionalMetadata.All(triple => record.MetadataAsTriples().Contains(triple));
+        var additionalMetadataIsIncludedOnContentGraph = additionalMetadata.All(triple => record.ContentAsTriples().Contains(triple));
+        var contentIsCopiedToMetadataGraph = record.MetadataAsTriples().Any(triple => content.Contains(triple));
+
+        additionalMetadataIsIncludedOnMetadataGraph.Should().BeTrue();
+        additionalMetadataIsIncludedOnContentGraph.Should().BeFalse();
+        contentIsCopiedToMetadataGraph.Should().BeFalse();
+    }
+
+
+
     [Fact]
     public void Can_Add_Provenance()
     {

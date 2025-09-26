@@ -196,7 +196,7 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataTriples = _storage.Triples.Concat(triples).ToList(),
+                MetadataTriples = _storage.MetadataTriples.Concat(triples).ToList(),
                 MetadataRdfStrings = _storage.RdfStrings.ToList(),
                 MetadataGraphs = _storage.ContentGraphs.ToList()
             }
@@ -210,7 +210,7 @@ public record RecordBuilder
             _storage = _storage with
             {
                 MetadataRdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
-                MetadataTriples = _storage.Triples.ToList(),
+                MetadataTriples = _storage.MetadataTriples.ToList(),
                 MetadataGraphs = _storage.ContentGraphs.ToList()
             }
         };
@@ -230,7 +230,7 @@ public record RecordBuilder
         {
             ContentGraphs = graphs.ToList(),
             RdfStrings = new(),
-            Triples = new(),
+            ContentTriples = new(),
         }
 
     };
@@ -247,7 +247,7 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                Triples = triples.ToList(),
+                ContentTriples = triples.ToList(),
                 RdfStrings = new(),
                 ContentGraphs = new()
             }
@@ -272,7 +272,7 @@ public record RecordBuilder
             _storage = _storage with
             {
                 RdfStrings = rdfStrings.ToList(),
-                Triples = new(),
+                ContentTriples = new(),
                 ContentGraphs = new()
             }
         };
@@ -286,7 +286,7 @@ public record RecordBuilder
         _storage = _storage with
         {
             ContentGraphs = _storage.ContentGraphs.Concat(graphs).ToList(),
-            Triples = _storage.Triples.ToList(),
+            ContentTriples = _storage.ContentTriples.ToList(),
             RdfStrings = _storage.RdfStrings.ToList()
         }
     };
@@ -298,7 +298,7 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                Triples = _storage.Triples.Concat(triples).ToList(),
+                ContentTriples = _storage.ContentTriples.Concat(triples).ToList(),
                 RdfStrings = _storage.RdfStrings.ToList(),
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
@@ -312,7 +312,7 @@ public record RecordBuilder
             _storage = _storage with
             {
                 RdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
-                Triples = _storage.Triples.ToList(),
+                ContentTriples = _storage.ContentTriples.ToList(),
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
@@ -327,7 +327,7 @@ public record RecordBuilder
 
         var metadataGraph = CreateMetadataGraph();
 
-        if (_storage.ContentGraphs.Count == 0 && _storage.Triples.Count == 0 && _storage.RdfStrings.Count == 0)
+        if (_storage.ContentGraphs.Count == 0 && _storage.ContentTriples.Count == 0 && _storage.RdfStrings.Count == 0)
         {
             var metadataTs = new TripleStore();
             metadataTs.Add(metadataGraph);
@@ -496,7 +496,7 @@ public record RecordBuilder
     private IEnumerable<Triple> CreateContentTripleString()
     {
 
-        var triples = _storage.Triples.Concat(_storage.RdfStrings.SelectMany(TripleListFromRdfString)).ToList();
+        var triples = _storage.ContentTriples.Concat(_storage.RdfStrings.SelectMany(TripleListFromRdfString)).ToList();
         if (triples.Any(q => q.Subject.ToString().Equals(_storage.Id?.ToString())))
             throw new RecordException("Content may not make metadata statements.");
         return triples;
@@ -573,7 +573,7 @@ public record RecordBuilder
         internal List<string> Describes = [];
         internal List<string> RdfStrings = [];
 
-        internal List<Triple> Triples = [];
+        internal List<Triple> ContentTriples = [];
         internal List<IGraph> ContentGraphs = [];
         internal List<Triple> MetadataTriples = [];
         internal List<string> MetadataRdfStrings = [];
