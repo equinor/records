@@ -74,10 +74,12 @@ public class RecordBuilderTests
             .Build();
 
         // Act
-        var additionalMetadataIsIncludedOnContentGraph = additionalMetadata.All(triple => record.MetadataAsTriples().Contains(triple));
+        var additionalMetadataIsIncludedOnMetadataGraph = additionalMetadata.All(triple => record.MetadataAsTriples().Contains(triple));
+        var additionalMetadataIsIncludedOnContentGraph = additionalMetadata.All(triple => record.ContentAsTriples().Contains(triple));
         var contentIsCopiedToMetadataGraph = record.MetadataAsTriples().Any(triple => content.Contains(triple));
 
-        additionalMetadataIsIncludedOnContentGraph.Should().BeTrue();
+        additionalMetadataIsIncludedOnMetadataGraph.Should().BeTrue();
+        additionalMetadataIsIncludedOnContentGraph.Should().BeFalse();
         contentIsCopiedToMetadataGraph.Should().BeFalse();
     }
 
