@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Records.Exceptions;
+using Records.Sender;
 using System.Diagnostics;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -49,6 +50,13 @@ public class Record : IEquatable<Record>
     {
         _describesConstraintMode = describesConstraintMode;
         LoadFromString(rdfString, reader);
+    }
+
+    public static implicit operator HttpRequestMessage(Record record)
+    {
+        var message = new HttpRequestMessage();
+        message.AddRecord(record);
+        return message;
     }
 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
