@@ -18,6 +18,7 @@ public static class HttpExtensions
     public static void AddRecordId(this HttpRequestMessage message, Immutable.Record record) =>
         message.AddRecordId(record.Id);
 
+    // Assumes the message contains a valid Record on any RDF format handled by DotNetRdf
     public static Immutable.Record ToRecord(this HttpRequestData message)
     {
         var recordString = message.ReadAsString();
