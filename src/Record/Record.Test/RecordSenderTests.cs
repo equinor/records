@@ -5,7 +5,6 @@ using Records.Sender;
 using Records.Immutable;
 using Microsoft.Azure.Functions.Worker.Http;
 using System.Text;
-using VDS.RDF.Query.Expressions;
 using NSubstitute;
 using Microsoft.Azure.Functions.Worker;
 
