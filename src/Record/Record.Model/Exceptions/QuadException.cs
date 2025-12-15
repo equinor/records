@@ -1,4 +1,5 @@
 ﻿namespace Records.Exceptions;
+
 public class QuadException : Exception
 {
     private static string _messageTemplate => "Failure in quad. {0}";

@@ -7,6 +7,7 @@ using VDS.RDF.JsonLd.Syntax;
 using VDS.RDF.Parsing;
 
 namespace RecordGenerator;
+
 public class Program
 {
     public enum RDFFormat

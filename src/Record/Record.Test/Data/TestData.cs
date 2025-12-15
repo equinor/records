@@ -2,6 +2,7 @@
 using VDS.RDF.Writing;
 
 namespace Records.Tests;
+
 public static class TestData
 {
 

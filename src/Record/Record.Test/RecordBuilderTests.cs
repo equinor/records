@@ -12,6 +12,7 @@ using static Records.ProvenanceBuilder;
 using Record = Records.Immutable.Record;
 
 namespace Records.Tests;
+
 public class RecordBuilderTests
 {
     private ITestOutputHelper _outputHelper;
