@@ -22,7 +22,7 @@ public static class HttpExtensions
     {
         var recordString = message.ReadAsString();
         if (string.IsNullOrEmpty(recordString))
-            throw new ArgumentNullException("message.ReadAsString() returned null or empty.");
+            throw new ArgumentException("message.ReadAsString() returned null or empty.");
 
         return new Immutable.Record(recordString);
     }
