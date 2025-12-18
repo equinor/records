@@ -65,6 +65,20 @@ public record RecordBuilder
 
     public RecordBuilder WithScopes(params Uri[] scopes) => WithScopes(scopes.Select(s => s.ToString()));
 
+    public RecordBuilder WithRelated(params string[] related) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                Related = [.. related]
+            }
+        };
+
+    public RecordBuilder WithRelated(IEnumerable<string> related)
+        => WithRelated([.. related]);
+
+    public RecordBuilder WithRelated(params Uri[] related) => WithRelated(related.Select(r => r.ToString()));
+
     public RecordBuilder WithDescribes(params string[] describes) =>
         this with
         {
@@ -471,6 +485,7 @@ public record RecordBuilder
 
         metadataTriples.AddRange(_storage.Replaces.Select(CreateReplacesTriple).Select(q => q));
         metadataTriples.AddRange(_storage.Scopes.Select(CreateScopeTriple).Select(q => q));
+        metadataTriples.AddRange(_storage.Related.Select(CreateRelatedTriple).Select(q => q));
         metadataTriples.AddRange(_storage.Describes.Select(CreateDescribesTriple).Select(q => q));
 
         return metadataTriples;
@@ -555,6 +570,9 @@ public record RecordBuilder
     private Triple CreateScopeTriple(string scope) =>
         CreateTripleWithPredicateAndObject(Namespaces.Record.IsInScope, scope);
 
+    private Triple CreateRelatedTriple(string scope) =>
+        CreateTripleWithPredicateAndObject(Namespaces.Record.Related, scope);
+
     private Triple CreateDescribesTriple(string describes) =>
         CreateTripleWithPredicateAndObject(Namespaces.Record.Describes, describes);
 
@@ -570,6 +588,7 @@ public record RecordBuilder
         internal string? IsSubRecordOf;
         internal List<string> Replaces = [];
         internal List<string> Scopes = [];
+        internal List<string> Related = [];
         internal List<string> Describes = [];
         internal List<string> RdfStrings = [];
 

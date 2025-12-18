@@ -46,6 +46,31 @@ public class RecordBuilderTests
 
 
     [Fact]
+    public void Can__Add__Related()
+    {
+        var id = TestData.CreateRecordId("0");
+        var scopes = TestData.CreateObjectList(2, "scope");
+        var describes = TestData.CreateObjectList(2, "describes");
+        var related = TestData.CreateObjectList(2, "related");
+
+        var record = new RecordBuilder()
+            .WithScopes(scopes)
+            .WithDescribes(describes)
+            .WithRelated(related)
+            .WithId(id)
+            .Build();
+
+        record.Should().NotBeNull();
+
+        var relatedObjects = record.TriplesWithPredicate(Namespaces.Record.Related).Select(triple => triple.Object.ToString()).ToList();
+        relatedObjects.Should().Contain(related.First());
+        relatedObjects.Should().Contain(related.Last());
+
+        record.Id.Should().Be(id);
+    }
+
+
+    [Fact]
     public void WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph()
     {
         // Arrange

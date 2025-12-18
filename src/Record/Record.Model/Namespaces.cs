@@ -12,6 +12,7 @@ public struct Namespaces
 
         public const string Replaces = $"{BaseUrl}replaces";
         public const string IsInScope = $"{BaseUrl}isInScope";
+        public const string Related = $"{BaseUrl}related";
         public const string Describes = $"{BaseUrl}describes";
         public const string IsSubRecordOf = $"{BaseUrl}isSubRecordOf";
         public const string HasContent = $"{BaseUrl}hasContent";
