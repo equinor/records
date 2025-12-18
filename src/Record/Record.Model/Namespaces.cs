@@ -24,6 +24,7 @@ public struct Namespaces
             public readonly static Uri RecordType = new(Record.RecordType);
             public readonly static Uri Replaces = new(Record.Replaces);
             public readonly static Uri IsInScope = new(Record.IsInScope);
+            public readonly static Uri Related = new(Record.Related);
             public readonly static Uri Describes = new(Record.Describes);
             public readonly static Uri IsSubRecordOf = new(Record.IsSubRecordOf);
             public readonly static Uri HasContent = new(Record.HasContent);
@@ -34,6 +35,7 @@ public struct Namespaces
             public readonly static UriNode RecordType = new(Uris.RecordType);
             public readonly static UriNode Replaces = new(Uris.Replaces);
             public readonly static UriNode IsInScope = new(Uris.IsInScope);
+            public readonly static UriNode Related = new(Uris.Related);
             public readonly static UriNode Describes = new(Uris.Describes);
             public readonly static UriNode IsSubRecordOf = new(Uris.IsSubRecordOf);
             public readonly static UriNode HasContent = new(Uris.HasContent);

@@ -62,7 +62,7 @@ public class RecordBuilderTests
 
         record.Should().NotBeNull();
 
-        var relatedObjects = record.TriplesWithPredicate(Namespaces.Record.Related).Select(triple => triple.Object.ToString()).ToList();
+        var relatedObjects = record.Metadata.WithPredicate(Namespaces.Record.UriNodes.Related).Select(triple => triple.Object.ToString()).ToList();
         relatedObjects.Should().Contain(related.First());
         relatedObjects.Should().Contain(related.Last());
 
