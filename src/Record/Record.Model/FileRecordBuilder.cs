@@ -164,7 +164,7 @@ public record FileRecordBuilder
 
     public Record Build()
     {
-        _storage.FileId ??= new Uri($"{Namespaces.FileContent.Att}/file/{Guid.NewGuid()}");
+        _storage.FileId ??= new Uri($"{Namespaces.FileContent.Att}file/{Guid.NewGuid()}");
 
         VerifyBuild();
 
