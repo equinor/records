@@ -46,24 +46,24 @@ public class Record : IEquatable<Record>
 
         ValidateDescribes();
     }
- public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
-        : this(new DotNetRdfRecordBackend(store), describesConstraintMode)
+    public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+           : this(new DotNetRdfRecordBackend(store), describesConstraintMode)
     {
     }
- public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
-        : this(new DotNetRdfRecordBackend(rdfString), describesConstraintMode)
+    public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+           : this(new DotNetRdfRecordBackend(rdfString), describesConstraintMode)
     {
     }
- public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
-        : this(new DotNetRdfRecordBackend(graph), describesConstraintMode)
+    public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+           : this(new DotNetRdfRecordBackend(graph), describesConstraintMode)
     {
     }
- public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-        : this(new DotNetRdfRecordBackend(rdfString, reader), describesConstraintMode)
+    public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+           : this(new DotNetRdfRecordBackend(rdfString, reader), describesConstraintMode)
     {
     }
-    
-    
+
+
     public static implicit operator HttpRequestMessage(Record record)
     {
         var message = new HttpRequestMessage();
@@ -71,7 +71,7 @@ public class Record : IEquatable<Record>
         return message;
     }
 
-    
+
     private void ValidateDescribes()
     {
         switch (_describesConstraintMode)
@@ -87,9 +87,9 @@ public class Record : IEquatable<Record>
                 break;
         }
     }
-    
+
     public IEnumerable<string> Sparql(string queryString) => _backend.Sparql(queryString);
-    
+
     public IGraph MetadataGraph()
     {
         var tempGraph = new Graph(_backend.GetMetadataGraph().BaseUri);
@@ -154,7 +154,7 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var queryResult =  _backend.Query(query);
+        var queryResult = _backend.Query(query);
 
         if (queryResult.Result)
             throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
@@ -186,26 +186,26 @@ public class Record : IEquatable<Record>
     public IEnumerable<INode> SubjectWithType(string type) => SubjectWithType(new Uri(type));
     public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
     public IEnumerable<INode> SubjectWithType(UriNode type) => _backend.SubjectWithType(type);
-    
+
     public IEnumerable<string> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
     public IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
-    public IEnumerable<string> LabelsOfSubject(UriNode subject) =>  _backend.LabelsOfSubject((subject));
-    
+    public IEnumerable<string> LabelsOfSubject(UriNode subject) => _backend.LabelsOfSubject((subject));
+
     public IEnumerable<Triple> TriplesWithSubject(string subject) => TriplesWithSubject(new Uri(subject));
     public IEnumerable<Triple> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
     public IEnumerable<Triple> TriplesWithSubject(UriNode subject) => _backend.TriplesWithSubject((subject));
-    
+
     public IEnumerable<Triple> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
     public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
     public IEnumerable<Triple> TriplesWithPredicate(UriNode predicate) => _backend.TriplesWithPredicate((predicate));
-    
+
     public IEnumerable<Triple> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
     public IEnumerable<Triple> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
     public IEnumerable<Triple> TriplesWithObject(INode @object) => _backend.TriplesWithObject((@object));
-    
+
     public IEnumerable<Triple> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
     public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object) =>  _backend.TriplesWithPredicateAndObject((predicate), (@object));
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object) => _backend.TriplesWithPredicateAndObject((predicate), (@object));
 
     public IEnumerable<Triple> TriplesWithSubjectObject(string subject, string @object) => TriplesWithSubjectObject(new Uri(subject), new Uri(@object));
     public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));

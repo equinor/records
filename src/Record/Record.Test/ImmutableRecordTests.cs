@@ -15,7 +15,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Has_Metadata()
     {
-        var record = new Record(new DotNetRdfRecordBackend( TestData.ValidJsonLdRecordString()));
+        var record = new Record(new DotNetRdfRecordBackend(TestData.ValidJsonLdRecordString()));
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);

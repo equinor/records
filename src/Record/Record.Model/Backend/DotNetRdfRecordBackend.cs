@@ -11,15 +11,14 @@ using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 namespace Records.Backend;
 
-public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRecordBackend>
+public class DotNetRdfRecordBackend : RecordBackendBase
 {
 
-    private IGraph _metadataGraph;
     private readonly TripleStore _store = new TripleStore();
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
-    
+
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public DotNetRdfRecordBackend(ITripleStore store)
@@ -49,7 +48,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
     private void LoadFromTripleStore(ITripleStore store)
     {
         ArgumentNullException.ThrowIfNull(store);
-        
+
         if (store.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
 
         foreach (var graph in store.Graphs) _store.Add(graph);
@@ -57,17 +56,14 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
         _dataset = new InMemoryDataset(_store, false);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
         _queryProcessor = new LeviathanQueryProcessor(_dataset);
-        
+
         var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
         var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
 
         _nQuadsString = sortedTriples;
-        
+
         InitializeMetadata();
     }
-
-
-
 
     private void LoadFromString(string rdfString, IStoreReader reader)
     {
@@ -77,7 +73,6 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
 
         LoadFromTripleStore(store);
     }
-
 
     private void LoadFromString(string rdfString)
     {
@@ -107,14 +102,6 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
         LoadFromTripleStore(tempStore);
     }
 
-    public IGraph MetadataGraph()
-    {
-        var tempGraph = new Graph(_metadataGraph.BaseUri);
-        tempGraph.Merge(_metadataGraph);
-        return tempGraph;
-    }
-    
-    
     private static void ValidateJsonLd(string rdfString)
     {
         try { JsonConvert.DeserializeObject(rdfString); }
@@ -232,7 +219,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
     public override IEnumerable<Triple> TriplesWithPredicate(UriNode predicate)
         => _store
             .GetTriplesWithPredicate(predicate);
-    
+
     public override IEnumerable<Triple> TriplesWithObject(INode @object)
         => _store
             .GetTriplesWithObject(@object);
@@ -253,9 +240,9 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
 
 
     public override IEnumerable<Triple> Triples() => _store.Triples ?? throw new UnloadedRecordException();
-    
 
-    public IEnumerable<Triple> MetadataAsTriples() => _metadataGraph.Triples;
+
+    public IEnumerable<Triple> MetadataAsTriples() => GetMetadataGraph().Triples;
 
     public override bool ContainsTriple(Triple triple) => _store.Contains(triple);
 
@@ -317,8 +304,6 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
             if (result is not null) yield return result.ToString()!;
         }
     }
-
-
     #endregion
 
 

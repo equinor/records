@@ -37,7 +37,7 @@ public interface IRecordBackend
     /// Thrown if query is not "construct".
     /// </exception>
     public IGraph ConstructQuery(SparqlQuery query);
-    
+
     /// <summary>
     /// This method allows you to do select and ask SPARQL queries on your record.
     /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
