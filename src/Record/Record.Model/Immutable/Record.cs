@@ -53,7 +53,6 @@ public class Record : IEquatable<Record>
  public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
         : this(new DotNetRdfRecordBackend(rdfString), describesConstraintMode)
     {
-        ValidateJsonLd(rdfString);
     }
  public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
         : this(new DotNetRdfRecordBackend(graph), describesConstraintMode)
@@ -62,7 +61,6 @@ public class Record : IEquatable<Record>
  public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
         : this(new DotNetRdfRecordBackend(rdfString, reader), describesConstraintMode)
     {
-        ValidateJsonLd(rdfString);
     }
     
     

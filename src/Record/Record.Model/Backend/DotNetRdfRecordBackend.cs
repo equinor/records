@@ -15,7 +15,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
 {
 
     private IGraph _metadataGraph;
-    private readonly TripleStore _store;
+    private readonly TripleStore _store = new TripleStore();
     private InMemoryDataset _dataset;
     private LeviathanQueryProcessor _queryProcessor;
     private string _nQuadsString;
@@ -49,7 +49,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
     private void LoadFromTripleStore(ITripleStore store)
     {
         ArgumentNullException.ThrowIfNull(store);
-
+        
         if (store.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
 
         foreach (var graph in store.Graphs) _store.Add(graph);
