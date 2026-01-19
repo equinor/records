@@ -242,8 +242,6 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     public override IEnumerable<Triple> Triples() => _store.Triples ?? throw new UnloadedRecordException();
 
 
-    public IEnumerable<Triple> MetadataAsTriples() => GetMetadataGraph().Triples;
-
     public override bool ContainsTriple(Triple triple) => _store.Contains(triple);
 
 

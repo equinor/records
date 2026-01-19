@@ -8,7 +8,7 @@ public record RecordMessageBuilder
 {
     private string? _token;
     private Uri? _endpoint;
-    private IriReference? _recordId;
+    private string? _recordId;
     private string? _cursor;
     private Immutable.Record? _record;
 
