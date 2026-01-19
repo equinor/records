@@ -15,7 +15,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Has_Metadata()
     {
-        var record = new Record(new DotNetRdfRecordBackend(TestData.ValidJsonLdRecordString()));
+        var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);
@@ -24,7 +24,7 @@ public class ImmutableRecordTests
     [Fact]
     public void Record_Finds_Id()
     {
-        var record = new Record(new DotNetRdfRecordBackend(TestData.ValidJsonLdRecordString()));
+        var record = new Record(TestData.ValidJsonLdRecordString());
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
