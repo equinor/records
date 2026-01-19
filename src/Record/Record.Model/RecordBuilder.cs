@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Records.Backend;
 using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -345,7 +346,7 @@ public record RecordBuilder
         {
             var metadataTs = new TripleStore();
             metadataTs.Add(metadataGraph);
-            return new Record(metadataTs);
+            return new Record(new DotNetRdfRecordBackend(metadataTs));
         }
 
         var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
@@ -369,7 +370,7 @@ public record RecordBuilder
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
-        return new Record(ts, _storage.DescribesConstraintMode);
+        return new Record(new DotNetRdfRecordBackend(ts), _storage.DescribesConstraintMode);
     }
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
