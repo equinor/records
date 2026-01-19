@@ -4,7 +4,6 @@ using Record = Records.Immutable.Record;
 using Records.Exceptions;
 using VDS.RDF.Writing;
 using Newtonsoft.Json;
-using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 
