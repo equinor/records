@@ -2,6 +2,8 @@
 using Records.Exceptions;
 using Records.Sender;
 using System.Diagnostics;
+using IriTools;
+using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -14,12 +16,8 @@ namespace Records.Immutable;
 [DebuggerDisplay($"{{{nameof(Id)}}}")]
 public class Record : IEquatable<Record>
 {
-    public string Id { get; private set; } = null!;
-    private IGraph _metadataGraph = new Graph();
-    private readonly TripleStore _store = new();
-    private InMemoryDataset _dataset;
-    private LeviathanQueryProcessor _queryProcessor;
-    private string _nQuadsString;
+    private IRecordBackend _backend;
+    public readonly string Id;
     private readonly DescribesConstraintMode _describesConstraintMode;
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
@@ -27,56 +25,12 @@ public class Record : IEquatable<Record>
     public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-    public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+
+    public Record(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
         _describesConstraintMode = describesConstraintMode;
-        LoadFromTripleStore(store);
-    }
-
-    public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-    {
-        _describesConstraintMode = describesConstraintMode;
-        LoadFromGraph(graph);
-    }
-
-    public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-    {
-        _describesConstraintMode = describesConstraintMode;
-        LoadFromString(rdfString);
-    }
-
-    public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-    {
-        _describesConstraintMode = describesConstraintMode;
-        LoadFromString(rdfString, reader);
-    }
-
-    public static implicit operator HttpRequestMessage(Record record)
-    {
-        var message = new HttpRequestMessage();
-        message.AddRecord(record);
-        return message;
-    }
-
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-
-    private void LoadFromTripleStore(ITripleStore store)
-    {
-        ArgumentNullException.ThrowIfNull(store);
-
-        if (store.Graphs.Count < 1) throw new RecordException("A record must contain at least one named graph.");
-
-        foreach (var graph in store.Graphs) _store.Add(graph);
-
-        _dataset = new InMemoryDataset(_store, false);
-        _queryProcessor = new LeviathanQueryProcessor(_dataset);
-        _queryProcessor = new LeviathanQueryProcessor(_dataset);
-
-        _metadataGraph = FindMetadataGraph();
-
-        Id = _metadataGraph.BaseUri?.ToString() ?? throw new RecordException("Metadata graph must have a base URI.");
-
+        _backend = backend;
+        Id = _backend.GetRecordId().ToString();
         Metadata = [.. TriplesWithSubject(Id)];
 
         Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object.ToString()).OrderBy(s => s)];
@@ -91,14 +45,35 @@ public class Record : IEquatable<Record>
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
         ValidateDescribes();
-
-        var rdfString = ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
-        var sortedTriples = string.Join("\n", rdfString.Split('\n').OrderBy(s => s)); // <- Something is off about the canonlization of the RDF
-
-        _nQuadsString = sortedTriples;
+    }
+ public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
+        : this(new DotNetRdfRecordBackend(store), describesConstraintMode)
+    {
+    }
+ public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
+        : this(new DotNetRdfRecordBackend(rdfString), describesConstraintMode)
+    {
+        ValidateJsonLd(rdfString);
+    }
+ public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) 
+        : this(new DotNetRdfRecordBackend(graph), describesConstraintMode)
+    {
+    }
+ public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+        : this(new DotNetRdfRecordBackend(rdfString, reader), describesConstraintMode)
+    {
+        ValidateJsonLd(rdfString);
+    }
+    
+    
+    public static implicit operator HttpRequestMessage(Record record)
+    {
+        var message = new HttpRequestMessage();
+        message.AddRecord(record);
+        return message;
     }
 
-
+    
     private void ValidateDescribes()
     {
         switch (_describesConstraintMode)
@@ -114,54 +89,13 @@ public class Record : IEquatable<Record>
                 break;
         }
     }
-
-    private void LoadFromString(string rdfString, IStoreReader reader)
-    {
-        var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_metadataGraph.IsEmpty || Metadata != null)
-            throw new RecordException("Record is already loaded.");
-
-        store.LoadFromString(rdfString, reader);
-
-        LoadFromTripleStore(store);
-    }
-
-
-    private void LoadFromString(string rdfString)
-    {
-        var store = new TripleStore();
-        if (!string.IsNullOrEmpty(Id) || !_metadataGraph.IsEmpty || Metadata != null)
-            throw new RecordException("Record is already loaded.");
-
-        try
-        {
-            store.LoadFromString(rdfString);
-        }
-        catch
-        {
-            ValidateJsonLd(rdfString);
-            store.LoadFromString(rdfString, new JsonLdParser());
-        }
-
-        LoadFromTripleStore(store);
-    }
-
-    private void LoadFromGraph(IGraph graph)
-    {
-        if (graph.Name == null) throw new RecordException("The IGraph's name must be set.");
-        var tempGraph = new Graph(graph.Name);
-        tempGraph.Merge(graph);
-
-        var tempStore = new TripleStore();
-        tempStore.Add(tempGraph);
-
-        LoadFromTripleStore(tempStore);
-    }
-
+    
+    public IEnumerable<string> Sparql(string queryString) => _backend.Sparql(queryString);
+    
     public IGraph MetadataGraph()
     {
-        var tempGraph = new Graph(_metadataGraph.BaseUri);
-        tempGraph.Merge(_metadataGraph);
+        var tempGraph = new Graph(_backend.GetMetadataGraph().BaseUri);
+        tempGraph.Merge(_backend.GetMetadataGraph());
         return tempGraph;
     }
 
@@ -187,7 +121,7 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
+        var queryResult = _backend.Query(query);
         if (queryResult.Result)
         {
             throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
@@ -222,34 +156,14 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var queryResult = (SparqlResultSet)_queryProcessor.ProcessQuery(query);
+        var queryResult =  _backend.Query(query);
 
         if (queryResult.Result)
             throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
 
     }
 
-    private IGraph FindMetadataGraph()
-    {
-        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . ?g a @RecordType . } }");
-        parameterizedQuery.SetUri("RecordType", new Uri(Namespaces.Record.RecordType));
 
-        var parser = new SparqlQueryParser();
-        var metadataQueryString = parameterizedQuery.ToString();
-        var metadataQuery = parser.ParseFromString(metadataQueryString);
-
-        var result = (IGraph)_queryProcessor.ProcessQuery(metadataQuery);
-        if (result == null || result.IsEmpty) throw new RecordException("A record must have exactly one metadata graph.");
-
-        // Extract the graph name from the result set
-        var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
-
-        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one metadata graph.");
-
-        result.BaseUri = new Uri(graphName);
-
-        return result;
-    }
 
     private static void ValidateJsonLd(string rdfString)
     {
@@ -261,151 +175,44 @@ public class Record : IEquatable<Record>
         }
     }
 
-    public ITripleStore TripleStore()
-    {
-        var tempStore = new TripleStore();
-        foreach (var graph in _store.Graphs) tempStore.Add(graph);
+    public ITripleStore TripleStore() => _backend.TripleStore();
 
-        return tempStore;
-    }
+    public IGraph GetMergedGraphs() => _backend.GetMergedGraphs();
 
-    public IGraph GetMergedGraphs() => _store.Collapse(Id);
-
-    public IEnumerable<IGraph> GetContentGraphs()
-        => _store.Graphs.Where(g => g.Name?.ToString() != Id && !g.IsEmpty);
-
-    /// <summary>
-    /// This method allows you to do a subset of SPARQL queries on your record.
-    /// Supported queries: construct, select. 
-    /// <example>
-    /// Examples:
-    /// <code>
-    /// record.Sparql("select ?s where { ?s a &lt;Thing&gt; . }");
-    /// </code>
-    /// <code>
-    /// record.Sparql("construct { ?s ?p ?o . } where { ?s ?p ?o . ?s a &lt;Thing&gt; . }");
-    /// </code>
-    /// </example>
-    /// </summary>
-    /// <param name="queryString">String must start with "construct" or "select".</param>
-    /// <exception cref="ArgumentException">
-    /// Thrown if query is not "construct" or "select".
-    /// </exception>
-    public IEnumerable<string> Sparql(string queryString)
-    {
-        var command = queryString.Split().First();
-        var parser = new SparqlQueryParser();
-        var query = parser.ParseFromString(queryString);
-
-        return command.ToLower() switch
-        {
-            "construct" => Construct(query),
-            "select" => Select(query),
-            _ => throw new ArgumentException("Unsupported command in SPARQL query.")
-        };
-    }
-
-    /// <summary>
-    /// This method allows you to do select and ask SPARQL queries on your record.
-    /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
-    /// <example>
-    /// Examples:
-    /// <code>
-    /// record.query(new SparqlQueryParser().ParseFromString("select ?s where { ?s a &lt;Thing&gt; . }"));
-    /// </code>
-    /// </example>
-    /// </summary>
-    /// <param name="query">Query to be evaluated over the triples in the record graph</param>
-    /// <exception cref="ArgumentException">
-    /// Thrown if query is not "ask" or "select".
-    /// </exception>
-    public SparqlResultSet Query(SparqlQuery query) =>
-        _queryProcessor.ProcessQuery(query) switch
-        {
-            SparqlResultSet res => res,
-            _ => throw new ArgumentException(
-                "DotNetRdf did not return SparqlResultSet. Probably the Sparql query was not a select or ask query")
-        };
+    public IEnumerable<IGraph> GetContentGraphs() => _backend.GetContentGraphs();
 
 
-    /// <summary>
-    /// This method allows you to do select and ask SPARQL queries on your record.
-    /// See DotNetRdf documentation on how to create SparqlQuery and parse results.
-    /// <example>
-    /// Examples:
-    /// <code>
-    /// record.Sparql(new SparqlQueryParser().ParseFromString("construct { ?s ?p ?o . } where { ?s ?p ?o . ?s a &lt;Thing&gt; . }"));
-    /// </code>
-    /// </example>
-    /// </summary>
-    /// <param name="query">Query to be evaluated over the triples in the record graph</param>
-    /// <exception cref="ArgumentException">
-    /// Thrown if query is not "construct".
-    /// </exception>
-    public IGraph ConstructQuery(SparqlQuery query) =>
-        _queryProcessor.ProcessQuery(query) switch
-        {
-            IGraph res => res,
-            _ => throw new ArgumentException(
-                "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
-        };
+
 
 
     public IEnumerable<INode> SubjectWithType(string type) => SubjectWithType(new Uri(type));
-    public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
-    public IEnumerable<INode> SubjectWithType(INode type)
-        => _store
-        .GetTriplesWithPredicateObject(Namespaces.Rdf.UriNodes.Type, type)
-        .Select(t => t.Subject);
-
+    public IEnumerable<INode> SubjectWithType(UriNode type) => SubjectWithType(type.Uri);
+    public IEnumerable<INode> SubjectWithType(Uri type) => _backend.SubjectWithType(type);
+    
     public IEnumerable<string> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
-    public IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
-    public IEnumerable<string> LabelsOfSubject(INode subject)
-        => _store
-        .GetTriplesWithSubjectPredicate(subject, Namespaces.Rdfs.UriNodes.Label)
-        .Where(t => t.Object is LiteralNode literal)
-        .Select(t => ((LiteralNode)t.Object).Value);
-
+    public IEnumerable<string> LabelsOfSubject(UriNode subject) => LabelsOfSubject(subject.Uri);
+    public IEnumerable<string> LabelsOfSubject(Uri subject) => _backend.LabelsOfSubject((subject));
+    
     public IEnumerable<Triple> TriplesWithSubject(string subject) => TriplesWithSubject(new Uri(subject));
-    public IEnumerable<Triple> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
-    public IEnumerable<Triple> TriplesWithSubject(INode subject)
-        => _store
-            .GetTriplesWithSubject(subject);
+    public IEnumerable<Triple> TriplesWithSubject(Uri subject) => _backend.TriplesWithSubject((subject));
     public IEnumerable<Triple> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
-    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
-    public IEnumerable<Triple> TriplesWithPredicate(INode predicate)
-        => _store
-            .GetTriplesWithPredicate(predicate);
+    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => _backend.TriplesWithPredicate((predicate));
     public IEnumerable<Triple> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
-    public IEnumerable<Triple> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithObject(INode @object)
-        => _store
-            .GetTriplesWithObject(@object);
-
+    public IEnumerable<Triple> TriplesWithObject(Uri @object) => _backend.TriplesWithObject((@object));
     public IEnumerable<Triple> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(INode predicate, INode @object)
-        => _store
-            .GetTriplesWithPredicateObject(predicate, @object);
-
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => _backend.TriplesWithPredicateAndObject((predicate), (@object));
+    
 
     public IEnumerable<Triple> TriplesWithSubjectObject(string subject, string @object) => TriplesWithSubjectObject(new Uri(subject), new Uri(@object));
-    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));
+    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => _backend.TriplesWithSubjectObject((subject), (@object));
 
-    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, UriNode @object)
-        => _store
-            .GetTriplesWithSubjectObject(subject, @object);
-
+    
     public IEnumerable<Triple> TriplesWithSubjectPredicate(string subject, string predicate) => TriplesWithSubjectPredicate(new Uri(subject), new Uri(predicate));
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => TriplesWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
-
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
-        => _store
-            .GetTriplesWithSubjectPredicate(subject, predicate);
+    public IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
 
 
 
-    public IEnumerable<Triple> Triples() => _store.Triples ?? throw new UnloadedRecordException();
+    public IEnumerable<Triple> Triples() => _backend.Triples();
     public IEnumerable<Triple> ContentAsTriples()
     {
         var parser = new SparqlQueryParser();
@@ -415,39 +222,21 @@ public class Record : IEquatable<Record>
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
         var contentQuery = parser.ParseFromString(contentQueryString);
-        var content = ConstructQuery(contentQuery);
+        var content = _backend.ConstructQuery(contentQuery);
         return content.Triples.Except(metadata);
     }
 
-    public IEnumerable<Triple> MetadataAsTriples() => _metadataGraph.Triples;
+    public IEnumerable<Triple> MetadataAsTriples() => _backend.GetMetadataGraph().Triples;
 
-    public bool ContainsTriple(Triple triple) => _store.Contains(triple);
+    public bool ContainsTriple(Triple triple) => _backend.ContainsTriple(triple);
 
 
-    public override string ToString() => _nQuadsString;
+    public override string ToString() => _backend.ToString();
     public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
-    public string ToString(IStoreWriter writer)
-    {
-        var stringWriter = new StringWriter();
-        writer.Save(_store, stringWriter);
-
-        return stringWriter.ToString();
-    }
+    public string ToString(IStoreWriter writer) => _backend.ToString(writer);
 
 
-    public string ToCanonString()
-    {
-        var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
-        var canon = new RdfCanonicalizer().Canonicalize(_store);
-        var canonStore = canon.OutputDataset;
-
-        var stringWriter = new StringWriter();
-        writer.Save(canonStore, stringWriter);
-
-        var result = stringWriter.ToString();
-
-        return result;
-    }
+    public string ToCanonString() => _backend.ToCanonString();
 
     public bool Equals(Record? other)
     {
@@ -469,24 +258,5 @@ public class Record : IEquatable<Record>
     {
         return HashCode.Combine(Scopes, Describes);
     }
-
-    #region Private
-    private IEnumerable<string> Construct(SparqlQuery query)
-    {
-        var resultGraph = ConstructQuery(query);
-        return resultGraph.Triples.Select(t => t.ToString());
-    }
-
-    private IEnumerable<string> Select(SparqlQuery query)
-    {
-        var rset = Query(query);
-        foreach (var result in rset)
-        {
-            if (result is not null) yield return result.ToString()!;
-        }
-    }
-
-
-    #endregion
 
 }

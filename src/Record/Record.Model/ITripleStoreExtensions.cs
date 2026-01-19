@@ -1,4 +1,5 @@
-﻿using Records.Exceptions;
+﻿using Records.Backend;
+using Records.Exceptions;
 using VDS.RDF;
 
 namespace Records;
@@ -63,7 +64,7 @@ public static class ITripleStoreExtensions
             foreach (var contentGraph in localContentGraphs)
                 recordStore.Add(contentGraph);
 
-            records.Add(new Immutable.Record(recordStore));
+            records.Add(new Immutable.Record(new DotNetRdfRecordBackend(recordStore)));
         }
 
         return records;

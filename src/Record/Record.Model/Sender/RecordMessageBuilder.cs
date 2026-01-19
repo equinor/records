@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using IriTools;
+using Microsoft.AspNetCore.WebUtilities;
+using Records.Backend;
 
 namespace Records.Sender;
 
@@ -6,7 +8,7 @@ public record RecordMessageBuilder
 {
     private string? _token;
     private Uri? _endpoint;
-    private string? _recordId;
+    private IriReference? _recordId;
     private string? _cursor;
     private Immutable.Record? _record;
 
@@ -36,7 +38,7 @@ public record RecordMessageBuilder
             _recordId = record.Id
         };
 
-    public RecordMessageBuilder WithRecord(string record) => WithRecord(new Immutable.Record(record));
+    public RecordMessageBuilder WithRecord(string record) => WithRecord(new Immutable.Record(new DotNetRdfRecordBackend(record)));
 
     public RecordMessageBuilder WithRecordId(string recordId) =>
     this with

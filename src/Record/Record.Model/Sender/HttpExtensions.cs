@@ -1,5 +1,7 @@
-﻿using VDS.RDF.Writing;
+﻿using IriTools;
+using VDS.RDF.Writing;
 using Microsoft.Azure.Functions.Worker.Http;
+using Records.Backend;
 
 namespace Records.Sender;
 
@@ -12,8 +14,8 @@ public static class HttpExtensions
         message.AddRecord(record.ToString<JsonLdWriter>());
 
 
-    public static void AddRecordId(this HttpRequestMessage message, string recordId) =>
-        message.Content = new MultipartFormDataContent() { { new StringContent(recordId), "recordId" } };
+    public static void AddRecordId(this HttpRequestMessage message, IriReference recordId) =>
+        message.Content = new MultipartFormDataContent() { { new StringContent(recordId.ToString()), "recordId" } };
 
     public static void AddRecordId(this HttpRequestMessage message, Immutable.Record record) =>
         message.AddRecordId(record.Id);
@@ -25,6 +27,6 @@ public static class HttpExtensions
         if (string.IsNullOrEmpty(recordString))
             throw new ArgumentException("message.ReadAsString() returned null or empty.");
 
-        return new Immutable.Record(recordString);
+        return new Immutable.Record(new DotNetRdfRecordBackend(recordString));
     }
 }
