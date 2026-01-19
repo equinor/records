@@ -236,7 +236,7 @@ public class Record : IEquatable<Record>
     public bool ContainsTriple(Triple triple) => _backend.ContainsTriple(triple);
 
 
-    public override string ToString() => _backend.ToString();
+    public override string? ToString() => _backend.ToString();
     public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
     public string ToString(IStoreWriter writer) => _backend.ToString(writer);
 
