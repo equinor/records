@@ -302,6 +302,11 @@ public class DotNetRdfRecordBackend : RecordBackendBase
             if (result is not null) yield return result.ToString()!;
         }
     }
+
+    public override int GetHashCode()
+    {
+        throw new NotImplementedException();
+    }
     #endregion
 
 

@@ -1,9 +1,9 @@
-using Records;
-using Records.Backend;
 using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
+
+namespace Records.Backend;
 
 public abstract class RecordBackendBase : IRecordBackend
 {

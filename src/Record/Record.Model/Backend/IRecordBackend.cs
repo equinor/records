@@ -9,7 +9,6 @@ public interface IRecordBackend
     public ITripleStore TripleStore();
     public Uri GetRecordId();
     public IGraph GetMetadataGraph();
-    public string ToString();
     public string ToString(IStoreWriter writer);
     public IEnumerable<INode> SubjectWithType(UriNode type);
 
