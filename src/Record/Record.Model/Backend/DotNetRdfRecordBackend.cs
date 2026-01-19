@@ -215,47 +215,38 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IEquatable<DotNetRdfRec
         };
 
 
-    public override IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
-    public IEnumerable<INode> SubjectWithType(INode type)
+    public override IEnumerable<INode> SubjectWithType(UriNode type)
         => _store
         .GetTriplesWithPredicateObject(Namespaces.Rdf.UriNodes.Type, type)
         .Select(t => t.Subject);
 
-    public override IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
-    public IEnumerable<string> LabelsOfSubject(INode subject)
+    public override IEnumerable<string> LabelsOfSubject(UriNode subject)
         => _store
         .GetTriplesWithSubjectPredicate(subject, Namespaces.Rdfs.UriNodes.Label)
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value);
 
-    public override IEnumerable<Triple> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
-    public IEnumerable<Triple> TriplesWithSubject(INode subject)
+    public override IEnumerable<Triple> TriplesWithSubject(UriNode subject)
         => _store
             .GetTriplesWithSubject(subject);
-    public override IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
-    public IEnumerable<Triple> TriplesWithPredicate(INode predicate)
+    public override IEnumerable<Triple> TriplesWithPredicate(UriNode predicate)
         => _store
             .GetTriplesWithPredicate(predicate);
-    public override IEnumerable<Triple> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithObject(INode @object)
+    
+    public override IEnumerable<Triple> TriplesWithObject(INode @object)
         => _store
             .GetTriplesWithObject(@object);
 
-    public override IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(INode predicate, INode @object)
+    public override IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
         => _store
             .GetTriplesWithPredicateObject(predicate, @object);
 
 
-    public override IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));
-
-    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, UriNode @object)
+    public override IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, INode @object)
         => _store
             .GetTriplesWithSubjectObject(subject, @object);
 
-    public override IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => TriplesWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
-
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
+    public override IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
         => _store
             .GetTriplesWithSubjectPredicate(subject, predicate);
 

@@ -11,16 +11,16 @@ public interface IRecordBackend
     public IGraph GetMetadataGraph();
     public string ToString();
     public string ToString(IStoreWriter writer);
-    public IEnumerable<INode> SubjectWithType(Uri type);
+    public IEnumerable<INode> SubjectWithType(UriNode type);
 
-    public IEnumerable<string> LabelsOfSubject(Uri subject);
+    public IEnumerable<string> LabelsOfSubject(UriNode subject);
 
-    public IEnumerable<Triple> TriplesWithSubject(Uri subject);
-    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate);
-    public IEnumerable<Triple> TriplesWithObject(Uri @object);
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object);
-    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object);
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate);
+    public IEnumerable<Triple> TriplesWithSubject(UriNode subject);
+    public IEnumerable<Triple> TriplesWithPredicate(UriNode predicate);
+    public IEnumerable<Triple> TriplesWithObject(INode @object);
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
+    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, INode @object);
+    public IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate);
 
     /// <summary>
     /// This method allows you to do select and ask SPARQL queries on your record.

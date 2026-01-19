@@ -186,29 +186,36 @@ public class Record : IEquatable<Record>
 
 
     public IEnumerable<INode> SubjectWithType(string type) => SubjectWithType(new Uri(type));
-    public IEnumerable<INode> SubjectWithType(UriNode type) => SubjectWithType(type.Uri);
-    public IEnumerable<INode> SubjectWithType(Uri type) => _backend.SubjectWithType(type);
+    public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
+    public IEnumerable<INode> SubjectWithType(UriNode type) => _backend.SubjectWithType(type);
     
     public IEnumerable<string> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
-    public IEnumerable<string> LabelsOfSubject(UriNode subject) => LabelsOfSubject(subject.Uri);
-    public IEnumerable<string> LabelsOfSubject(Uri subject) => _backend.LabelsOfSubject((subject));
+    public IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
+    public IEnumerable<string> LabelsOfSubject(UriNode subject) =>  _backend.LabelsOfSubject((subject));
     
     public IEnumerable<Triple> TriplesWithSubject(string subject) => TriplesWithSubject(new Uri(subject));
-    public IEnumerable<Triple> TriplesWithSubject(Uri subject) => _backend.TriplesWithSubject((subject));
-    public IEnumerable<Triple> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
-    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => _backend.TriplesWithPredicate((predicate));
-    public IEnumerable<Triple> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
-    public IEnumerable<Triple> TriplesWithObject(Uri @object) => _backend.TriplesWithObject((@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => _backend.TriplesWithPredicateAndObject((predicate), (@object));
+    public IEnumerable<Triple> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
+    public IEnumerable<Triple> TriplesWithSubject(UriNode subject) => _backend.TriplesWithSubject((subject));
     
+    public IEnumerable<Triple> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
+    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
+    public IEnumerable<Triple> TriplesWithPredicate(UriNode predicate) => _backend.TriplesWithPredicate((predicate));
+    
+    public IEnumerable<Triple> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
+    public IEnumerable<Triple> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
+    public IEnumerable<Triple> TriplesWithObject(INode @object) => _backend.TriplesWithObject((@object));
+    
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
+    public IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object) =>  _backend.TriplesWithPredicateAndObject((predicate), (@object));
 
     public IEnumerable<Triple> TriplesWithSubjectObject(string subject, string @object) => TriplesWithSubjectObject(new Uri(subject), new Uri(@object));
-    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => _backend.TriplesWithSubjectObject((subject), (@object));
+    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));
+    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, INode @object) => _backend.TriplesWithSubjectObject((subject), (@object));
 
-    
     public IEnumerable<Triple> TriplesWithSubjectPredicate(string subject, string predicate) => TriplesWithSubjectPredicate(new Uri(subject), new Uri(predicate));
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
+    public IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => TriplesWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
+    public IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
 
 
 

@@ -40,14 +40,14 @@ public abstract class RecordBackendBase : IRecordBackend
 
     public abstract ITripleStore TripleStore();
     public abstract string ToString(IStoreWriter writer);
-    public abstract IEnumerable<INode> SubjectWithType(Uri type);
-    public abstract IEnumerable<string> LabelsOfSubject(Uri subject);
-    public abstract IEnumerable<Triple> TriplesWithSubject(Uri subject);
-    public abstract IEnumerable<Triple> TriplesWithPredicate(Uri predicate);
-    public abstract IEnumerable<Triple> TriplesWithObject(Uri @object);
-    public abstract IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object);
-    public abstract IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object);
-    public abstract IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate);
+    public abstract IEnumerable<INode> SubjectWithType(UriNode type);
+    public abstract IEnumerable<string> LabelsOfSubject(UriNode subject);
+    public abstract IEnumerable<Triple> TriplesWithSubject(UriNode subject);
+    public abstract IEnumerable<Triple> TriplesWithPredicate(UriNode predicate);
+    public abstract IEnumerable<Triple> TriplesWithObject(INode @object);
+    public abstract IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
+    public abstract IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, INode @object);
+    public abstract IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate);
     public abstract IGraph ConstructQuery(SparqlQuery query);
     public abstract SparqlResultSet Query(SparqlQuery query);
     public abstract IEnumerable<string> Sparql(string queryString);
