@@ -65,6 +65,9 @@ public class RecordBuilderTests
         var relatedObjects = record.Metadata.WithPredicate(Namespaces.Record.UriNodes.Related).Select(triple => triple.Object.ToString()).ToList();
         relatedObjects.Should().Contain(related.First());
         relatedObjects.Should().Contain(related.Last());
+        
+        record.Related.Should().NotBeNull();
+        record.Related.Should().BeEquivalentTo(relatedObjects);
 
         record.Id.Should().Be(id);
     }

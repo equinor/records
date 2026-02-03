@@ -21,6 +21,7 @@ public class Record : IEquatable<Record>
     private readonly DescribesConstraintMode _describesConstraintMode;
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
+    public HashSet<string>? Related { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
@@ -34,8 +35,8 @@ public class Record : IEquatable<Record>
         Metadata = [.. TriplesWithSubject(Id)];
 
         Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object.ToString()).OrderBy(s => s)];
+        Related = [.. TriplesWithPredicate(Namespaces.Record.Related).Select(q => q.Object.ToString()).OrderBy(r => r)];
         Describes = [.. TriplesWithPredicate(Namespaces.Record.Describes).Select(q => q.Object.ToString()).OrderBy(d => d)];
-
         Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object.ToString())];
 
         var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).ToArray();
