@@ -52,12 +52,12 @@ public static class TestData
             .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool("https://example.com/software/v1"));
     }
 
-    public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static Task<string> ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<JsonLdWriter>(id, numberScopes, numberDescribes, numberQuads);
-    public static string ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static Task<string> ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<NQuadsWriter>(id, numberScopes, numberDescribes, numberQuads);
 
-    public static string ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
+    public static Task<string> ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
     {
         var record = ValidRecord(id, numberScopes, numberDescribes, numberQuads);
         return record.ToString<T>();

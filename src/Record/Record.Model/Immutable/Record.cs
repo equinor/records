@@ -30,15 +30,15 @@ public class Record : IEquatable<Record>
     {
         _describesConstraintMode = describesConstraintMode;
         _backend = backend;
-        Id = _backend.GetRecordId().ToString();
-        Metadata = [.. TriplesWithSubject(Id)];
+        Id = _backend.GetRecordId().Result.ToString();
+        Metadata = [.. TriplesWithSubject(Id).Result];
 
-        Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Select(q => q.Object.ToString()).OrderBy(s => s)];
-        Describes = [.. TriplesWithPredicate(Namespaces.Record.Describes).Select(q => q.Object.ToString()).OrderBy(d => d)];
+        Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Result.Select(q => q.Object.ToString()).OrderBy(s => s)];
+        Describes = [.. TriplesWithPredicate(Namespaces.Record.Describes).Result.Select(q => q.Object.ToString()).OrderBy(d => d)];
 
-        Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Select(q => q.Object.ToString())];
+        Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Result.Select(q => q.Object.ToString())];
 
-        var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).ToArray();
+        var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Result.Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
 
@@ -88,16 +88,17 @@ public class Record : IEquatable<Record>
         }
     }
 
-    public IEnumerable<string> Sparql(string queryString) => _backend.Sparql(queryString);
+    public Task<IEnumerable<string>> Sparql(string queryString) => _backend.Sparql(queryString);
 
-    public IGraph MetadataGraph()
+    public async Task<IGraph> MetadataGraph()
     {
-        var tempGraph = new Graph(_backend.GetMetadataGraph().BaseUri);
-        tempGraph.Merge(_backend.GetMetadataGraph());
+        var metadataGraph = await _backend.GetMetadataGraph();
+        var tempGraph = new Graph(metadataGraph.BaseUri);
+        tempGraph.Merge(metadataGraph);
         return tempGraph;
     }
 
-    private void AskIfNotAllDescribesNodesExistInContent()
+    private async Task AskIfNotAllDescribesNodesExistInContent()
     {
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
@@ -119,14 +120,14 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var queryResult = _backend.Query(query);
+        var queryResult = await _backend.Query(query);
         if (queryResult.Result)
         {
             throw new RecordException("All described nodes on the metadata graph must exist as nodes on the content graph.");
         }
     }
 
-    private void AskIfContentSubjectIsUnreachableFromMetadata()
+    private async Task AskIfContentSubjectIsUnreachableFromMetadata()
     {
         var parameterizedQuery = new SparqlParameterizedString(@"
             ASK {
@@ -154,7 +155,7 @@ public class Record : IEquatable<Record>
         var queryString = parameterizedQuery.ToString();
         var query = parser.ParseFromString(queryString);
 
-        var queryResult = _backend.Query(query);
+        var queryResult = await _backend.Query(query);
 
         if (queryResult.Result)
             throw new RecordException("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
@@ -173,75 +174,75 @@ public class Record : IEquatable<Record>
         }
     }
 
-    public ITripleStore TripleStore() => _backend.TripleStore();
+    public Task<ITripleStore> TripleStore() => _backend.TripleStore();
 
-    public IGraph GetMergedGraphs() => _backend.GetMergedGraphs();
+    public Task<IGraph> GetMergedGraphs() => _backend.GetMergedGraphs();
 
-    public IEnumerable<IGraph> GetContentGraphs() => _backend.GetContentGraphs();
-
-
+    public Task<IEnumerable<IGraph>> GetContentGraphs() => _backend.GetContentGraphs();
 
 
 
-    public IEnumerable<INode> SubjectWithType(string type) => SubjectWithType(new Uri(type));
-    public IEnumerable<INode> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
-    public IEnumerable<INode> SubjectWithType(UriNode type) => _backend.SubjectWithType(type);
-
-    public IEnumerable<string> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
-    public IEnumerable<string> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
-    public IEnumerable<string> LabelsOfSubject(UriNode subject) => _backend.LabelsOfSubject((subject));
-
-    public IEnumerable<Triple> TriplesWithSubject(string subject) => TriplesWithSubject(new Uri(subject));
-    public IEnumerable<Triple> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
-    public IEnumerable<Triple> TriplesWithSubject(UriNode subject) => _backend.TriplesWithSubject((subject));
-
-    public IEnumerable<Triple> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
-    public IEnumerable<Triple> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
-    public IEnumerable<Triple> TriplesWithPredicate(UriNode predicate) => _backend.TriplesWithPredicate((predicate));
-
-    public IEnumerable<Triple> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
-    public IEnumerable<Triple> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithObject(INode @object) => _backend.TriplesWithObject((@object));
-
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object) => _backend.TriplesWithPredicateAndObject((predicate), (@object));
-
-    public IEnumerable<Triple> TriplesWithSubjectObject(string subject, string @object) => TriplesWithSubjectObject(new Uri(subject), new Uri(@object));
-    public IEnumerable<Triple> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));
-    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, INode @object) => _backend.TriplesWithSubjectObject((subject), (@object));
-
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(string subject, string predicate) => TriplesWithSubjectPredicate(new Uri(subject), new Uri(predicate));
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => TriplesWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
 
 
+    public Task<IEnumerable<INode>> SubjectWithType(string type) => SubjectWithType(new Uri(type));
+    public Task<IEnumerable<INode>> SubjectWithType(Uri type) => SubjectWithType(new UriNode(type));
+    public Task<IEnumerable<INode>> SubjectWithType(UriNode type) => _backend.SubjectWithType(type);
 
-    public IEnumerable<Triple> Triples() => _backend.Triples();
-    public IEnumerable<Triple> ContentAsTriples()
+    public Task<IEnumerable<string>> LabelsOfSubject(string subject) => LabelsOfSubject(new Uri(subject));
+    public Task<IEnumerable<string>> LabelsOfSubject(Uri subject) => LabelsOfSubject(new UriNode(subject));
+    public Task<IEnumerable<string>> LabelsOfSubject(UriNode subject) => _backend.LabelsOfSubject((subject));
+
+    public Task<IEnumerable<Triple>> TriplesWithSubject(string subject) => TriplesWithSubject(new Uri(subject));
+    public Task<IEnumerable<Triple>> TriplesWithSubject(Uri subject) => TriplesWithSubject(new UriNode(subject));
+    public Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject) => _backend.TriplesWithSubject((subject));
+
+    public Task<IEnumerable<Triple>> TriplesWithPredicate(string predicate) => TriplesWithPredicate(new Uri(predicate));
+    public Task<IEnumerable<Triple>> TriplesWithPredicate(Uri predicate) => TriplesWithPredicate(new UriNode(predicate));
+    public Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate) => _backend.TriplesWithPredicate((predicate));
+
+    public Task<IEnumerable<Triple>> TriplesWithObject(string @object) => TriplesWithObject(new Uri(@object));
+    public Task<IEnumerable<Triple>> TriplesWithObject(Uri @object) => TriplesWithObject(new UriNode(@object));
+    public Task<IEnumerable<Triple>> TriplesWithObject(INode @object) => _backend.TriplesWithObject((@object));
+
+    public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(string predicate, string @object) => TriplesWithPredicateAndObject(new Uri(predicate), new Uri(@object));
+    public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(Uri predicate, Uri @object) => TriplesWithPredicateAndObject(new UriNode(predicate), new UriNode(@object));
+    public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object) => _backend.TriplesWithPredicateAndObject((predicate), (@object));
+
+    public Task<IEnumerable<Triple>> TriplesWithSubjectObject(string subject, string @object) => TriplesWithSubjectObject(new Uri(subject), new Uri(@object));
+    public Task<IEnumerable<Triple>> TriplesWithSubjectObject(Uri subject, Uri @object) => TriplesWithSubjectObject(new UriNode(subject), new UriNode(@object));
+    public Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object) => _backend.TriplesWithSubjectObject((subject), (@object));
+
+    public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(string subject, string predicate) => TriplesWithSubjectPredicate(new Uri(subject), new Uri(predicate));
+    public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(Uri subject, Uri predicate) => TriplesWithSubjectPredicate(new UriNode(subject), new UriNode(predicate));
+    public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
+
+
+
+    public Task<IEnumerable<Triple>> Triples() => _backend.Triples();
+    public async Task<IEnumerable<Triple>> ContentAsTriples()
     {
         var parser = new SparqlQueryParser();
-        var metadata = MetadataAsTriples();
+        var metadata = await MetadataAsTriples();
 
         var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
         var contentQuery = parser.ParseFromString(contentQueryString);
-        var content = _backend.ConstructQuery(contentQuery);
+        var content = await _backend.ConstructQuery(contentQuery);
         return content.Triples.Except(metadata);
     }
 
-    public IEnumerable<Triple> MetadataAsTriples() => _backend.GetMetadataGraph().Triples;
+    public async Task<IEnumerable<Triple>> MetadataAsTriples() => (await _backend.GetMetadataGraph()).Triples;
 
-    public bool ContainsTriple(Triple triple) => _backend.ContainsTriple(triple);
+    public Task<bool> ContainsTriple(Triple triple) => _backend.ContainsTriple(triple);
 
 
     public override string? ToString() => _backend.ToString();
-    public string ToString<T>() where T : IStoreWriter, new() => ToString(new T());
-    public string ToString(IStoreWriter writer) => _backend.ToString(writer);
+    public Task<string> ToString<T>() where T : IStoreWriter, new() => ToString(new T());
+    public Task<string> ToString(IStoreWriter writer) => _backend.ToString(writer);
 
 
-    public string ToCanonString() => _backend.ToCanonString();
+    public Task<string> ToCanonString() => _backend.ToCanonString();
 
     public bool Equals(Record? other)
     {

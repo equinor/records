@@ -371,7 +371,7 @@ public class RecordBuilderTests
             graph.Assert(new Triple(sub, pre, obj));
         }
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var result = () => record = new RecordBuilder()
             .WithId(id0)
             .WithScopes(scope)
@@ -610,7 +610,7 @@ public class RecordBuilderTests
             .WithContent(content)
             .WithIsSubRecordOf(superRecordId);
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var buildProcess = () => record = builder.Build();
 
         buildProcess.Should().NotThrow();
@@ -645,7 +645,7 @@ public class RecordBuilderTests
             .WithIsSubRecordOf(superRecordId1)
             .WithIsSubRecordOf(superRecordId2);
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var buildProcess = () => record = builder.Build();
 
         buildProcess.Should().NotThrow();
@@ -712,7 +712,7 @@ public class RecordBuilderTests
         var superRecord = TestData.CreateRecordId("superRecordId");
         var superDuperRecord = TestData.CreateRecordId("superDuperRecordId");
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var recordBuilder = () =>
         {
@@ -773,7 +773,7 @@ public class RecordBuilderTests
         var @object = new LiteralNode("string", UriFactory.Create("http://www.w3.org/2001/XMLSchema#string"));
         var additionalMetadata = new Triple(subject, predicate, @object);
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var recordBuilder = () =>
         {

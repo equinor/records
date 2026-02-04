@@ -10,12 +10,12 @@ public static class HttpExtensions
     public static void AddRecord(this HttpRequestMessage message, string record) =>
         message.Content = new RecordContent(record);
 
-    public static void AddRecord(this HttpRequestMessage message, Immutable.Record record) =>
-        message.AddRecord(record.ToString<JsonLdWriter>());
+    public static async Task AddRecord(this HttpRequestMessage message, Immutable.Record record) =>
+        message.AddRecord(await record.ToString<JsonLdWriter>());
 
 
-    public static void AddRecordId(this HttpRequestMessage message, string recordId) =>
-        message.Content = new MultipartFormDataContent() { { new StringContent(recordId), "recordId" } };
+    public static Task AddRecordId(this HttpRequestMessage message, string recordId) =>
+        Task.FromResult(message.Content = new MultipartFormDataContent() { { new StringContent(recordId), "recordId" } });
 
     public static void AddRecordId(this HttpRequestMessage message, Immutable.Record record) =>
         message.AddRecordId(record.Id);

@@ -59,6 +59,9 @@
 		</EmbeddedResource>
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Records.Tests" />
+	</ItemGroup>
 
 	<Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
 		<ItemGroup>

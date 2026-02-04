@@ -1,0 +1,22 @@
+@prefix :        <#> .
+@prefix fuseki:  <http://jena.apache.org/fuseki#> .
+@prefix tdb2:    <http://jena.apache.org/2016/tdb#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ja:      <http://jena.hpl.hp.com/2005/11/Assembler#> .
+@prefix bravo:   <https://rdf.equinor.com/bravo/> .
+
+[] rdf:type fuseki:Server ;
+   fuseki:services (
+     [
+       rdf:type fuseki:Service ;
+       fuseki:name "ds" ;
+       fuseki:serviceQuery "sparql" ;
+       fuseki:serviceUpdate "update" ;
+       fuseki:serviceUpload "upload" ;
+       fuseki:serviceReadWriteGraphStore "data" ;
+
+       fuseki:dataset [
+         rdf:type ja:MemoryDataset ;
+       ]
+     ]
+   ) .

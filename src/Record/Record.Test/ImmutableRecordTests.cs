@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 using FluentAssertions;
-using Record = Records.Immutable.Record;
+using Records.Immutable;
 using Records.Exceptions;
 using VDS.RDF.Writing;
 using Newtonsoft.Json;
@@ -12,40 +12,40 @@ namespace Records.Tests;
 public class ImmutableRecordTests
 {
     [Fact]
-    public void Record_Has_Metadata()
+    public async Task Record_Has_Metadata()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);
     }
 
     [Fact]
-    public void Record_Finds_Id()
+    public async Task Record_Finds_Id()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
     }
 
     [Fact]
-    public void Record_CanBeCreated_FromGraph()
+    public async Task Record_CanBeCreated_FromGraph()
     {
         ITripleStore store = new TripleStore();
-        var graph = TestData.ValidRecord().GetMergedGraphs();
+        var graph = await TestData.ValidRecord().GetMergedGraphs();
 
-        var record = new Record(graph);
+        var record = new Immutable.Record(graph);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
     }
 
     [Fact]
-    public void Record_Can_Do_Queries()
+    public async Task Record_Can_Do_Queries()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
-        var queryResult = record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var queryResult = await record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
         var result = queryResult.Count();
         result.Should().Be(5);
     }
@@ -56,37 +56,37 @@ public class ImmutableRecordTests
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
-        var result = () => new Record(rdf);
+        var result = () => new Immutable.Record(rdf);
 
         result.Should().Throw<RecordException>().WithMessage("A record must have exactly one metadata graph.");
     }
 
 
     [Fact]
-    public void Creating_Record_From_Invalid_JsonLD_Throws()
+    public async Task Creating_Record_From_Invalid_JsonLD_Throws()
     {
-        var invalidJsonLdString = TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
-        var result = () => new Record(invalidJsonLdString);
+        var invalidJsonLdString = await TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
+        var result = () => new Immutable.Record(invalidJsonLdString);
         result.Should().Throw<RecordException>().WithInnerException<JsonReaderException>();
     }
 
     [Fact]
-    public void Record_Can_Be_Serialised_Nquad()
+    public async Task Record_Can_Be_Serialised_Nquad()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
 
-        var result = record.ToString<NQuadsWriter>().Split("\n").Length;
+        var result = (await record.ToString<NQuadsWriter>()).Split("\n").Length;
 
         // This is how many quads are generated
         result.Should().Be(32);
     }
 
     [Fact]
-    public void Record_Can_Be_Serialised_Nquad_With_Direct_Writer()
+    public async Task Record_Can_Be_Serialised_Nquad_With_Direct_Writer()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
 
-        var result = record.ToString(new NQuadsWriter()).Split("\n").Length;
+        var result = (await record.ToString(new NQuadsWriter())).Split("\n").Length;
 
         // This is how many quads are generated
         result.Should().Be(32);
@@ -95,19 +95,19 @@ public class ImmutableRecordTests
 
 
     [Fact]
-    public void Record_Can_Produce_Quads()
+    public async Task Record_Can_Produce_Quads()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
-        var result = record.Triples().Count();
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var result = (await record.Triples()).Count();
 
         // This is how many quads should be extraced from the JSON-LD
         result.Should().Be(31);
     }
 
     [Fact]
-    public void Record_Has_Scopes_And_Describes()
+    public async Task Record_Has_Scopes_And_Describes()
     {
-        var record = new Record(TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
 
         var scopes = record.Scopes;
         var describes = record.Describes;
@@ -120,44 +120,44 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_With_Same_Scopes_And_Describes_Are_Equal()
+    public async Task Record_With_Same_Scopes_And_Describes_Are_Equal()
     {
-        var rdfString1 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
-        var rdfString2 = TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
+        var rdfString1 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
+        var rdfString2 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
 
-        var record = new Record(rdfString1);
-        var record2 = new Record(rdfString2);
+        var record = new Immutable.Record(rdfString1);
+        var record2 = new Immutable.Record(rdfString2);
 
         record.Should().Be(record2);
     }
 
     [Fact]
-    public void Record_With_Different_Scopes_And_Describes_Are_Not_Equal()
+    public async Task Record_With_Different_Scopes_And_Describes_Are_Not_Equal()
     {
         var id1 = TestData.CreateRecordId("1");
         var id2 = TestData.CreateRecordId("2");
 
-        var rdfString1 = TestData.ValidNQuadRecordString(id1, 3, 2);
-        var rdfString2 = TestData.ValidNQuadRecordString(id2, 3, 2);
+        var rdfString1 = await TestData.ValidNQuadRecordString(id1, 3, 2);
+        var rdfString2 = await TestData.ValidNQuadRecordString(id2, 3, 2);
 
-        var record = new Record(rdfString1);
-        var record2 = new Record(rdfString2);
+        var record = new Immutable.Record(rdfString1);
+        var record2 = new Immutable.Record(rdfString2);
 
         record.Should().Be(record2);
 
         var id3 = TestData.CreateRecordId("3");
-        var rdfString3 = TestData.ValidNQuadRecordString(id3, 2, 2);
+        var rdfString3 = await TestData.ValidNQuadRecordString(id3, 2, 2);
 
-        var record3 = new Record(rdfString3);
+        var record3 = new Immutable.Record(rdfString3);
         record.Should().NotBe(record3);
     }
 
     [Fact]
-    public void Record_Can_Write_To_JsonLd()
+    public async Task Record_Can_Write_To_JsonLd()
     {
-        var record = new Record(TestData.ValidNQuadRecordString());
+        var record = new Immutable.Record(await TestData.ValidNQuadRecordString());
 
-        var jsonLdString = record.ToString<JsonLdWriter>();
+        var jsonLdString = await record.ToString<JsonLdWriter>();
 
         var jsonArray = default(JsonArray);
 
@@ -173,9 +173,9 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_Can_Be_SubRecord()
+    public async Task Record_Can_Be_SubRecord()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var superRecordId = TestData.CreateRecordId("super");
         var loadResult = () =>
         {
@@ -192,42 +192,42 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_Does_Not_Need_SubRecordOf()
+    public async Task Record_Does_Not_Need_SubRecordOf()
     {
-        var record = default(Record);
-        var loadResult = () => record = new Record(TestData.ValidJsonLdRecordString());
-        loadResult.Should().NotThrow();
+        var record = default(Immutable.Record);
+        var loadResult = async () => record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        await loadResult.Should().NotThrowAsync();
 
         record.Should().NotBeNull();
         record!.IsSubRecordOf.Should().BeNull();
     }
 
     [Fact]
-    public void Record_Can_Have_At_Most_One_SuperRecord()
+    public async Task Record_Can_Have_At_Most_One_SuperRecord()
     {
-        var record = default(Record);
-        var loadResult = () =>
+        var record = default(Immutable.Record);
+        var loadResult = async () =>
         {
             var immutable = TestData.ValidRecordBeforeBuildComplete()
                 .WithIsSubRecordOf(TestData.CreateRecordId("super"))
                 .Build();
 
-            var recordString = immutable.ToString(new NQuadsWriter());
+            var recordString = await immutable.ToString(new NQuadsWriter());
             recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}> .\n";
 
-            record = new Record(recordString);
+            record = new Immutable.Record(recordString);
         };
-        loadResult.Should()
-            .Throw<RecordException>()
+        await loadResult.Should()
+            .ThrowAsync<RecordException>()
             .WithMessage("A record can at most be the subrecord of one other record.");
 
         record.Should().BeNull();
     }
 
     [Fact]
-    public void Record_Content_Does_Not_Include_Metadata()
+    public async Task Record_Content_Does_Not_Include_Metadata()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var loadResult = () =>
         {
             record = TestData.ValidRecordBeforeBuildComplete()
@@ -236,17 +236,17 @@ public class ImmutableRecordTests
         };
         loadResult.Should().NotThrow();
 
-        var metadata = record!.MetadataAsTriples();
-        var content = record.ContentAsTriples();
+        var metadata = await record!.MetadataAsTriples();
+        var content = await record.ContentAsTriples();
         var contentSubjects = content.Select(t => t.Subject.ToString()).ToList();
         contentSubjects.Should().NotContain(record.Id);
         content.Should().NotContain(metadata);
     }
 
     [Fact]
-    public void Record_Can_Copy_Of_Internal_Graph()
+    public async Task Record_Can_Copy_Of_Internal_Graph()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var loadResult = () =>
         {
             record = TestData.ValidRecordBeforeBuildComplete()
@@ -256,14 +256,14 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var tripleStore = record!.TripleStore();
-        record.Triples().Should().Contain(tripleStore.Triples);
+        var tripleStore = await record!.TripleStore();
+        (await record.Triples()).Should().Contain(tripleStore.Triples);
     }
 
     [Fact]
-    public void Record_Can_Be_Copied_To_New_Record_Via_ITripleStore()
+    public async Task Record_Can_Be_Copied_To_New_Record_Via_ITripleStore()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var loadResult = () =>
         {
             record = TestData.ValidRecordBeforeBuildComplete()
@@ -273,22 +273,22 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var tripleStore = record!.TripleStore();
-        var metadataGraph = record.MetadataGraph();
+        var tripleStore = await record!.TripleStore();
+        var metadataGraph = await record.MetadataGraph();
         metadataGraph.Name.ToString().Should().Be(record.Id);
 
-        record.Triples().Should().Contain(tripleStore.Triples);
+        (await record.Triples()).Should().Contain(tripleStore.Triples);
 
-        var newRecord = new Record(tripleStore);
+        var newRecord = new Immutable.Record(tripleStore);
         newRecord.Should().Be(record);
         newRecord.Id.Should().Be(record.Id);
-        newRecord.Triples().Should().Contain(record.Triples());
+        (await newRecord.Triples()).Should().Contain(await record.Triples());
     }
 
     [Fact]
-    public void Record_Can_Query_Subjects_With_Type()
+    public async Task Record_Can_Query_Subjects_With_Type()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var typeExample = new UriNode(new Uri("https://example.com/type/Cool"));
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
@@ -304,16 +304,16 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var subjects = record!.SubjectWithType(typeExample);
+        var subjects = await record!.SubjectWithType(typeExample);
 
         subjects.Count().Should().Be(1);
         subjects.Single().Should().Be(subjectExample);
     }
 
     [Fact]
-    public void Record_Can_Query_Subjects_With_Label()
+    public async Task Record_Can_Query_Subjects_With_Label()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var labelExample = "This is an example label.";
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
@@ -329,16 +329,16 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var labels = record!.LabelsOfSubject(subjectExample);
+        var labels = await record!.LabelsOfSubject(subjectExample);
 
         labels.Count().Should().Be(1);
         labels.Single().Should().Be(labelExample);
     }
 
     [Fact]
-    public void Record_Can_Query_Graphs()
+    public async Task Record_Can_Query_Graphs()
     {
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var recordId = TestData.CreateRecordId(1);
 
@@ -361,66 +361,66 @@ public class ImmutableRecordTests
 
         loadResult.Should().NotThrow();
 
-        var labelTriples = record!.TriplesWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
+        var labelTriples = await record!.TriplesWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
         labelTriples.Count().Should().Be(1);
         labelTriples.Single().Should().Be(labelTriple);
 
 
-        var typeTriples = record.TriplesWithSubjectPredicate(subjectExample, Namespaces.Rdf.UriNodes.Type);
+        var typeTriples = await record.TriplesWithSubjectPredicate(subjectExample, Namespaces.Rdf.UriNodes.Type);
 
         typeTriples.Count().Should().Be(1);
         typeTriples.Single().Should().Be(typeTriple);
 
 
-        var recordTriples = record.TriplesWithSubjectObject(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.RecordType);
+        var recordTriples = await record.TriplesWithSubjectObject(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.RecordType);
 
         recordTriples.Count().Should().Be(1);
         recordTriples.Single().Should().Be(new Triple(new UriNode(new Uri(recordId)), Namespaces.Rdf.UriNodes.Type, Namespaces.Record.UriNodes.RecordType));
     }
 
     [Fact]
-    public void Record_Can_Be_Created_From_String_And_IStoreReader()
+    public async Task Record_Can_Be_Created_From_String_And_IStoreReader()
     {
-        var recordString = TestData.ValidJsonLdRecordString();
+        var recordString = await TestData.ValidJsonLdRecordString();
         var reader = new JsonLdParser();
 
         var loadResult = () =>
         {
-            var record = new Record(recordString, reader);
+            var record = new Immutable.Record(recordString, reader);
         };
 
         loadResult.Should().NotThrow();
     }
 
     [Fact]
-    public void Record_With_Wrong_IStoreReader_Fails_To_Load()
+    public async Task Record_With_Wrong_IStoreReader_Fails_To_Load()
     {
-        var recordString = TestData.ValidJsonLdRecordString();
+        var recordString = await TestData.ValidJsonLdRecordString();
         var reader = new NQuadsParser();
 
         var loadResult = () =>
         {
-            var record = new Record(recordString, reader);
+            var record = new Immutable.Record(recordString, reader);
         };
 
         loadResult.Should().Throw<RdfParseException>();
     }
 
     [Fact]
-    public void Record_Can_Load_From_TripleStore()
+    public async Task Record_Can_Load_From_TripleStore()
     {
         var originalRecord = TestData.ValidRecord();
 
-        var recordString = originalRecord.ToString<JsonLdWriter>();
+        var recordString = await originalRecord.ToString<JsonLdWriter>();
         var store = new TripleStore();
         store.LoadFromString(recordString, new JsonLdParser());
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var loadResult = () =>
         {
-            record = new Record(store);
+            record = new Immutable.Record(store);
         };
 
         loadResult.Should().NotThrow();
@@ -430,7 +430,7 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void Record_Collapse_ShouldReturnSingleGraphWithAllTriples()
+    public async Task Record_Collapse_ShouldReturnSingleGraphWithAllTriples()
     {
         // Arrange
         var recordId = "https://example.com/1";
@@ -450,7 +450,7 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public void RecordGraph_Can_Create_New_Record()
+    public async Task RecordGraph_Can_Create_New_Record()
     {
         // Arrange
         var recordId = "https://example.com/1";
@@ -459,15 +459,15 @@ public class ImmutableRecordTests
         var graph = record.GetMergedGraphs();
 
         // Act
-        var result = new Record(graph);
+        var result = new Immutable.Record(graph);
 
         // Assert
         result.Should().Be(record);
-        result.Triples().Count().Should().Be(record.Triples().Count());
+        result.Triples().Count().Should().Be((await record.Triples()).Count());
     }
 
     [Fact]
-    public void Record_GetContentGraphs_Returns_All_Content_Graphs()
+    public async Task Record_GetContentGraphs_Returns_All_Content_Graphs()
     {
         // Arrange
         var recordId = "https://example.com/1";

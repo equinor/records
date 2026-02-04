@@ -10,16 +10,15 @@ public class FusekiContainerManager : IAsyncLifetime
     private const int _fusekiPort = 3030;
     private IContainer? _fusekiContainer;
 
-    public FusekiClient CreateClient(Func<Task<string>>? _ = null) =>
-       FusekiClient.CreateAsync(
-           new Uri($"http://{_fusekiContainer!.Hostname}:{_fusekiContainer!.GetMappedPublicPort(_fusekiPort)}"));
+    public Uri address =>
+           new Uri($"http://{_fusekiContainer!.Hostname}:{_fusekiContainer!.GetMappedPublicPort(_fusekiPort)}");
 
     public async Task InitializeAsync()
     {
-        var commonDirectoryPath = CommonDirectoryPath.GetSolutionDirectory();
+        var commonDirectoryPath = CommonDirectoryPath.GetBinDirectory();
         var futureImage = new ImageFromDockerfileBuilder()
             .WithName(_imageName)
-            .WithDockerfileDirectory(commonDirectoryPath, "jena-fuseki")
+            .WithDockerfileDirectory(commonDirectoryPath, "docker-fuseki")
             .WithDockerfile("Dockerfile")
             .WithCleanUp(true)
             .Build();
@@ -27,7 +26,7 @@ public class FusekiContainerManager : IAsyncLifetime
         await futureImage.CreateAsync().ConfigureAwait(false);
 
         _fusekiContainer = new ContainerBuilder(_imageName)
-            .WithPortBinding(_fusekiPort, _fusekiPort)
+            .WithPortBinding(_fusekiPort, true)
             .WithEnvironment("ADMIN_PASSWORD", "admin")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(_fusekiPort))
             .WithCleanUp(true)

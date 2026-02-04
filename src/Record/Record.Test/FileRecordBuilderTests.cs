@@ -2,13 +2,12 @@
 using FluentAssertions;
 using Records.Exceptions;
 using VDS.RDF.Writing;
-using Record = Records.Immutable.Record;
 namespace Records.Tests;
 
 public class FileRecordBuilderTests
 {
     [Fact]
-    public void FileRecordBuilder_ShouldCreate_ValidRecordWithFileContent()
+    public async Task FileRecordBuilder_ShouldCreate_ValidRecordWithFileContent()
     {
 
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
@@ -26,17 +25,17 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var recstring = fileRecord.ToString<TriGWriter>();
+        var recstring = await fileRecord.ToString<TriGWriter>();
 
         fileRecord.Should().NotBeNull();
-        fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
-        fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
-        fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(3);
+        (await fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf)).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
+        (await fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime)).Count().Should().Be(1);
+        (await fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type)).Count().Should().Be(3);
     }
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateUriNode__WhenObjectIsFileType()
+    public async Task FileRecordBuilder__ShouldCreateUriNode__WhenObjectIsFileType()
     {
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
@@ -54,13 +53,13 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var fileTypeNode = fileRecord.TriplesWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
+        var fileTypeNode = (await fileRecord.TriplesWithObject(Namespaces.FileContent.Type)).Select(q => q.Object).First();
         fileTypeNode.Should().NotBeNull("The variable fileTypeNode is null which means that it is not an uri node.");
 
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateDervivedFrom()
+    public async Task FileRecordBuilder__ShouldCreateDervivedFrom()
     {
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
@@ -79,13 +78,13 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var derivedFromNode = fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object.ToString()).First();
+        var derivedFromNode = (await fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom)).Select(q => q.Object.ToString()).First();
         derivedFromNode.Should().Be("https://example.com/derivedFrom");
     }
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateDerivedFrom__FromUri()
+    public async Task FileRecordBuilder__ShouldCreateDerivedFrom__FromUri()
     {
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
@@ -105,15 +104,15 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var describesNode = fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object.ToString()).First();
+        var describesNode = (await fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom)).Select(q => q.Object.ToString()).First();
         describesNode.Should().Be(httpsExampleComDescribes.ToString());
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenModelTypeIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenModelTypeIsMissing()
     {
         {
-            var fileRecord = default(Record);
+            var fileRecord = default(Immutable.Record);
             var scopes = TestData.CreateObjectList(3, "scope");
 
 
@@ -139,10 +138,10 @@ public class FileRecordBuilderTests
         }
     }
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenDocumentTypeIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenDocumentTypeIsMissing()
     {
         {
-            var fileRecord = default(Record);
+            var fileRecord = default(Immutable.Record);
             var scopes = TestData.CreateObjectList(3, "scope");
 
 
@@ -170,9 +169,9 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenContentIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenContentIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
         var scopes = TestData.CreateObjectList(3, "scope");
 
         var fileRecordBuilder = () =>
@@ -198,9 +197,9 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenFileNameIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenFileNameIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
         var scopes = TestData.CreateObjectList(3, "scope");
 
         var fileRecordBuilder = () =>
@@ -226,9 +225,9 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenFileExtensionIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenFileExtensionIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
         var scopes = TestData.CreateObjectList(3, "scope");
 
         var fileRecordBuilder = () =>
@@ -253,9 +252,9 @@ public class FileRecordBuilderTests
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenScopesIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenScopesIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
 
         var fileRecordBuilder = () =>
         {
@@ -279,9 +278,9 @@ public class FileRecordBuilderTests
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowAggregateException__WhenSeveralValuesIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowAggregateException__WhenSeveralValuesIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
 
         var fileRecordBuilder = () =>
         {
