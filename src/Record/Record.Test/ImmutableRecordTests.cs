@@ -436,12 +436,12 @@ public class ImmutableRecordTests
         var recordId = "https://example.com/1";
 
         var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
-        var tripleStore = record.TripleStore();
+        var tripleStore = await record.TripleStore();
 
         var collapsedGraph = tripleStore.Collapse(recordId);
 
         // Act
-        var result = record.GetMergedGraphs();
+        var result = await record.GetMergedGraphs();
 
         // Assert
         result.Should().BeEquivalentTo(collapsedGraph);
@@ -456,14 +456,14 @@ public class ImmutableRecordTests
         var recordId = "https://example.com/1";
 
         var record = TestData.ValidRecord(recordId);
-        var graph = record.GetMergedGraphs();
+        var graph = await record.GetMergedGraphs();
 
         // Act
         var result = new Immutable.Record(graph);
 
         // Assert
         result.Should().Be(record);
-        result.Triples().Count().Should().Be((await record.Triples()).Count());
+        (await result.Triples()).Count().Should().Be((await record.Triples()).Count());
     }
 
     [Fact]
@@ -475,7 +475,7 @@ public class ImmutableRecordTests
         var record = TestData.ValidRecord(recordId);
 
         // Act
-        var result = record.GetContentGraphs();
+        var result = await record.GetContentGraphs();
 
         // Assert
         result.Should().HaveCount(1);

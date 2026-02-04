@@ -7,7 +7,7 @@ namespace Records.Tests;
 public class ITripleStoreExtentionsTests
 {
     [Fact]
-    public void Collapse_WithId_ShouldReturnGraph()
+    public async Task Collapse_WithId_ShouldReturnGraph()
     {
         // Arrange
         var store = new TripleStore();
@@ -23,7 +23,7 @@ public class ITripleStoreExtentionsTests
     }
 
     [Fact]
-    public void Collapse_WithUri_ShouldReturnGraph()
+    public async Task Collapse_WithUri_ShouldReturnGraph()
     {
         // Arrange
         var store = new TripleStore();
@@ -39,7 +39,7 @@ public class ITripleStoreExtentionsTests
     }
 
     [Fact]
-    public void Collapse_WithIRefNode_ShouldReturnGraph()
+    public async Task Collapse_WithIRefNode_ShouldReturnGraph()
     {
         // Arrange
         var store = new TripleStore();
@@ -54,7 +54,7 @@ public class ITripleStoreExtentionsTests
         result.Should().BeEquivalentTo(graph);
     }
     [Fact]
-    public void Collapse_WithMultipleGraphs_ShouldReturnGraph()
+    public async Task Collapse_WithMultipleGraphs_ShouldReturnGraph()
     {
         // Arrange
         var firstId = "https://example.com/1";
@@ -77,7 +77,7 @@ public class ITripleStoreExtentionsTests
     }
 
     [Fact]
-    public void String_WithMultipleRecords_ShouldParseToSameRecords()
+    public async Task String_WithMultipleRecords_ShouldParseToSameRecords()
     {
         // Arrange
         var firstId = "https://example.com/1";
@@ -104,7 +104,7 @@ public class ITripleStoreExtentionsTests
 
         recordIds.Should().Contain(firstId);
         foundRecords.Should().Contain(firstRecord);
-        foundFirstRecord.Triples().Should().HaveCount(firstRecord.Triples().Count());
+        (await foundFirstRecord.Triples()).Should().HaveCount((await firstRecord.Triples()).Count());
 
         var firstString = firstRecord.ToCanonString();
         var foundFirstString = foundFirstRecord.ToCanonString();
@@ -112,6 +112,6 @@ public class ITripleStoreExtentionsTests
 
         recordIds.Should().Contain(secondId);
         foundRecords.Should().Contain(secondRecord);
-        foundSecondRecord.Triples().Should().HaveCount(secondRecord.Triples().Count());
+        (await foundSecondRecord.Triples()).Should().HaveCount((await secondRecord.Triples()).Count());
     }
 }
