@@ -2,14 +2,10 @@
 using Records.Exceptions;
 using Records.Sender;
 using System.Diagnostics;
-using IriTools;
 using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
-using VDS.RDF.Query.Datasets;
-using VDS.RDF.Writing;
-using StringWriter = System.IO.StringWriter;
 
 namespace Records.Immutable;
 
@@ -90,7 +86,9 @@ public class Record : IEquatable<Record>
     }
 
     public IEnumerable<string> Sparql(string queryString) => _backend.Sparql(queryString);
-
+    
+    public IGraph ConstructQuery(SparqlQuery sparqlQuery) => _backend.ConstructQuery(sparqlQuery);
+    
     public IGraph MetadataGraph()
     {
         var tempGraph = new Graph(_backend.GetMetadataGraph().BaseUri);
