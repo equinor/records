@@ -86,9 +86,9 @@ public class Record : IEquatable<Record>
     }
 
     public IEnumerable<string> Sparql(string queryString) => _backend.Sparql(queryString);
-    
+
     public IGraph ConstructQuery(SparqlQuery sparqlQuery) => _backend.ConstructQuery(sparqlQuery);
-    
+
     public IGraph MetadataGraph()
     {
         var tempGraph = new Graph(_backend.GetMetadataGraph().BaseUri);
