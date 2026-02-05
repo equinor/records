@@ -11,11 +11,11 @@ namespace Records.Backend;
 public class FusekiRecordBackend : RecordBackendBase
 {
     private readonly Uri BaseAddress;
-    private Uri SparqlEndpointUrl() => new($"{BaseAddress}/{_datasetName}/sparql");
-    private Uri UpdateEndpointUrl() => new($"{BaseAddress}/{_datasetName}/update");
-    private Uri DataEndpointUrl() => new($"{BaseAddress}/{_datasetName}/data");
-    private Uri CreateDatasetEndpointUrl() => new($"{BaseAddress}/$/datasets");
-    private Uri DatasetEndpointUrl() => new($"{BaseAddress}/$/datasets/{_datasetName}");
+    private Uri SparqlEndpointUrl() => new($"{BaseAddress}{_datasetName}/sparql");
+    private Uri UpdateEndpointUrl() => new($"{BaseAddress}{_datasetName}/update");
+    private Uri DataEndpointUrl() => new($"{BaseAddress}{_datasetName}/data");
+    private Uri CreateDatasetEndpointUrl() => new($"{BaseAddress}$/datasets");
+    private Uri DatasetEndpointUrl() => new($"{BaseAddress}$/datasets/{_datasetName}");
     private readonly Func<Task<string>>? _authorization;
     private readonly string _datasetName;
 
@@ -56,7 +56,7 @@ public class FusekiRecordBackend : RecordBackendBase
     private async Task CreateDatasetAsync()
     {
         var client = await CreateClientAsync();
-        var query = $"dbName={_datasetName}&dbType=memory";
+        var query = $"dbName={_datasetName}&dbType=mem";
         var fullUri = $"{CreateDatasetEndpointUrl()}?{query}";
         var content = new StringContent("");
         var response = await client.PostAsync(fullUri, content);
@@ -169,34 +169,81 @@ public class FusekiRecordBackend : RecordBackendBase
         throw new NotImplementedException();
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
+
+
+    public override async Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
     {
-        throw new NotImplementedException();
+        string queryString = $"SELECT ?p ?o WHERE {{ <{subject.Uri}> ?p ?o . }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(subject,
+                result.Value("p"),
+                result.Value("o")
+            ));
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
     {
-        throw new NotImplementedException();
+        string queryString = $"SELECT ?p ?o WHERE {{ ?s <{predicate.Uri}> ?o . }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(result.Value("s"),
+                predicate,
+                result.Value("o")
+            ));
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
     {
-        throw new NotImplementedException();
+        string queryString = $"SELECT ?p ?o WHERE {{ ?s ?p {@object.ToString(new TurtleFormatter())} . }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(result.Value("s"),
+                result.Value("p"),
+                @object
+            ));
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
     {
-        throw new NotImplementedException();
+        var turtleFormatter = new TurtleFormatter();
+        string queryString = $"SELECT ?s WHERE {{ ?s {predicate.ToString(turtleFormatter)} {@object.ToString(turtleFormatter)} . }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(result.Value("s"),
+                predicate,
+                @object
+            ));
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
     {
-        throw new NotImplementedException();
+        var turtleFormatter = new TurtleFormatter();
+        string queryString = $"SELECT ?p WHERE {{ {subject.ToString(turtleFormatter)} ?p {@object.ToString(turtleFormatter)} . }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(subject,
+                result.Value("p"),
+                @object
+            ));
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
     {
-        throw new NotImplementedException();
+        var turtleFormatter = new TurtleFormatter();
+        string queryString = $"SELECT ?o WHERE {{ {subject.ToString(turtleFormatter)} {predicate.ToString(turtleFormatter)} ?o . }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(subject,
+                predicate,
+                result.Value("o")
+            ));
     }
 
     public override async Task<IGraph> ConstructQuery(SparqlQuery query)
@@ -205,14 +252,18 @@ public class FusekiRecordBackend : RecordBackendBase
         return await queryClient.QueryWithResultGraphAsync(query.ToString());
     }
 
-    public override Task<SparqlResultSet> Query(SparqlQuery query)
+    public override async Task<SparqlResultSet> Query(SparqlQuery query)
     {
-        throw new NotImplementedException();
+        var queryClient = await GetSparqlQueryClient();
+        return await queryClient.QueryWithResultSetAsync(query.ToString());
     }
 
-    public override Task<IEnumerable<string>> Sparql(string queryString)
+    public override async Task<IEnumerable<string>> Sparql(string queryString)
     {
-        throw new NotImplementedException();
+        var queryClient = await GetSparqlQueryClient();
+        var resultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return resultSet
+            .Select(result => result.ToString() ?? throw new InvalidOperationException("Null result from sparql query on record"));
     }
 
     public override Task<IGraph> GetMergedGraphs()

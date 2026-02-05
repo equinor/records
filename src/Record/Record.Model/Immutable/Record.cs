@@ -67,7 +67,7 @@ public class Record : IEquatable<Record>
     public static implicit operator HttpRequestMessage(Record record)
     {
         var message = new HttpRequestMessage();
-        message.AddRecord(record).RunSynchronously();
+        message.AddRecord(record).Wait();
         return message;
     }
 

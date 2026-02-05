@@ -6,6 +6,7 @@ RUN mkdir -p /opt/jena && \
     mv /opt/jena/apache-jena-fuseki-* /opt/jena/jena-fuseki2
 
 COPY config/in_memory.ttl /opt/jena/config.ttl
+COPY config/shiro.ini /opt/jena/jena-fuseki2/run/shiro.ini
 
 WORKDIR /opt/jena/jena-fuseki2
 EXPOSE 3030

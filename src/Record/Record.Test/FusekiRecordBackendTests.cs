@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Record.Test.TestInfrastructure;
 using VDS.RDF;
 using VDS.RDF.Writing;
@@ -7,6 +8,8 @@ namespace Records.Tests;
 
 public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerManager) : IClassFixture<FusekiContainerManager>, IAsyncLifetime
 {
+    readonly Uri _connectionUri = fusekiContainerManager.address;
+
     [Fact]
     public async Task CanCreateFusekiRecordBackend()
     {
@@ -14,11 +17,24 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var graph = await TestData.ValidRecord().TripleStore();
         var writer = new TriGWriter();
         var recordString = VDS.RDF.Writing.StringWriter.Write(graph, writer);
-
-        var connectionstring = fusekiContainerManager.address;
-        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, connectionstring, () => Task.FromResult(string.Empty));
+        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, _connectionUri, () => Task.FromResult(string.Empty));
         Assert.NotNull(backend);
         var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
+        var result = record.Metadata!.Count();
+
+        result.Should().Be(14);
+    }
+
+    [Fact]
+    public async Task CanCreateFusekiRecordFromJsonLdRecord()
+    {
+        var recordString = await TestData.ValidJsonLdRecordString();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, _connectionUri, () => Task.FromResult(string.Empty));
+        Assert.NotNull(backend);
+        var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
+        var result = record.Metadata!.Count();
+
+        result.Should().Be(14);
     }
 
     public Task InitializeAsync() => fusekiContainerManager.InitializeAsync();
