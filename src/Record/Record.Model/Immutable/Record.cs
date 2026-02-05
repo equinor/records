@@ -2,14 +2,10 @@
 using Records.Exceptions;
 using Records.Sender;
 using System.Diagnostics;
-using IriTools;
 using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
-using VDS.RDF.Query.Datasets;
-using VDS.RDF.Writing;
-using StringWriter = System.IO.StringWriter;
 
 namespace Records.Immutable;
 
@@ -21,6 +17,7 @@ public class Record : IEquatable<Record>
     private readonly DescribesConstraintMode _describesConstraintMode;
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
+    public HashSet<string>? Related { get; private set; }
     public HashSet<string>? Describes { get; private set; }
     public List<string>? Replaces { get; private set; }
     public string? IsSubRecordOf { get; set; }
@@ -37,7 +34,8 @@ public class Record : IEquatable<Record>
         Describes = [.. TriplesWithPredicate(Namespaces.Record.Describes).Result.Select(q => q.Object.ToString()).OrderBy(d => d)];
 
         Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Result.Select(q => q.Object.ToString())];
-
+        Related = [.. TriplesWithPredicate(Namespaces.Record.Related).Result.Select(q => q.Object.ToString()).OrderBy(r => r)];
+        
         var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Result.Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
@@ -89,6 +87,8 @@ public class Record : IEquatable<Record>
     }
 
     public Task<IEnumerable<string>> Sparql(string queryString) => _backend.Sparql(queryString);
+
+    public async Task<IGraph> ConstructQuery(SparqlQuery sparqlQuery) => _backend.ConstructQuery(sparqlQuery);
 
     public async Task<IGraph> MetadataGraph()
     {
