@@ -20,7 +20,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, _connectionUri, () => Task.FromResult(string.Empty));
         Assert.NotNull(backend);
         var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
-        var result = record.Metadata!.Count();
+        var result = record.Metadata?.Count;
 
         result.Should().Be(14);
     }
