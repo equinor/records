@@ -22,7 +22,7 @@ public class RecordSenderTests
                         .Build();
 
         var message = new HttpRequestMessage();
-        message.AddRecord(record);
+        await message.AddRecord(record);
 
         var resultContentType = message.Content!.Headers.ContentType;
         resultContentType.Should().Be(new MediaTypeHeaderValue("application/ld+json"));

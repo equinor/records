@@ -7,7 +7,7 @@ namespace Records.Backend;
 public interface IRecordBackend
 {
     public Task<ITripleStore> TripleStore();
-    public Task<Uri> GetRecordId();
+    public Uri GetRecordId();
     public Task<IGraph> GetMetadataGraph();
     public Task<string> ToString(IStoreWriter writer);
     public Task<IEnumerable<INode>> SubjectWithType(UriNode type);

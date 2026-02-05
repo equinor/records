@@ -120,10 +120,10 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return Task.FromResult((ITripleStore)tempStore);
     }
 
-    public override Task<IGraph> GetMergedGraphs() => Task.FromResult(_store.Collapse(GetRecordId().Result));
+    public override Task<IGraph> GetMergedGraphs() => Task.FromResult(_store.Collapse(GetRecordId()));
 
     public override Task<IEnumerable<IGraph>> GetContentGraphs()
-        => Task.FromResult(_store.Graphs.Where(g => g.Name?.ToString() != GetRecordId().ToString() && !g.IsEmpty));
+        => Task.FromResult(_store.Graphs.Where(g => g.Name?.ToString() != GetRecordId().AbsoluteUri && !g.IsEmpty));
 
     /// <summary>
     /// This method allows you to do a subset of SPARQL queries on your record.

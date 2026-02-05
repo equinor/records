@@ -30,7 +30,7 @@ public class Record : IEquatable<Record>
     {
         _describesConstraintMode = describesConstraintMode;
         _backend = backend;
-        Id = _backend.GetRecordId().Result.ToString();
+        Id = _backend.GetRecordId().AbsoluteUri;
         Metadata = [.. TriplesWithSubject(Id).Result];
 
         Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Result.Select(q => q.Object.ToString()).OrderBy(s => s)];
@@ -44,7 +44,7 @@ public class Record : IEquatable<Record>
 
         IsSubRecordOf = subRecordOf.FirstOrDefault();
 
-        ValidateDescribes();
+        ValidateDescribes().Wait();
     }
     public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
            : this(new DotNetRdfRecordBackend(store), describesConstraintMode)
@@ -67,23 +67,23 @@ public class Record : IEquatable<Record>
     public static implicit operator HttpRequestMessage(Record record)
     {
         var message = new HttpRequestMessage();
-        message.AddRecord(record);
+        message.AddRecord(record).RunSynchronously();
         return message;
     }
 
 
-    private void ValidateDescribes()
+    private async Task ValidateDescribes()
     {
         switch (_describesConstraintMode)
         {
             case DescribesConstraintMode.None:
                 break;
             case DescribesConstraintMode.DescribesIsInContent:
-                AskIfNotAllDescribesNodesExistInContent();
+                await AskIfNotAllDescribesNodesExistInContent();
                 break;
             case DescribesConstraintMode.AllContentReachableFromDescribes:
-                AskIfNotAllDescribesNodesExistInContent();
-                AskIfContentSubjectIsUnreachableFromMetadata();
+                await AskIfNotAllDescribesNodesExistInContent();
+                await AskIfContentSubjectIsUnreachableFromMetadata();
                 break;
         }
     }
