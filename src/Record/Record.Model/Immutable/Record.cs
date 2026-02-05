@@ -88,7 +88,7 @@ public class Record : IEquatable<Record>
 
     public Task<IEnumerable<string>> Sparql(string queryString) => _backend.Sparql(queryString);
 
-    public async Task<IGraph> ConstructQuery(SparqlQuery sparqlQuery) => _backend.ConstructQuery(sparqlQuery);
+    public Task<IGraph> ConstructQuery(SparqlQuery sparqlQuery) => _backend.ConstructQuery(sparqlQuery);
 
     public async Task<IGraph> MetadataGraph()
     {
