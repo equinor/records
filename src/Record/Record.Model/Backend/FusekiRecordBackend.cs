@@ -18,7 +18,7 @@ public class FusekiRecordBackend : RecordBackendBase
     private Uri DatasetEndpointUrl() => new($"{BaseAddress}/$/datasets/{_datasetName}");
     private readonly Func<Task<string>>? _authorization;
     private readonly string _datasetName;
-    
+
     private FusekiRecordBackend(Uri baseAddress, Func<Task<string>>? authorization = null)
     {
         _datasetName = $"record_{Guid.NewGuid()}";
@@ -26,12 +26,12 @@ public class FusekiRecordBackend : RecordBackendBase
         BaseAddress = baseAddress ?? throw new ArgumentNullException(nameof(baseAddress), "Base address cannot be null.");
     }
 
-    
+
     public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null)
     {
         var client = new FusekiRecordBackend(baseAddress, authorization);
         await client.CreateDatasetAsync();
-        await client.UploadRdfData(rdfString);   
+        await client.UploadRdfData(rdfString);
         await client.InitializeMetadata();
         return client;
     }
@@ -46,7 +46,7 @@ public class FusekiRecordBackend : RecordBackendBase
     }
     private async Task<HttpClient> CreateClientAsync()
     {
-        var client = new HttpClient {  };
+        var client = new HttpClient { };
         if (_authorization != null)
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authorization());
 
@@ -66,7 +66,7 @@ public class FusekiRecordBackend : RecordBackendBase
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
         }
     }
-    
+
     private async Task DeleteDatasetAsync()
     {
         var client = await CreateClientAsync();
@@ -79,7 +79,7 @@ public class FusekiRecordBackend : RecordBackendBase
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
         }
     }
-    
+
     internal async Task UploadRdfData(string rdfData)
     {
         using var client = await CreateClientAsync();
@@ -92,7 +92,7 @@ public class FusekiRecordBackend : RecordBackendBase
             throw new Exception($"Failed to upload RDF data: {response.StatusCode} - {errorMessage}");
         }
     }
-    
+
     internal async Task DeleteNamedGraphs(IEnumerable<string> graphUris)
     {
         using var httpClient = await CreateSparqlClientAsync();
@@ -135,7 +135,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
         return response.StatusCode;
     }
-    
+
     public override Task<ITripleStore> TripleStore()
     {
         throw new NotImplementedException();

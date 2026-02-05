@@ -14,9 +14,9 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var graph = await TestData.ValidRecord().TripleStore();
         var writer = new TriGWriter();
         var recordString = VDS.RDF.Writing.StringWriter.Write(graph, writer);
-        
+
         var connectionstring = fusekiContainerManager.address;
-        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, connectionstring, () => Task.FromResult(string.Empty) );
+        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, connectionstring, () => Task.FromResult(string.Empty));
         Assert.NotNull(backend);
         var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
     }
@@ -24,5 +24,5 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     public Task InitializeAsync() => fusekiContainerManager.InitializeAsync();
 
     public Task DisposeAsync() => fusekiContainerManager.DisposeAsync();
-    
+
 }

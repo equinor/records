@@ -117,13 +117,13 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         var tempStore = new TripleStore();
         foreach (var graph in _store.Graphs) tempStore.Add(graph);
 
-        return Task.FromResult((ITripleStore) tempStore);
+        return Task.FromResult((ITripleStore)tempStore);
     }
 
-    public override Task<IGraph> GetMergedGraphs() =>  Task.FromResult(_store.Collapse(GetRecordId().Result));
+    public override Task<IGraph> GetMergedGraphs() => Task.FromResult(_store.Collapse(GetRecordId().Result));
 
     public override Task<IEnumerable<IGraph>> GetContentGraphs()
-        =>  Task.FromResult(_store.Graphs.Where(g => g.Name?.ToString() != GetRecordId().ToString() && !g.IsEmpty));
+        => Task.FromResult(_store.Graphs.Where(g => g.Name?.ToString() != GetRecordId().ToString() && !g.IsEmpty));
 
     /// <summary>
     /// This method allows you to do a subset of SPARQL queries on your record.
@@ -150,8 +150,8 @@ public class DotNetRdfRecordBackend : RecordBackendBase
 
         return command.ToLower() switch
         {
-            "construct" =>  Task.FromResult(Construct(query)),
-            "select" =>  Task.FromResult(Select(query)),
+            "construct" => Task.FromResult(Construct(query)),
+            "select" => Task.FromResult(Select(query)),
             _ => throw new ArgumentException("Unsupported command in SPARQL query.")
         };
     }
@@ -173,7 +173,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     public override Task<SparqlResultSet> Query(SparqlQuery query) =>
         _queryProcessor.ProcessQuery(query) switch
         {
-            SparqlResultSet res =>  Task.FromResult(res),
+            SparqlResultSet res => Task.FromResult(res),
             _ => throw new ArgumentException(
                 "DotNetRdf did not return SparqlResultSet. Probably the Sparql query was not a select or ask query")
         };
@@ -208,41 +208,41 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         .Select(t => t.Subject));
 
     public override Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
         .GetTriplesWithSubjectPredicate(subject, Namespaces.Rdfs.UriNodes.Label)
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value));
 
     public override Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
             .GetTriplesWithSubject(subject));
     public override Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
             .GetTriplesWithPredicate(predicate));
 
     public override Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
             .GetTriplesWithObject(@object));
 
     public override Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
             .GetTriplesWithPredicateObject(predicate, @object));
 
 
     public override Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
             .GetTriplesWithSubjectObject(subject, @object));
 
     public override Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
-        =>  Task.FromResult(_store
+        => Task.FromResult(_store
             .GetTriplesWithSubjectPredicate(subject, predicate));
 
 
 
-    public override Task<IEnumerable<Triple>> Triples() =>  Task.FromResult(_store.Triples ?? throw new UnloadedRecordException());
+    public override Task<IEnumerable<Triple>> Triples() => Task.FromResult(_store.Triples ?? throw new UnloadedRecordException());
 
 
-    public override Task<bool> ContainsTriple(Triple triple) =>  Task.FromResult(_store.Contains(triple));
+    public override Task<bool> ContainsTriple(Triple triple) => Task.FromResult(_store.Contains(triple));
 
 
     public override string ToString() => _nQuadsString;
@@ -267,7 +267,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase
 
         var result = stringWriter.ToString();
 
-        return  Task.FromResult(result);
+        return Task.FromResult(result);
     }
 
     public bool Equals(DotNetRdfRecordBackend? other)

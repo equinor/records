@@ -17,7 +17,7 @@ public abstract class RecordBackendBase : IRecordBackend
     }
 
     public Task<Uri> GetRecordId() => Task.FromResult(RecordId ?? throw new RecordException("RecordBackendBase not initialized. Call InitializeMetadata() in your constructor."));
-    public Task<IGraph> GetMetadataGraph() =>  Task.FromResult(MetadataGraph ?? throw new RecordException("RecordBackendBase not initialized. Call InitializeMetadata() in your constructor."));
+    public Task<IGraph> GetMetadataGraph() => Task.FromResult(MetadataGraph ?? throw new RecordException("RecordBackendBase not initialized. Call InitializeMetadata() in your constructor."));
 
     private async Task<IGraph> FindMetadataGraph()
     {

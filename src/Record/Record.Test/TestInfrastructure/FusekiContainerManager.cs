@@ -4,6 +4,7 @@ using DotNet.Testcontainers.Containers;
 using Records.Backend;
 
 namespace Record.Test.TestInfrastructure;
+
 public class FusekiContainerManager : IAsyncLifetime
 {
     private const string _imageName = "bravo-jena-test";

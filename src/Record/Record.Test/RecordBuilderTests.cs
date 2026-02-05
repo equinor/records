@@ -105,7 +105,7 @@ public class RecordBuilderTests
         var contentAsTriples = await record.ContentAsTriples();
         var additionalMetadataIsIncludedOnContentGraph =
             additionalMetadata.All(triple => contentAsTriples.Contains(triple));
-        
+
         var contentIsCopiedToMetadataGraph = metadataAsTriples.Any(triple => content.Contains(triple));
 
         additionalMetadataIsIncludedOnMetadataGraph.Should().BeTrue();
