@@ -62,7 +62,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase
 
         _nQuadsString = sortedTriples;
 
-        InitializeMetadata();
+        InitializeMetadata().Wait();
     }
 
     private void LoadFromString(string rdfString, IStoreReader reader)

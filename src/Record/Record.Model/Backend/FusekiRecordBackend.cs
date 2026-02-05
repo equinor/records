@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using IriTools;
 using VDS.RDF;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Builder;
@@ -9,26 +10,33 @@ namespace Records.Backend;
 
 public class FusekiRecordBackend : RecordBackendBase
 {
-    public readonly Uri baseAddress;
-    public Uri SparqlEndpointUrl() => new($"{baseAddress}{_datasetName}/sparql");
-    public Uri UpdateEndpointUrl() => new($"{baseAddress}{_datasetName}/update");
+    private readonly Uri BaseAddress;
+    private Uri SparqlEndpointUrl() => new($"{BaseAddress}/{_datasetName}/sparql");
+    private Uri UpdateEndpointUrl() => new($"{BaseAddress}/{_datasetName}/update");
+    private Uri DataEndpointUrl() => new($"{BaseAddress}/{_datasetName}/data");
+    private Uri CreateDatasetEndpointUrl() => new($"{BaseAddress}/$/datasets");
+    private Uri DatasetEndpointUrl() => new($"{BaseAddress}/$/datasets/{_datasetName}");
     private readonly Func<Task<string>>? _authorization;
-    private const string _datasetName = "ds";
-
+    private readonly string _datasetName;
+    
     private FusekiRecordBackend(Uri baseAddress, Func<Task<string>>? authorization = null)
     {
+        _datasetName = $"record_{Guid.NewGuid()}";
         _authorization = authorization;
-        this.baseAddress = baseAddress ?? throw new ArgumentNullException(nameof(baseAddress), "Base address cannot be null.");
-        InitializeMetadata();
+        BaseAddress = baseAddress ?? throw new ArgumentNullException(nameof(baseAddress), "Base address cannot be null.");
     }
 
-    public static FusekiRecordBackend CreateAsync(Uri baseAddress, Func<Task<string>>? authorization = null)
+    
+    public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null)
     {
         var client = new FusekiRecordBackend(baseAddress, authorization);
+        await client.CreateDatasetAsync();
+        await client.UploadRdfData(rdfString);   
+        await client.InitializeMetadata();
         return client;
     }
 
-    private async Task<HttpClient> UseClientAsync()
+    private async Task<HttpClient> CreateSparqlClientAsync()
     {
         var client = new HttpClient { BaseAddress = SparqlEndpointUrl() };
         if (_authorization != null)
@@ -36,17 +44,47 @@ public class FusekiRecordBackend : RecordBackendBase
 
         return client;
     }
-
-    internal async Task UploadRdfData(string recordId, string rdfData)
+    private async Task<HttpClient> CreateClientAsync()
     {
-        using var client = await UseClientAsync();
+        var client = new HttpClient {  };
+        if (_authorization != null)
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authorization());
 
-        if (await RecordIsAlreadyUploaded(recordId))
-            throw new Exception("Aborting: a record with this ID is already being processed by Fuseki.");
+        return client;
+    }
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{baseAddress}{_datasetName}/data");
+    private async Task CreateDatasetAsync()
+    {
+        var client = await CreateClientAsync();
+        var query = $"dbName={_datasetName}&dbType=memory";
+        var fullUri = $"{CreateDatasetEndpointUrl()}?{query}";
+        var content = new StringContent("");
+        var response = await client.PostAsync(fullUri, content);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
+        }
+    }
+    
+    private async Task DeleteDatasetAsync()
+    {
+        var client = await CreateClientAsync();
+        var jsonContent = $"{{\"name\": \"{_datasetName}\", \"type\": \"memory\"}}";
+        var reqContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+        var response = await client.DeleteAsync(DataEndpointUrl());
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
+        }
+    }
+    
+    internal async Task UploadRdfData(string rdfData)
+    {
+        using var client = await CreateClientAsync();
+        var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointUrl());
         request.Content = new StringContent(rdfData, System.Text.Encoding.UTF8, "application/trig");
-
         var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
@@ -54,25 +92,10 @@ public class FusekiRecordBackend : RecordBackendBase
             throw new Exception($"Failed to upload RDF data: {response.StatusCode} - {errorMessage}");
         }
     }
-
-    private async Task<bool> RecordIsAlreadyUploaded(string recordId)
-    {
-        var ask = @$"ASK {{ 
-                    GRAPH <{recordId}> {{ 
-                        ?s ?p ?o . 
-                    }}
-                }}";
-
-        var queryClient = await GetSparqlQueryClient();
-        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(ask);
-        var result = sparqlResultSet.Result;
-
-        return result;
-    }
-
+    
     internal async Task DeleteNamedGraphs(IEnumerable<string> graphUris)
     {
-        using var httpClient = await UseClientAsync();
+        using var httpClient = await CreateSparqlClientAsync();
         foreach (var graphUri in graphUris)
         {
             var sparqlUpdate = $"DROP GRAPH <{graphUri}>";
@@ -82,15 +105,15 @@ public class FusekiRecordBackend : RecordBackendBase
     }
 
     internal async Task<SparqlQueryClient> GetSparqlQueryClient() =>
-        new SparqlQueryClient(await UseClientAsync(), SparqlEndpointUrl());
+        new SparqlQueryClient(await CreateSparqlClientAsync(), SparqlEndpointUrl());
 
     public async Task<HttpStatusCode> HealthCheck()
     {
         using var requestMessage = new HttpRequestMessage();
         requestMessage.Method = HttpMethod.Get;
-        requestMessage.RequestUri = new Uri($"{baseAddress}Health");
+        requestMessage.RequestUri = new Uri($"{BaseAddress}Health");
 
-        var httpClient = await UseClientAsync();
+        var httpClient = await CreateSparqlClientAsync();
 
         HttpResponseMessage response;
         try

@@ -1,5 +1,5 @@
 FROM eclipse-temurin:21 AS runtime
-ADD https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-5.6.0.tar.gz apache-jena-fuseki.tar.gz
+ADD https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-6.0.0.tar.gz apache-jena-fuseki.tar.gz
 RUN mkdir -p /opt/jena && \
     tar -xzf apache-jena-fuseki.tar.gz -C /opt/jena && \
     rm apache-jena-fuseki.tar.gz && \

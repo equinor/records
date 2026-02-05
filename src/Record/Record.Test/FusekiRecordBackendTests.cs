@@ -10,15 +10,15 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     [Fact]
     public async Task CanCreateFusekiRecordBackend()
     {
-        var connectionstring = fusekiContainerManager.address;
-        var backend = Records.Backend.FusekiRecordBackend.CreateAsync(connectionstring, () => Task.FromResult(string.Empty) );
-        Assert.NotNull(backend);
         ITripleStore store = new TripleStore();
         var graph = await TestData.ValidRecord().TripleStore();
         var writer = new TriGWriter();
         var recordString = VDS.RDF.Writing.StringWriter.Write(graph, writer);
-        await backend.UploadRdfData("http://example.com/record/1", recordString);
-    var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
+        
+        var connectionstring = fusekiContainerManager.address;
+        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, connectionstring, () => Task.FromResult(string.Empty) );
+        Assert.NotNull(backend);
+        var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
     }
 
     public Task InitializeAsync() => fusekiContainerManager.InitializeAsync();

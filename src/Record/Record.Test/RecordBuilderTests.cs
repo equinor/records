@@ -849,6 +849,7 @@ public class RecordBuilderTests
 
         // Assert
         record.MetadataGraph().Should().NotBeNull();
-        (await record.GetContentGraphs()).Should().BeEmpty();
+        var contentGraphs = await record.GetContentGraphs();
+        contentGraphs.Should().BeEmpty();
     }
 }
