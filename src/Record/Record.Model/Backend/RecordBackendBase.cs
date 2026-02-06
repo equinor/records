@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -37,7 +38,16 @@ public abstract class RecordBackendBase : IRecordBackend
         result.BaseUri = new Uri(graphName);
         return result;
     }
-
+    internal static void ValidateJsonLd(string rdfString)
+    {
+        try { JsonConvert.DeserializeObject(rdfString); }
+        catch (JsonReaderException ex)
+        {
+            var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
+            throw recordException;
+        }
+    }
+    
     public abstract Task<ITripleStore> TripleStore();
     public abstract Task<string> ToString(RdfMediaType mediaType);
     public abstract Task<IEnumerable<INode>> SubjectWithType(UriNode type);

@@ -40,7 +40,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var client = new FusekiRecordBackend(baseAddress, authorization);
         await client.CreateDatasetAsync();
-        await client.UploadRdfData(rdfString, contentType.GetMediaTypeHeaderValue());
+        await client.UploadRdfData(rdfString, contentType);
         await client.InitializeMetadata();
         return client;
     }
@@ -90,11 +90,13 @@ public class FusekiRecordBackend : RecordBackendBase
         }
     }
 
-    internal async Task UploadRdfData(string rdfData, MediaTypeHeaderValue contentType)
+    internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
     {
         using var client = await CreateClientAsync();
+        if(contentType == RdfMediaType.JsonLd)
+            ValidateJsonLd(rdfData);
         var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointUrl());
-        request.Content = new StringContent(rdfData, contentType);
+        request.Content = new StringContent(rdfData, contentType.GetMediaTypeHeaderValue());
 
         var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode)

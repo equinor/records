@@ -102,15 +102,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         LoadFromTripleStore(tempStore);
     }
 
-    private static void ValidateJsonLd(string rdfString)
-    {
-        try { JsonConvert.DeserializeObject(rdfString); }
-        catch (JsonReaderException ex)
-        {
-            var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
-            throw recordException;
-        }
-    }
+
 
     public override Task<ITripleStore> TripleStore()
     {
