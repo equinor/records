@@ -93,7 +93,7 @@ public class FusekiRecordBackend : RecordBackendBase
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
     {
         using var client = await CreateClientAsync();
-        if(contentType == RdfMediaType.JsonLd)
+        if (contentType == RdfMediaType.JsonLd)
             ValidateJsonLd(rdfData);
         var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointUrl());
         request.Content = new StringContent(rdfData, contentType.GetMediaTypeHeaderValue());

@@ -47,7 +47,7 @@ public abstract class RecordBackendBase : IRecordBackend
             throw recordException;
         }
     }
-    
+
     public abstract Task<ITripleStore> TripleStore();
     public abstract Task<string> ToString(RdfMediaType mediaType);
     public abstract Task<IEnumerable<INode>> SubjectWithType(UriNode type);
