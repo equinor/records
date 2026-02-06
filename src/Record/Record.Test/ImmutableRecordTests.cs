@@ -109,7 +109,8 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     {
         var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
-        var result = (await record.ToString<NQuadsWriter>()).Split("\n").Length;
+        var recordString = await record.ToString<NQuadsWriter>();
+        var result = recordString.Split("\n").Length;
 
         // This is how many quads are generated
         result.Should().Be(32);
