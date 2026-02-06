@@ -39,7 +39,7 @@ public abstract class RecordBackendBase : IRecordBackend
     }
 
     public abstract Task<ITripleStore> TripleStore();
-    public abstract Task<string> ToString(IStoreWriter writer);
+    public abstract Task<string> ToString(RdfMediaType mediaType);
     public abstract Task<IEnumerable<INode>> SubjectWithType(UriNode type);
     public abstract Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);
     public abstract Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject);

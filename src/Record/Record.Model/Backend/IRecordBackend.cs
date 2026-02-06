@@ -9,7 +9,7 @@ public interface IRecordBackend
     public Task<ITripleStore> TripleStore();
     public Uri GetRecordId();
     public Task<IGraph> GetMetadataGraph();
-    public Task<string> ToString(IStoreWriter writer);
+    public Task<string> ToString(RdfMediaType mediaType);
     public Task<IEnumerable<INode>> SubjectWithType(UriNode type);
 
     public Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using IriTools;
 using VDS.RDF;
 using VDS.RDF.Query;
@@ -25,13 +26,21 @@ public class FusekiRecordBackend : RecordBackendBase
         _authorization = authorization;
         BaseAddress = baseAddress ?? throw new ArgumentNullException(nameof(baseAddress), "Base address cannot be null.");
     }
+    public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
+        CreateAsync(rdfString, RdfMediaType.Trig, baseAddress, authorization);
+    
+    public static Task<FusekiRecordBackend> CreateFromJsonLdAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
+        CreateAsync(rdfString, RdfMediaType.JsonLd, baseAddress, authorization);
 
+    public static Task<FusekiRecordBackend> CreateFromNQuadsAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
+        CreateAsync(rdfString, RdfMediaType.Quads, baseAddress, authorization);
 
-    public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null)
+    
+    private static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, Uri baseAddress, Func<Task<string>>? authorization = null)
     {
         var client = new FusekiRecordBackend(baseAddress, authorization);
         await client.CreateDatasetAsync();
-        await client.UploadRdfData(rdfString);
+        await client.UploadRdfData(rdfString, contentType.GetMediaTypeHeaderValue());
         await client.InitializeMetadata();
         return client;
     }
@@ -80,11 +89,12 @@ public class FusekiRecordBackend : RecordBackendBase
         }
     }
 
-    internal async Task UploadRdfData(string rdfData)
+    internal async Task UploadRdfData(string rdfData, MediaTypeHeaderValue contentType)
     {
         using var client = await CreateClientAsync();
         var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointUrl());
-        request.Content = new StringContent(rdfData, System.Text.Encoding.UTF8, "application/trig");
+        request.Content = new StringContent(rdfData, contentType);
+        
         var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
@@ -93,57 +103,36 @@ public class FusekiRecordBackend : RecordBackendBase
         }
     }
 
-    internal async Task DeleteNamedGraphs(IEnumerable<string> graphUris)
-    {
-        using var httpClient = await CreateSparqlClientAsync();
-        foreach (var graphUri in graphUris)
-        {
-            var sparqlUpdate = $"DROP GRAPH <{graphUri}>";
-            var content = new StringContent(sparqlUpdate, System.Text.Encoding.UTF8, "application/sparql-update");
-            await httpClient.PostAsync(UpdateEndpointUrl(), content);
-        }
-    }
-
     internal async Task<SparqlQueryClient> GetSparqlQueryClient() =>
         new SparqlQueryClient(await CreateSparqlClientAsync(), SparqlEndpointUrl());
+    
 
-    public async Task<HttpStatusCode> HealthCheck()
+    public override async Task<ITripleStore> TripleStore()
     {
-        using var requestMessage = new HttpRequestMessage();
-        requestMessage.Method = HttpMethod.Get;
-        requestMessage.RequestUri = new Uri($"{BaseAddress}Health");
-
-        var httpClient = await CreateSparqlClientAsync();
-
-        HttpResponseMessage response;
-        try
-        {
-            response = await httpClient.SendAsync(requestMessage);
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new Exception("An error occurred during health check.", ex);
-        }
-        catch (TaskCanceledException ex)
-        {
-            throw new Exception("The HTTP request was canceled or timed out during health check.", ex);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Something unexpected happened during health check.", ex);
-        }
-
-        return response.StatusCode;
+        var content = await GetRdfDataAsString(RdfMediaType.Quads);
+        var ts = new TripleStore();
+        var parser = new VDS.RDF.Parsing.NQuadsParser();
+        parser.Load(ts, content);
+        return ts;
     }
 
-    public override Task<ITripleStore> TripleStore()
+    public override Task<string> ToString(RdfMediaType mediaType)
     {
-        throw new NotImplementedException();
+        return GetRdfDataAsString(mediaType);
     }
 
-    public override Task<string> ToString(IStoreWriter writer)
+    internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
-        throw new NotImplementedException();
+        using var client = await CreateClientAsync();
+        var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointUrl());
+        request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
+        var response = await client.SendAsync(request);
+        if (!response.IsSuccessStatusCode)        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
+        }
+        return await response.Content.ReadAsStringAsync();
+
     }
 
     public override async Task<IEnumerable<INode>> SubjectWithType(UriNode type)
@@ -161,19 +150,24 @@ public class FusekiRecordBackend : RecordBackendBase
         var queryString = queryBuilder.BuildQuery().ToString();
         var queryClient = await GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
-        return sparqlResultSet.Select(result => new UriNode(new Uri(result.Value(x).ToString(new TurtleFormatter()))));
+        return sparqlResultSet.Select(result => result.Value(x));
     }
 
-    public override Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
+    public override async Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
     {
-        throw new NotImplementedException();
+        string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} rdfs:label ?label . }} }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            result.Value("label").ToString(new TurtleFormatter())
+        );
     }
 
 
 
     public override async Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
     {
-        string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ <{subject.Uri}> ?p ?o . }} }}";
+        string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} ?p ?o . }} }}";
         var queryClient = await GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
@@ -185,7 +179,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
     {
-        string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ ?s <{predicate.Uri}> ?o . }} }}";
+        string queryString = $"SELECT ?s ?o WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(new TurtleFormatter())} ?o . }} }}";
         var queryClient = await GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
@@ -197,7 +191,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
     {
-        string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ ?s ?p {@object.ToString(new TurtleFormatter())} . }} }}";
+        string queryString = $"SELECT ?s ?p WHERE {{ GRAPH ?g {{ ?s ?p {@object.ToString(new TurtleFormatter())} . }} }}";
         var queryClient = await GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>

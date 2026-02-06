@@ -239,7 +239,7 @@ public class Record : IEquatable<Record>
 
     public override string? ToString() => _backend.ToString();
     public Task<string> ToString<T>() where T : IStoreWriter, new() => ToString(new T());
-    public Task<string> ToString(IStoreWriter writer) => _backend.ToString(writer);
+    public Task<string> ToString(IStoreWriter writer) => _backend.ToString(writer.GetRdfMediaType());
 
 
     public Task<string> ToCanonString() => _backend.ToCanonString();
