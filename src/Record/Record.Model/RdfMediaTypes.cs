@@ -19,14 +19,14 @@ public static class RdfMediaTypesExtensions
     public static MediaTypeHeaderValue GetMediaTypeHeaderValue(this RdfMediaType mediaType) => mediaType switch
     {
         RdfMediaType.Trig => new MediaTypeHeaderValue("application/trig"),
-        RdfMediaType.Quads => new MediaTypeHeaderValue("application/quads"),
+        RdfMediaType.Quads => new MediaTypeHeaderValue("application/n-quads"),
         RdfMediaType.JsonLd => new MediaTypeHeaderValue("application/ld+json"),
         _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
     };
     public static MediaTypeWithQualityHeaderValue GetMediaTypeWithQualityHeaderValue(this RdfMediaType mediaType) => mediaType switch
     {
         RdfMediaType.Trig => new MediaTypeWithQualityHeaderValue("application/trig"),
-        RdfMediaType.Quads => new MediaTypeWithQualityHeaderValue("application/quads"),
+        RdfMediaType.Quads => new MediaTypeWithQualityHeaderValue("application/n-quads"),
         RdfMediaType.JsonLd => new MediaTypeWithQualityHeaderValue("application/ld+json"),
         _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
     };

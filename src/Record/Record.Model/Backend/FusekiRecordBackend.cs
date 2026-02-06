@@ -36,7 +36,7 @@ public class FusekiRecordBackend : RecordBackendBase
         CreateAsync(rdfString, RdfMediaType.Quads, baseAddress, authorization);
 
 
-    private static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, Uri baseAddress, Func<Task<string>>? authorization = null)
+    public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, Uri baseAddress, Func<Task<string>>? authorization = null)
     {
         var client = new FusekiRecordBackend(baseAddress, authorization);
         await client.CreateDatasetAsync();
@@ -53,6 +53,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
         return client;
     }
+
     private async Task<HttpClient> CreateClientAsync()
     {
         var client = new HttpClient { };
@@ -267,10 +268,10 @@ public class FusekiRecordBackend : RecordBackendBase
         return await queryClient.QueryWithResultGraphAsync("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . } }");
     }
 
-    public override Task<IEnumerable<IGraph>> GetContentGraphs()
+    public override async Task<IEnumerable<IGraph>> GetContentGraphs()
     {
-        //TODO
-        throw new NotImplementedException();
+        var ts = await TripleStore();
+        return ts.Graphs;
     }
 
     public override async Task<IEnumerable<Triple>> Triples()
@@ -285,10 +286,12 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override Task<bool> ContainsTriple(Triple triple)
+    public override async Task<bool> ContainsTriple(Triple triple)
     {
-        //TODO
-        throw new NotImplementedException();
+        var queryString = $"ASK WHERE {{ GRAPH ?g {{ {triple.Subject.ToString(new TurtleFormatter())} {triple.Predicate.ToString(new TurtleFormatter())} {triple.Object.ToString(new TurtleFormatter())} . }} }}";
+        var queryClient = await GetSparqlQueryClient();
+        var qResult = await queryClient.QueryWithResultSetAsync(queryString);
+        return qResult.Result;
     }
 
     public override Task<string> ToCanonString()

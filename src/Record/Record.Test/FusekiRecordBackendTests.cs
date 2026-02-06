@@ -7,7 +7,8 @@ using StringWriter = System.IO.StringWriter;
 
 namespace Records.Tests;
 
-public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerManager) : IClassFixture<FusekiContainerManager>
+[Collection("Integration Testing Collection")]
+public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerManager)
 {
     readonly Uri _connectionUri = fusekiContainerManager.address;
 

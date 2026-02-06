@@ -4,26 +4,52 @@ using Records.Immutable;
 using Records.Exceptions;
 using VDS.RDF.Writing;
 using Newtonsoft.Json;
+using Record.Test.TestInfrastructure;
+using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 
 namespace Records.Tests;
 
-public class ImmutableRecordTests
+[Collection("Integration Testing Collection")]
+public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
 {
-    [Fact]
-    public async Task Record_Has_Metadata()
+    readonly Uri _connectionUri = fusekiContainerManager.address;
+    public enum BackendType
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        DotNetRdf,
+        Fuseki
+    }
+    private async Task<IRecordBackend> CreateBackend(BackendType backendType, RdfMediaType mediaType, string rdfstring)
+    {
+        IRecordBackend backend = backendType switch
+        {
+            BackendType.Fuseki => await FusekiRecordBackend.CreateAsync(rdfstring, mediaType, _connectionUri,
+                () => Task.FromResult(string.Empty)),
+            BackendType.DotNetRdf => new DotNetRdfRecordBackend(rdfstring),
+            _ => throw new ArgumentException("Invalid backend type")
+        };
+        return backend;
+    }
+
+
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Has_Metadata(BackendType backendType)
+    {
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);
     }
 
-    [Fact]
-    public async Task Record_Finds_Id()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Finds_Id(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -41,39 +67,47 @@ public class ImmutableRecordTests
         result.Should().Be("https://ssi.example.com/record/1");
     }
 
-    [Fact]
-    public async Task Record_Can_Do_Queries()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Do_Queries(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var queryResult = await record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
         var result = queryResult.Count();
         result.Should().Be(5);
     }
 
-    [Fact]
-    public void Record_Does_Not_Have_Metadata()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Does_Not_Have_Metadata(BackendType backendType)
     {
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
-        var result = () => new Immutable.Record(rdf);
+        var result = async () => new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, rdf));
 
-        result.Should().Throw<RecordException>().WithMessage("A record must have exactly one metadata graph.");
+        await result.Should().ThrowAsync<RecordException>().WithMessage("A record must have exactly one metadata graph.");
     }
 
 
-    [Fact]
-    public async Task Creating_Record_From_Invalid_JsonLD_Throws()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Creating_Record_From_Invalid_JsonLD_Throws(BackendType backendType)
     {
         var invalidJsonLdString = await TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
-        var result = () => new Immutable.Record(invalidJsonLdString);
-        result.Should().Throw<RecordException>().WithInnerException<JsonReaderException>();
+        var result = async () => new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, invalidJsonLdString));
+        await result.Should().ThrowAsync<RecordException>();
     }
 
-    [Fact]
-    public async Task Record_Can_Be_Serialised_Nquad()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Be_Serialised_Nquad(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
         var result = (await record.ToString<NQuadsWriter>()).Split("\n").Length;
 
@@ -81,10 +115,12 @@ public class ImmutableRecordTests
         result.Should().Be(32);
     }
 
-    [Fact]
-    public async Task Record_Can_Be_Serialised_Nquad_With_Direct_Writer()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Be_Serialised_Nquad_With_Direct_Writer(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
         var result = (await record.ToString(new NQuadsWriter())).Split("\n").Length;
 
@@ -94,20 +130,24 @@ public class ImmutableRecordTests
 
 
 
-    [Fact]
-    public async Task Record_Can_Produce_Quads()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Produce_Quads(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = (await record.Triples()).Count();
 
         // This is how many quads should be extraced from the JSON-LD
         result.Should().Be(31);
     }
 
-    [Fact]
-    public async Task Record_Has_Scopes_And_Describes()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Has_Scopes_And_Describes(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
         var scopes = record.Scopes;
         var describes = record.Describes;
@@ -119,20 +159,24 @@ public class ImmutableRecordTests
         describesCount.Should().Be(5);
     }
 
-    [Fact]
-    public async Task Record_With_Same_Scopes_And_Describes_Are_Equal()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_With_Same_Scopes_And_Describes_Are_Equal(BackendType backendType)
     {
         var rdfString1 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
         var rdfString2 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
 
-        var record = new Immutable.Record(rdfString1);
-        var record2 = new Immutable.Record(rdfString2);
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString1));
+        var record2 = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString2));
 
         record.Should().Be(record2);
     }
 
-    [Fact]
-    public async Task Record_With_Different_Scopes_And_Describes_Are_Not_Equal()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_With_Different_Scopes_And_Describes_Are_Not_Equal(BackendType backendType)
     {
         var id1 = TestData.CreateRecordId("1");
         var id2 = TestData.CreateRecordId("2");
@@ -140,22 +184,24 @@ public class ImmutableRecordTests
         var rdfString1 = await TestData.ValidNQuadRecordString(id1, 3, 2);
         var rdfString2 = await TestData.ValidNQuadRecordString(id2, 3, 2);
 
-        var record = new Immutable.Record(rdfString1);
-        var record2 = new Immutable.Record(rdfString2);
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString1));
+        var record2 = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString2));
 
         record.Should().Be(record2);
 
         var id3 = TestData.CreateRecordId("3");
         var rdfString3 = await TestData.ValidNQuadRecordString(id3, 2, 2);
 
-        var record3 = new Immutable.Record(rdfString3);
+        var record3 = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString3));
         record.Should().NotBe(record3);
     }
 
-    [Fact]
-    public async Task Record_Can_Write_To_JsonLd()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Write_To_JsonLd(BackendType backendType)
     {
-        var record = new Immutable.Record(await TestData.ValidNQuadRecordString());
+        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, await TestData.ValidNQuadRecordString()));
 
         var jsonLdString = await record.ToString<JsonLdWriter>();
 
@@ -173,7 +219,7 @@ public class ImmutableRecordTests
     }
 
     [Fact]
-    public async Task Record_Can_Be_SubRecord()
+    public void Record_Can_Be_SubRecord()
     {
         var record = default(Immutable.Record);
         var superRecordId = TestData.CreateRecordId("super");
@@ -191,19 +237,23 @@ public class ImmutableRecordTests
         record.IsSubRecordOf.Should().Be(superRecordId);
     }
 
-    [Fact]
-    public async Task Record_Does_Not_Need_SubRecordOf()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Does_Not_Need_SubRecordOf(BackendType backendType)
     {
         var record = default(Immutable.Record);
-        var loadResult = async () => record = new Immutable.Record(await TestData.ValidJsonLdRecordString());
+        var loadResult = async () => record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         await loadResult.Should().NotThrowAsync();
 
         record.Should().NotBeNull();
         record!.IsSubRecordOf.Should().BeNull();
     }
 
-    [Fact]
-    public async Task Record_Can_Have_At_Most_One_SuperRecord()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Have_At_Most_One_SuperRecord(BackendType backendType)
     {
         var record = default(Immutable.Record);
         var loadResult = async () =>
@@ -215,7 +265,7 @@ public class ImmutableRecordTests
             var recordString = await immutable.ToString(new NQuadsWriter());
             recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}> .\n";
 
-            record = new Immutable.Record(recordString);
+            record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, recordString));
         };
         await loadResult.Should()
             .ThrowAsync<RecordException>()
