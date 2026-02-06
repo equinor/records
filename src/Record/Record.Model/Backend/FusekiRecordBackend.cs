@@ -28,14 +28,14 @@ public class FusekiRecordBackend : RecordBackendBase
     }
     public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
         CreateAsync(rdfString, RdfMediaType.Trig, baseAddress, authorization);
-    
+
     public static Task<FusekiRecordBackend> CreateFromJsonLdAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
         CreateAsync(rdfString, RdfMediaType.JsonLd, baseAddress, authorization);
 
     public static Task<FusekiRecordBackend> CreateFromNQuadsAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
         CreateAsync(rdfString, RdfMediaType.Quads, baseAddress, authorization);
 
-    
+
     private static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, Uri baseAddress, Func<Task<string>>? authorization = null)
     {
         var client = new FusekiRecordBackend(baseAddress, authorization);
@@ -94,7 +94,7 @@ public class FusekiRecordBackend : RecordBackendBase
         using var client = await CreateClientAsync();
         var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointUrl());
         request.Content = new StringContent(rdfData, contentType);
-        
+
         var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
@@ -105,7 +105,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     internal async Task<SparqlQueryClient> GetSparqlQueryClient() =>
         new SparqlQueryClient(await CreateSparqlClientAsync(), SparqlEndpointUrl());
-    
+
 
     public override async Task<ITripleStore> TripleStore()
     {
@@ -127,7 +127,8 @@ public class FusekiRecordBackend : RecordBackendBase
         var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointUrl());
         request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
         var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode)        {
+        if (!response.IsSuccessStatusCode)
+        {
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
         }
@@ -260,28 +261,39 @@ public class FusekiRecordBackend : RecordBackendBase
             .Select(result => result.ToString() ?? throw new InvalidOperationException("Null result from sparql query on record"));
     }
 
-    public override Task<IGraph> GetMergedGraphs()
+    public override async Task<IGraph> GetMergedGraphs()
     {
-        throw new NotImplementedException();
+        var queryClient = await GetSparqlQueryClient();
+        return await queryClient.QueryWithResultGraphAsync("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . } }");
     }
 
     public override Task<IEnumerable<IGraph>> GetContentGraphs()
     {
+        //TODO
         throw new NotImplementedException();
     }
 
-    public override Task<IEnumerable<Triple>> Triples()
+    public override async Task<IEnumerable<Triple>> Triples()
     {
-        throw new NotImplementedException();
+        string queryString = $"SELECT ?s ?p ?o WHERE {{ GRAPH ?g {{ ?s ?p ?o . }} }}";
+        var queryClient = await GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
+        return sparqlResultSet.Select(result =>
+            new Triple(result.Value("s"),
+                result.Value("p"),
+                result.Value("o")
+            ));
     }
 
     public override Task<bool> ContainsTriple(Triple triple)
     {
+        //TODO
         throw new NotImplementedException();
     }
 
     public override Task<string> ToCanonString()
     {
+        //TODO
         throw new NotImplementedException();
     }
 }

@@ -35,7 +35,7 @@ public class Record : IEquatable<Record>
 
         Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Result.Select(q => q.Object.ToString())];
         Related = [.. TriplesWithPredicate(Namespaces.Record.Related).Result.Select(q => q.Object.ToString()).OrderBy(r => r)];
-        
+
         var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Result.Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
