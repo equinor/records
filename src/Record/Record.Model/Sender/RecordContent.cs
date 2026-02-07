@@ -14,6 +14,6 @@ public class RecordContent : StringContent
         Headers.ContentType = new("application/ld+json");
     }
 
-    public RecordContent(Immutable.Record record) : this(record.ToString<JsonLdWriter>()) { }
+    public RecordContent(Immutable.Record record) : this(record.ToString<JsonLdWriter>().Result) { }
 
 }

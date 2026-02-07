@@ -556,7 +556,7 @@ public record RecordBuilder
         var outputFolderPath = Assembly.GetExecutingAssembly()
                                    .GetManifestResourceStream("Records.Properties.commit.url") ??
                                throw new Exception("Could not get Records commit url.");
-        var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
+        var shapeString = new StreamReader(outputFolderPath).ReadLine();
         return shapeString;
     }
     private Triple CreateTripleWithPredicateAndObject(string predicate, string @object)

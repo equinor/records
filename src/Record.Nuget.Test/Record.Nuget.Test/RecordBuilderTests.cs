@@ -35,7 +35,7 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void Can__Find__Version()
+    public async Task Can__Find__Version()
     {
         var id = CreateRecordId("0");
         var scopes = CreateObjectList(2, "scope");
@@ -50,7 +50,7 @@ public class RecordBuilderTests
         var query = new SparqlQueryParser().ParseFromString(
             $"SELECT * WHERE {{ graph <{record.Id}>  {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }} }}");
 
-        var tripleStore = record.TripleStore();
+        var tripleStore = await record.TripleStore();
         var ds = new InMemoryDataset((TripleStore)tripleStore);
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qResults = qProcessor.ProcessQuery(query);

@@ -21,7 +21,7 @@ public class RecordBuilderTests
         _outputHelper = outputHelper;
 
     [Fact]
-    public void Can_Add_Scopes()
+    public async Task Can_Add_Scopes()
     {
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
@@ -46,7 +46,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void Can__Add__Related()
+    public async Task Can__Add__Related()
     {
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
@@ -74,7 +74,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph()
+    public async Task WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph()
     {
         // Arrange
         var scopes = Enumerable.Range(1, 3)
@@ -103,9 +103,13 @@ public class RecordBuilderTests
             .Build();
 
         // Act
-        var additionalMetadataIsIncludedOnMetadataGraph = additionalMetadata.All(triple => record.MetadataAsTriples().Contains(triple));
-        var additionalMetadataIsIncludedOnContentGraph = additionalMetadata.All(triple => record.ContentAsTriples().Contains(triple));
-        var contentIsCopiedToMetadataGraph = record.MetadataAsTriples().Any(triple => content.Contains(triple));
+        var metadataAsTriples = await record.MetadataAsTriples();
+        var additionalMetadataIsIncludedOnMetadataGraph = additionalMetadata.All(triple => metadataAsTriples.Contains(triple));
+        var contentAsTriples = await record.ContentAsTriples();
+        var additionalMetadataIsIncludedOnContentGraph =
+            additionalMetadata.All(triple => contentAsTriples.Contains(triple));
+
+        var contentIsCopiedToMetadataGraph = metadataAsTriples.Any(triple => content.Contains(triple));
 
         additionalMetadataIsIncludedOnMetadataGraph.Should().BeTrue();
         additionalMetadataIsIncludedOnContentGraph.Should().BeFalse();
@@ -115,7 +119,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void Can_Add_Provenance()
+    public async Task Can_Add_Provenance()
     {
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
@@ -146,7 +150,7 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void RecordBuilder_With()
+    public async Task RecordBuilder_With()
     {
         var id0 = TestData.CreateRecordId("0");
 
@@ -168,7 +172,7 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void RecordBuilder_Fluent()
+    public async Task RecordBuilder_Fluent()
     {
         var id0 = TestData.CreateRecordId("0");
         var id1 = TestData.CreateRecordId("1");
@@ -196,11 +200,11 @@ public class RecordBuilderTests
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(desc);
         record.Replaces.Should().Contain(id0);
-        record.Triples().ToList().Should().Contain(triples);
+        (await record.Triples()).ToList().Should().Contain(triples);
     }
 
     [Fact]
-    public void RecordBuilder_Fails_With_No_Scopes()
+    public async Task RecordBuilder_Fails_With_No_Scopes()
     {
         var id0 = TestData.CreateRecordId("0");
         var id1 = TestData.CreateRecordId("1");
@@ -228,7 +232,7 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void RecordBuilder_Does_Not_Merge_Blank_Nodes()
+    public async Task RecordBuilder_Does_Not_Merge_Blank_Nodes()
     {
         var rdfString = """
 
@@ -344,7 +348,7 @@ public class RecordBuilderTests
             .WithDescribes("https://example.com/desc/1")
             .Build();
 
-        var recordContentGraph = record.GetContentGraphs().First();
+        var recordContentGraph = (await record.GetContentGraphs()).First();
         var subjectsAfter = recordContentGraph.GetTriplesWithPredicate(new UriNode(new Uri("https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/hasAmount")))
             .Select(q => q.Subject)
             .Distinct()
@@ -354,7 +358,7 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void RecordBuilder_Can_Add_Triples()
+    public async Task RecordBuilder_Can_Add_Triples()
     {
         var graph = new Graph();
 
@@ -374,7 +378,7 @@ public class RecordBuilderTests
             graph.Assert(new Triple(sub, pre, obj));
         }
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var result = () => record = new RecordBuilder()
             .WithId(id0)
             .WithScopes(scope)
@@ -388,12 +392,12 @@ public class RecordBuilderTests
         for (var i = 0; i < numberOfTriples; i++)
         {
             var triple = TestData.CreateRecordTriple(i.ToString());
-            record!.ContainsTriple(triple).Should().BeTrue();
+            (await record!.ContainsTriple(triple)).Should().BeTrue();
         }
     }
 
     [Fact]
-    public void RecordBuilder__ShouldNotThrow__WhenAllNodesAreReachable()
+    public async Task RecordBuilder__ShouldNotThrow__WhenAllNodesAreReachable()
     {
         // Arrange
         var describes = Enumerable.Range(1, 10)
@@ -419,7 +423,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__ShouldNotThrow__WhenOnlyObjectNodesAreReachable()
+    public async Task RecordBuilder__ShouldNotThrow__WhenOnlyObjectNodesAreReachable()
     {
         // Arrange 
         var describes = Enumerable.Range(1, 3)
@@ -445,7 +449,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__ShouldThrow__WhenNotAllNodesIsReachableFromDescribes()
+    public async Task RecordBuilder__ShouldThrow__WhenNotAllNodesIsReachableFromDescribes()
     {
         // Arrange 
         var describes = Enumerable.Range(1, 3)
@@ -472,7 +476,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__ShouldThrow__WhenNotAllDescribesAreMentionedInContent()
+    public async Task RecordBuilder__ShouldThrow__WhenNotAllDescribesAreMentionedInContent()
     {
         // Arrange 
         var describes = Enumerable.Range(1, 10)
@@ -499,7 +503,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__ShouldThrow__WhenNodesAreUnreachable()
+    public async Task RecordBuilder__ShouldThrow__WhenNodesAreUnreachable()
     {
         // Arrange 
         static Triple CreateTriple(int i) => new(
@@ -525,7 +529,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder_With_RdfString()
+    public async Task RecordBuilder_With_RdfString()
     {
         var rdfString =
             @"<http://example.com/object/version/1234/5678> <http://www.w3.org/ns/prov#atLocation> <http://example.com/object/version/1234/5678/738499902> .
@@ -543,15 +547,15 @@ public class RecordBuilderTests
             .Build();
 
         record.Id.Should().Be(g);
-        record
-            .TriplesWithSubject("http://example.com/object/version/1234/5678")
+        (await record
+            .TriplesWithSubject("http://example.com/object/version/1234/5678"))
             .Count()
             .Should()
             .Be(1);
     }
 
     [Fact]
-    public void RecordBuilder_Can_Replace_Content()
+    public async Task RecordBuilder_Can_Replace_Content()
     {
         var id1 = TestData.CreateRecordId("1");
 
@@ -582,19 +586,19 @@ public class RecordBuilderTests
             .WithAdditionalContent(triples.GetRange(halfMark, numberOfTriples - halfMark))
             .Build();
 
-        record1
-            .Triples()
+        (await record1
+            .Triples())
             .Should()
             .NotContain(triples.GetRange(0, halfMark));
 
-        record2
-            .Triples()
+        (await record2
+            .Triples())
             .Should()
             .Contain(triples);
     }
 
     [Fact]
-    public void RecordBuilder_Can_Add_IsSubRecordOf()
+    public async Task RecordBuilder_Can_Add_IsSubRecordOf()
     {
         var id = TestData.CreateRecordId("1");
         var scope = TestData.CreateRecordIri("scope", "1");
@@ -613,7 +617,7 @@ public class RecordBuilderTests
             .WithContent(content)
             .WithIsSubRecordOf(superRecordId);
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var buildProcess = () => record = builder.Build();
 
         buildProcess.Should().NotThrow();
@@ -623,11 +627,11 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
-        record.Triples().Should().Contain(content);
+        (await record.Triples()).Should().Contain(content);
     }
 
     [Fact]
-    public void RecordBuilder_Only_Adds_Latest_IsSubRecordOf()
+    public async Task RecordBuilder_Only_Adds_Latest_IsSubRecordOf()
     {
         var id = TestData.CreateRecordId("1");
         var scope = TestData.CreateRecordIri("scope", "1");
@@ -648,7 +652,7 @@ public class RecordBuilderTests
             .WithIsSubRecordOf(superRecordId1)
             .WithIsSubRecordOf(superRecordId2);
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
         var buildProcess = () => record = builder.Build();
 
         buildProcess.Should().NotThrow();
@@ -658,11 +662,11 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
         record.Scopes.Should().Contain(scope);
         record.Describes.Should().Contain(describes);
-        record.Triples().Should().Contain(content);
+        (await record.Triples()).Should().Contain(content);
     }
 
     [Fact]
-    public void RecordBuilder_Builds_Object_Literals_Correctly_Check_With_JsonLd()
+    public async Task RecordBuilder_Builds_Object_Literals_Correctly_Check_With_JsonLd()
     {
         var graph = new Graph();
         var (s, p, _, g) = TestData.CreateRecordQuadStringTuple("1");
@@ -691,7 +695,7 @@ public class RecordBuilderTests
 
         record.Id.Should().Be(graph.BaseUri.ToString());
 
-        var jsonLd = record.ToString<JsonLdWriter>();
+        var jsonLd = await record.ToString<JsonLdWriter>();
 
         JArray.Parse(jsonLd)
             .SelectMany(jo => jo["@graph"]!.Children<JObject>())
@@ -709,13 +713,13 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder_Content_May_Not_Add_Provenance_Information()
+    public async Task RecordBuilder_Content_May_Not_Add_Provenance_Information()
     {
         var recordId = TestData.CreateRecordId("recordId");
         var superRecord = TestData.CreateRecordId("superRecordId");
         var superDuperRecord = TestData.CreateRecordId("superDuperRecordId");
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var recordBuilder = () =>
         {
@@ -734,7 +738,7 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void RecordBuilder_Can_Add_ContentGraphs()
+    public async Task RecordBuilder_Can_Add_ContentGraphs()
     {
         var firstGraph = TestData.CreateGraph("https://example.com/1");
         var secondGraph = TestData.CreateGraph("https://example.com/2");
@@ -744,11 +748,11 @@ public class RecordBuilderTests
             .WithAdditionalContent(secondGraph)
             .Build();
 
-        record.GetContentGraphs().Should().HaveCount(2);
+        (await record.GetContentGraphs()).Should().HaveCount(2);
     }
 
     [Fact]
-    public void RecordBuilder_Can_Add_Additional_Metadata()
+    public async Task RecordBuilder_Can_Add_Additional_Metadata()
     {
         var (s, p, _, _) = TestData.CreateRecordQuadStringTuple("1");
         var subject = new UriNode(new Uri(s));
@@ -760,15 +764,15 @@ public class RecordBuilderTests
             .WithAdditionalMetadata(additionalMetadata)
             .Build();
 
-        var metadataTriples = record.MetadataAsTriples();
-        var contentTriples = record.ContentAsTriples();
+        var metadataTriples = await record.MetadataAsTriples();
+        var contentTriples = await record.ContentAsTriples();
 
         metadataTriples.Should().Contain(additionalMetadata);
         contentTriples.Should().NotContain(additionalMetadata);
     }
 
     [Fact]
-    public void RecordBuilder_Fails_If_Subject_Is_Not_Record_Id_And_Predicate_Is_Record_Predicate()
+    public async Task RecordBuilder_Fails_If_Subject_Is_Not_Record_Id_And_Predicate_Is_Record_Predicate()
     {
         var (s, _, _, g) = TestData.CreateRecordQuadStringTuple("1");
         var subject = new UriNode(new Uri(s));
@@ -776,7 +780,7 @@ public class RecordBuilderTests
         var @object = new LiteralNode("string", UriFactory.Create("http://www.w3.org/2001/XMLSchema#string"));
         var additionalMetadata = new Triple(subject, predicate, @object);
 
-        var record = default(Record);
+        var record = default(Immutable.Record);
 
         var recordBuilder = () =>
         {
@@ -795,7 +799,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__Hashes__ContentGraphs()
+    public async Task RecordBuilder__Hashes__ContentGraphs()
     {
         // Arrange 
 
@@ -811,7 +815,7 @@ public class RecordBuilderTests
             .Build();
 
         // Assert
-        var contentGraphNames = record.GetContentGraphs().Select(g => g.Name);
+        var contentGraphNames = (await record.GetContentGraphs()).Select(g => g.Name);
 
         var query = new SparqlQueryParser().ParseFromString(
             @$"SELECT DISTINCT ?contentId ?checksumValue WHERE 
@@ -823,7 +827,7 @@ public class RecordBuilderTests
                                   }} 
                     }}");
 
-        var ds = new InMemoryDataset((TripleStore)record.TripleStore());
+        var ds = new InMemoryDataset((TripleStore)(await record.TripleStore()));
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qresults = (SparqlResultSet)qProcessor.ProcessQuery(query);
         var resultDict = qresults.Select(r =>
@@ -838,7 +842,7 @@ public class RecordBuilderTests
 
 
     [Fact]
-    public void RecordBuilder__CanBuild__RecordWithOnlyMetaDataGraph()
+    public async Task RecordBuilder__CanBuild__RecordWithOnlyMetaDataGraph()
     {
         // Arrange 
         var recordBuilder = TestData.RecordBuilderWithProvenanceAndWithoutContent();
@@ -848,6 +852,7 @@ public class RecordBuilderTests
 
         // Assert
         record.MetadataGraph().Should().NotBeNull();
-        record.GetContentGraphs().Should().BeEmpty();
+        var contentGraphs = await record.GetContentGraphs();
+        contentGraphs.Should().BeEmpty();
     }
 }
