@@ -267,6 +267,9 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return Task.FromResult(result);
     }
 
+    public override ValueTask DeleteDatasetAsync() => new ValueTask();
+
+
     public bool Equals(DotNetRdfRecordBackend? other)
     {
         if (ReferenceEquals(null, other)) return false;

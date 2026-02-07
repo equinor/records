@@ -61,6 +61,8 @@ public class Record : IEquatable<Record>
     {
     }
 
+    public ValueTask DeleteDatasetAsync() =>
+        _backend.DeleteDatasetAsync();
 
     public static implicit operator HttpRequestMessage(Record record)
     {

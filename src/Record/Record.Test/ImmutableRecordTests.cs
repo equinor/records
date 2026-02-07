@@ -206,19 +206,19 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Write_To_JsonLd(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, 
-            RdfMediaType.Quads, 
+        var record = new Immutable.Record(await CreateBackend(backendType,
+            RdfMediaType.Quads,
             await TestData.ValidNQuadRecordString()));
 
         var jsonLdString = await record.ToString<JsonLdWriter>();
         var jsonObject = JsonNode.Parse(jsonLdString);
-        JsonArray? jsonArray = jsonObject switch 
+        JsonArray? jsonArray = jsonObject switch
         {
             JsonArray arr => arr,
             JsonObject obj => obj["@graph"] as JsonArray,
             _ => throw new Exception("Unexpected JSON structure")
         };
-        
+
         jsonArray.Should().NotBeNull();
         jsonArray?.Count.Should().Be(2);
 

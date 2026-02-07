@@ -76,4 +76,5 @@ public interface IRecordBackend
     Task<IEnumerable<Triple>> Triples();
     Task<bool> ContainsTriple(Triple triple);
     Task<string> ToCanonString();
+    ValueTask DeleteDatasetAsync();
 }

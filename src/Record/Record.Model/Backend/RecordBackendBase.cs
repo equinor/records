@@ -66,4 +66,5 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract Task<IEnumerable<Triple>> Triples();
     public abstract Task<bool> ContainsTriple(Triple triple);
     public abstract Task<string> ToCanonString();
+    public abstract ValueTask DeleteDatasetAsync();
 }
