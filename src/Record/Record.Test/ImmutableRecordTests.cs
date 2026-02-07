@@ -3,7 +3,6 @@ using FluentAssertions;
 using Records.Immutable;
 using Records.Exceptions;
 using VDS.RDF.Writing;
-using Newtonsoft.Json;
 using Record.Test.TestInfrastructure;
 using Records.Backend;
 using VDS.RDF;
@@ -212,12 +211,14 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
             await TestData.ValidNQuadRecordString()));
 
         var jsonLdString = await record.ToString<JsonLdWriter>();
-
-        var jsonArray = default(JsonArray);
-
-        var deserialisationFunc = () => jsonArray = JsonNode.Parse(jsonLdString) as JsonArray;
-        deserialisationFunc.Should().NotThrow();
-
+        var jsonObject = JsonNode.Parse(jsonLdString);
+        JsonArray? jsonArray = jsonObject switch 
+        {
+            JsonArray arr => arr,
+            JsonObject obj => obj["@graph"] as JsonArray,
+            _ => throw new Exception("Unexpected JSON structure")
+        };
+        
         jsonArray.Should().NotBeNull();
         jsonArray?.Count.Should().Be(2);
 

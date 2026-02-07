@@ -137,8 +137,10 @@ public class FusekiRecordBackend : RecordBackendBase
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
         }
-        return await response.Content.ReadAsStringAsync();
-
+        var fusekiDatasetReponse = await response.Content.ReadAsStringAsync();
+        if(mediaType == RdfMediaType.JsonLd)
+            ValidateJsonLd(fusekiDatasetReponse);
+        return fusekiDatasetReponse;
     }
 
     public override async Task<IEnumerable<INode>> SubjectWithType(UriNode type)
@@ -267,13 +269,13 @@ public class FusekiRecordBackend : RecordBackendBase
             "construct" => (await queryClient.QueryWithResultGraphAsync(queryString))
                 .Triples
                 .Select(tr => tr.ToString(new TurtleFormatter())),
-            "select" => (await queryClient.QueryWithResultSetAsync(queryString)).Results.Select(result =>
+            "select" =>(await queryClient.QueryWithResultSetAsync(queryString)).Results.Select(result =>
                 result.ToString() ?? throw new InvalidOperationException("Null result from sparql query on record")),
             _ => throw new ArgumentException("Unsupported command in SPARQL query.")
         };
     }
-
-
+        
+    
 
     public override async Task<IGraph> GetMergedGraphs()
     {
