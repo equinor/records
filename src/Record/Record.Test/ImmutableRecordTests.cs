@@ -90,7 +90,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
-        var result = async () => new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, rdf));
+        var result = async () => new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdf));
 
         await result.Should().ThrowAsync<RecordException>().WithMessage("A record must have exactly one metadata graph.");
     }
@@ -272,7 +272,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
                 .Build();
 
             var recordString = await immutable.ToString(new NQuadsWriter());
-            recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}> .\n";
+            recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}>  <{immutable.Id}> .\n";
 
             record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, recordString));
         };
