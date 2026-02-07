@@ -73,7 +73,12 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Record_Can_Do_Queries(BackendType backendType)
     {
         var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
-        var queryResult = await record.Sparql($"construct {{ ?s ?p ?o }} where {{ graph ?g {{ ?s ?p ?o . ?s <{Namespaces.Record.IsInScope}> ?o .}} }}");
+        var queryResult = await record.Sparql(
+            $"construct {{ ?s ?p ?o }} where {{ " +
+            $"graph ?g {{ " +
+            $"?s ?p ?o . " +
+            $"?s <{Namespaces.Record.IsInScope}> ?o ." +
+            $"}} }}");
         var result = queryResult.Count();
         result.Should().Be(5);
     }
@@ -202,7 +207,9 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Write_To_JsonLd(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, await TestData.ValidNQuadRecordString()));
+        var record = new Immutable.Record(await CreateBackend(backendType, 
+            RdfMediaType.Quads, 
+            await TestData.ValidNQuadRecordString()));
 
         var jsonLdString = await record.ToString<JsonLdWriter>();
 
@@ -266,7 +273,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
             var recordString = await immutable.ToString(new NQuadsWriter());
             recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}> .\n";
 
-            record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, recordString));
+            record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, recordString));
         };
         await loadResult.Should()
             .ThrowAsync<RecordException>()

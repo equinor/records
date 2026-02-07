@@ -3,8 +3,10 @@ using System.Net.Http.Headers;
 using System.Text;
 using IriTools;
 using VDS.RDF;
+using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Builder;
+using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 
 namespace Records.Backend;
@@ -259,10 +261,19 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<string>> Sparql(string queryString)
     {
         var queryClient = await GetSparqlQueryClient();
-        var resultSet = await queryClient.QueryWithResultSetAsync(queryString);
-        return resultSet
-            .Select(result => result.ToString() ?? throw new InvalidOperationException("Null result from sparql query on record"));
+        var command = queryString.Split().First();
+        return command.ToLower() switch
+        {
+            "construct" => (await queryClient.QueryWithResultGraphAsync(queryString))
+                .Triples
+                .Select(tr => tr.ToString(new TurtleFormatter())),
+            "select" => (await queryClient.QueryWithResultSetAsync(queryString)).Results.Select(result =>
+                result.ToString() ?? throw new InvalidOperationException("Null result from sparql query on record")),
+            _ => throw new ArgumentException("Unsupported command in SPARQL query.")
+        };
     }
+
+
 
     public override async Task<IGraph> GetMergedGraphs()
     {
