@@ -201,7 +201,6 @@ public class DotNetRdfRecordBackend : RecordBackendBase
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
 
-
     public override IEnumerable<INode> SubjectWithType(UriNode type)
         => _store
         .GetTriplesWithPredicateObject(Namespaces.Rdf.UriNodes.Type, type)

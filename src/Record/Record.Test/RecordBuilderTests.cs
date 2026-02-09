@@ -66,6 +66,9 @@ public class RecordBuilderTests
         relatedObjects.Should().Contain(related.First());
         relatedObjects.Should().Contain(related.Last());
 
+        record.Related.Should().NotBeNull();
+        record.Related.Should().BeEquivalentTo(relatedObjects);
+
         record.Id.Should().Be(id);
     }
 
