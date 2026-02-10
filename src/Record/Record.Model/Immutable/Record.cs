@@ -10,11 +10,12 @@ using VDS.RDF.Query;
 namespace Records.Immutable;
 
 [DebuggerDisplay($"{{{nameof(Id)}}}")]
-public class Record : IEquatable<Record>
+public class Record : IEquatable<Record>, IAsyncDisposable
 {
-    private IRecordBackend _backend;
+    private readonly IRecordBackend _backend;
     public readonly string Id;
     private readonly DescribesConstraintMode _describesConstraintMode;
+    
     public List<Triple>? Metadata { get; private set; }
     public HashSet<string>? Scopes { get; private set; }
     public HashSet<string>? Related { get; private set; }
@@ -240,6 +241,8 @@ public class Record : IEquatable<Record>
 
 
     public override string? ToString() => _backend.ToString();
+    public ValueTask DisposeAsync() => DeleteDatasetAsync();
+    
     public Task<string> ToString<T>() where T : IStoreWriter, new() => ToString(new T());
     public Task<string> ToString(IStoreWriter writer) => _backend.ToString(writer.GetRdfMediaType());
 
