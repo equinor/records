@@ -168,9 +168,12 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     /// Thrown if query is not "ask" or "select".
     /// </exception>
     public override Task<SparqlResultSet> Query(SparqlQuery query) =>
+        Task.FromResult(QuerySync(query));
+
+    private SparqlResultSet QuerySync(SparqlQuery query) =>
         _queryProcessor.ProcessQuery(query) switch
         {
-            SparqlResultSet res => Task.FromResult(res),
+            SparqlResultSet res => res,
             _ => throw new ArgumentException(
                 "DotNetRdf did not return SparqlResultSet. Probably the Sparql query was not a select or ask query")
         };
@@ -191,9 +194,12 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     /// Thrown if query is not "construct".
     /// </exception>
     public override Task<IGraph> ConstructQuery(SparqlQuery query) =>
+        Task.FromResult(ConstructQuerySync(query));
+
+    private IGraph ConstructQuerySync(SparqlQuery query) =>
         _queryProcessor.ProcessQuery(query) switch
         {
-            IGraph res => Task.FromResult(res),
+            IGraph res => res,
             _ => throw new ArgumentException(
                 "DotNetRdf did not return IGraph. Probably the Sparql query was not a construct query")
         };
@@ -290,13 +296,13 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     #region Private
     private IEnumerable<string> Construct(SparqlQuery query)
     {
-        var resultGraph = ConstructQuery(query).Result;
+        var resultGraph = ConstructQuerySync(query);
         return resultGraph.Triples.Select(t => t.ToString());
     }
 
     private IEnumerable<string> Select(SparqlQuery query)
     {
-        var rset = Query(query).Result;
+        var rset = QuerySync(query);
         foreach (var result in rset)
         {
             if (result is not null) yield return result.ToString()!;

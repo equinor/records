@@ -66,7 +66,7 @@ public class RecordSenderTests
                         .Build();
 
 
-        HttpRequestMessage message = record;
+        HttpRequestMessage message = await Immutable.Record.ToHttpRequestMessageAsync(record);
 
         var resultContentType = message.Content!.Headers.ContentType;
         resultContentType.Should().Be(new MediaTypeHeaderValue("application/ld+json"));

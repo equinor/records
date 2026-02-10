@@ -8,6 +8,7 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Builder;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
+using StringWriter = VDS.RDF.Writing.StringWriter;
 
 namespace Records.Backend;
 
@@ -279,9 +280,16 @@ public class FusekiRecordBackend : RecordBackendBase
         return qResult.Result;
     }
 
-    public override Task<string> ToCanonString()
+    public override async Task<string> ToCanonString()
     {
-        //TODO
-        throw new NotImplementedException();
+        var originalStore = await TripleStore();
+        var canon = new RdfCanonicalizer().Canonicalize(originalStore);
+        var canonStore = canon.OutputDataset;
+
+        var stringWriter = new System.IO.StringWriter();
+        var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
+        writer.Save(canonStore, stringWriter);
+        var result = stringWriter.ToString();
+        return result;
     }
 }
