@@ -220,7 +220,7 @@ public class RecordSenderTests
         requestData.Body.Returns(bodyStream);
 
 
-        var recordRequest = requestData.ToRecord();
+        var recordRequest = await requestData.ToRecord();
         recordRequest.Should().Be(record);
     }
 }
