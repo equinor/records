@@ -13,16 +13,16 @@ namespace Records.Tests;
 public class RecordSenderTests
 {
     [Fact]
-    public void Can_Add_Record_To_HttpRequestMessage()
+    public async Task Can_Add_Record_To_HttpRequestMessage()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                         .WithId("https://example.com/record/1")
                         .WithScopes("https://example.com/scope/1")
                         .WithDescribes("https://example.com/object/1")
                         .Build();
 
         var message = new HttpRequestMessage();
-        message.AddRecord(record);
+        await message.AddRecord(record);
 
         var resultContentType = message.Content!.Headers.ContentType;
         resultContentType.Should().Be(new MediaTypeHeaderValue("application/ld+json"));
@@ -31,20 +31,20 @@ public class RecordSenderTests
         using var reader = new StreamReader(resultStream, System.Text.Encoding.UTF8);
         var resultContent = reader.ReadToEnd();
 
-        resultContent.Should().Be(record.ToString<JsonLdWriter>());
+        resultContent.Should().Be(await record.ToString<JsonLdWriter>());
     }
 
     [Fact]
-    public void Can_Add_RecordString_To_HttpRequestMessage()
+    public async Task Can_Add_RecordString_To_HttpRequestMessage()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                         .WithId("https://example.com/record/1")
                         .WithScopes("https://example.com/scope/1")
                         .WithDescribes("https://example.com/object/1")
                         .Build();
 
         var message = new HttpRequestMessage();
-        message.AddRecord(record.ToString<JsonLdWriter>());
+        message.AddRecord(await record.ToString<JsonLdWriter>());
 
         var resultContentType = message.Content!.Headers.ContentType;
         resultContentType.Should().Be(new MediaTypeHeaderValue("application/ld+json"));
@@ -53,20 +53,20 @@ public class RecordSenderTests
         using var reader = new StreamReader(resultStream, System.Text.Encoding.UTF8);
         var resultContent = reader.ReadToEnd();
 
-        resultContent.Should().Be(record.ToString<JsonLdWriter>());
+        resultContent.Should().Be(await record.ToString<JsonLdWriter>());
     }
 
     [Fact]
-    public void Can_Implicitly_Cast_Record_To_HttpRequestMessage()
+    public async Task Can_Implicitly_Cast_Record_To_HttpRequestMessage()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                         .WithId("https://example.com/record/1")
                         .WithScopes("https://example.com/scope/1")
                         .WithDescribes("https://example.com/object/1")
                         .Build();
 
 
-        HttpRequestMessage message = record;
+        HttpRequestMessage message = await Immutable.Record.ToHttpRequestMessageAsync(record);
 
         var resultContentType = message.Content!.Headers.ContentType;
         resultContentType.Should().Be(new MediaTypeHeaderValue("application/ld+json"));
@@ -75,15 +75,15 @@ public class RecordSenderTests
         using var reader = new StreamReader(resultStream, System.Text.Encoding.UTF8);
         var resultContent = reader.ReadToEnd();
 
-        resultContent.Should().Be(record.ToString<JsonLdWriter>());
+        resultContent.Should().Be(await record.ToString<JsonLdWriter>());
     }
 
 
     [Fact]
-    public void Can_Add_RecordId_To_HttpRequestMessage()
+    public async Task Can_Add_RecordId_To_HttpRequestMessage()
     {
         var recordId = "https://example.com/record/1";
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId(recordId)
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -100,9 +100,9 @@ public class RecordSenderTests
     }
 
     [Fact]
-    public void Can_Build_RecordSender()
+    public async Task Can_Build_RecordSender()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -126,13 +126,13 @@ public class RecordSenderTests
         using var reader = new StreamReader(resultStream, System.Text.Encoding.UTF8);
         var resultContent = reader.ReadToEnd();
 
-        resultContent.Should().Be(record.ToString<JsonLdWriter>());
+        resultContent.Should().Be(await record.ToString<JsonLdWriter>());
     }
 
     [Fact]
-    public void Can_Build_RecordRetracter()
+    public async Task Can_Build_RecordRetracter()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -155,9 +155,9 @@ public class RecordSenderTests
     }
 
     [Fact]
-    public void Fail_Build_RecordSender()
+    public async Task Fail_Build_RecordSender()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
         .WithId("https://example.com/record/1")
         .WithScopes("https://example.com/scope/1")
         .WithDescribes("https://example.com/object/1")
@@ -173,9 +173,9 @@ public class RecordSenderTests
     }
 
     [Fact]
-    public void Record_Can_Create_Builder()
+    public async Task Record_Can_Create_Builder()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -199,19 +199,19 @@ public class RecordSenderTests
         using var reader = new StreamReader(resultStream, System.Text.Encoding.UTF8);
         var resultContent = reader.ReadToEnd();
 
-        resultContent.Should().Be(record.ToString<JsonLdWriter>());
+        resultContent.Should().Be(await record.ToString<JsonLdWriter>());
     }
 
     [Fact]
-    public void HttpRequestData_Can_Be_ParsedTo_Record()
+    public async Task HttpRequestData_Can_Be_ParsedTo_Record()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
                 .Build();
 
-        var recordBytes = Encoding.UTF8.GetBytes(record.ToString<JsonLdWriter>());
+        var recordBytes = Encoding.UTF8.GetBytes(await record.ToString<JsonLdWriter>());
 
         // Mock Azure function and HttpRequestData
         var mockFunctionContext = Substitute.For<FunctionContext>();
@@ -220,7 +220,7 @@ public class RecordSenderTests
         requestData.Body.Returns(bodyStream);
 
 
-        var recordRequest = requestData.ToRecord();
+        var recordRequest = await requestData.ToRecord();
         recordRequest.Should().Be(record);
     }
 }

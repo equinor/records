@@ -6,20 +6,19 @@ namespace Records.Backend;
 
 public interface IRecordBackend
 {
-    public ITripleStore TripleStore();
+    public Task<ITripleStore> TripleStore();
     public Uri GetRecordId();
-    public IGraph GetMetadataGraph();
-    public string ToString(IStoreWriter writer);
-    public IEnumerable<INode> SubjectWithType(UriNode type);
+    public Task<IGraph> GetMetadataGraph();
+    public Task<string> ToString(RdfMediaType mediaType);
+    public Task<IEnumerable<INode>> SubjectWithType(UriNode type);
 
-    public IEnumerable<string> LabelsOfSubject(UriNode subject);
-
-    public IEnumerable<Triple> TriplesWithSubject(UriNode subject);
-    public IEnumerable<Triple> TriplesWithPredicate(UriNode predicate);
-    public IEnumerable<Triple> TriplesWithObject(INode @object);
-    public IEnumerable<Triple> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
-    public IEnumerable<Triple> TriplesWithSubjectObject(UriNode subject, INode @object);
-    public IEnumerable<Triple> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate);
+    public Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);
+    public Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject);
+    public Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate);
+    public Task<IEnumerable<Triple>> TriplesWithObject(INode @object);
+    public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
+    public Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object);
+    public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate);
 
     /// <summary>
     /// This method allows you to do select and ask SPARQL queries on your record.
@@ -35,7 +34,7 @@ public interface IRecordBackend
     /// <exception cref="ArgumentException">
     /// Thrown if query is not "construct".
     /// </exception>
-    public IGraph ConstructQuery(SparqlQuery query);
+    public Task<IGraph> ConstructQuery(SparqlQuery query);
 
     /// <summary>
     /// This method allows you to do select and ask SPARQL queries on your record.
@@ -51,7 +50,7 @@ public interface IRecordBackend
     /// <exception cref="ArgumentException">
     /// Thrown if query is not "ask" or "select".
     /// </exception>
-    public SparqlResultSet Query(SparqlQuery query);
+    public Task<SparqlResultSet> Query(SparqlQuery query);
 
     /// <summary>
     /// This method allows you to do a subset of SPARQL queries on your record.
@@ -70,11 +69,12 @@ public interface IRecordBackend
     /// <exception cref="ArgumentException">
     /// Thrown if query is not "construct" or "select".
     /// </exception>
-    public IEnumerable<string> Sparql(string queryString);
+    public Task<IEnumerable<string>> Sparql(string queryString);
 
-    IGraph GetMergedGraphs();
-    IEnumerable<IGraph> GetContentGraphs();
-    IEnumerable<Triple> Triples();
-    bool ContainsTriple(Triple triple);
-    string ToCanonString();
+    Task<IGraph> GetMergedGraphs();
+    Task<IEnumerable<IGraph>> GetContentGraphs();
+    Task<IEnumerable<Triple>> Triples();
+    Task<bool> ContainsTriple(Triple triple);
+    Task<string> ToCanonString();
+    ValueTask DeleteDatasetAsync();
 }

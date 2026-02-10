@@ -10,14 +10,14 @@ public class RecordBuilderTests
 {
 
     [Fact]
-    public void Can__Create__Record()
+    public async Task Can__Create__Record()
     {
         var id = CreateRecordId("0");
         var scopes = CreateObjectList(2, "scope");
         var describes = CreateObjectList(2, "describes");
         var used = CreateObjectList(2, "used");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithId(id)
@@ -35,13 +35,13 @@ public class RecordBuilderTests
     }
 
     [Fact]
-    public void Can__Find__Version()
+    public async Task Can__Find__Version()
     {
         var id = CreateRecordId("0");
         var scopes = CreateObjectList(2, "scope");
         var describes = CreateObjectList(2, "describes");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithId(id)
@@ -50,7 +50,7 @@ public class RecordBuilderTests
         var query = new SparqlQueryParser().ParseFromString(
             $"SELECT * WHERE {{ graph <{record.Id}>  {{ <{record.Id}> <http://www.w3.org/ns/prov#wasGeneratedBy>/<http://www.w3.org/ns/prov#wasAssociatedWith> ?version . }} }}");
 
-        var tripleStore = record.TripleStore();
+        var tripleStore = await record.TripleStore();
         var ds = new InMemoryDataset((TripleStore)tripleStore);
         var qProcessor = new LeviathanQueryProcessor(ds);
         var qResults = qProcessor.ProcessQuery(query);

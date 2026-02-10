@@ -2,19 +2,18 @@
 using FluentAssertions;
 using Records.Exceptions;
 using VDS.RDF.Writing;
-using Record = Records.Immutable.Record;
 namespace Records.Tests;
 
 public class FileRecordBuilderTests
 {
     [Fact]
-    public void FileRecordBuilder_ShouldCreate_ValidRecordWithFileContent()
+    public async Task FileRecordBuilder_ShouldCreate_ValidRecordWithFileContent()
     {
 
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
-        var fileRecord = new FileRecordBuilder()
+        var fileRecord = await new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithIsSubRecordOf(superRecordId)
             .WithFileExtension("xslx")
@@ -26,23 +25,23 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var recstring = fileRecord.ToString<TriGWriter>();
+        var recstring = await fileRecord.ToString<TriGWriter>();
 
         fileRecord.Should().NotBeNull();
-        fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
-        fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime).Count().Should().Be(1);
-        fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type).Count().Should().Be(3);
+        (await fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf)).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
+        (await fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime)).Count().Should().Be(1);
+        (await fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type)).Count().Should().Be(3);
     }
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateUriNode__WhenObjectIsFileType()
+    public async Task FileRecordBuilder__ShouldCreateUriNode__WhenObjectIsFileType()
     {
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
 
-        var fileRecord = new FileRecordBuilder()
+        var fileRecord = await new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithIsSubRecordOf(superRecordId)
             .WithFileExtension("xslx")
@@ -54,19 +53,19 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var fileTypeNode = fileRecord.TriplesWithObject(Namespaces.FileContent.Type).Select(q => q.Object).First();
+        var fileTypeNode = (await fileRecord.TriplesWithObject(Namespaces.FileContent.Type)).Select(q => q.Object).First();
         fileTypeNode.Should().NotBeNull("The variable fileTypeNode is null which means that it is not an uri node.");
 
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateDervivedFrom()
+    public async Task FileRecordBuilder__ShouldCreateDervivedFrom()
     {
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
 
-        var fileRecord = new FileRecordBuilder()
+        var fileRecord = await new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithDerivedFrom("https://example.com/derivedFrom")
             .WithIsSubRecordOf(superRecordId)
@@ -79,20 +78,20 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var derivedFromNode = fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object.ToString()).First();
+        var derivedFromNode = (await fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom)).Select(q => q.Object.ToString()).First();
         derivedFromNode.Should().Be("https://example.com/derivedFrom");
     }
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldCreateDerivedFrom__FromUri()
+    public async Task FileRecordBuilder__ShouldCreateDerivedFrom__FromUri()
     {
         var superRecordId = TestData.CreateRecordId(Guid.NewGuid().ToString());
         var fileRecordId = TestData.CreateRecordId("fileRecordId");
         var scopes = TestData.CreateObjectList(3, "scope");
         var httpsExampleComDescribes = new Uri("https://example.com/derivedFrom");
 
-        var fileRecord = new FileRecordBuilder()
+        var fileRecord = await new FileRecordBuilder()
             .WithId(fileRecordId)
             .WithDerivedFrom(httpsExampleComDescribes)
             .WithIsSubRecordOf(superRecordId)
@@ -105,21 +104,21 @@ public class FileRecordBuilderTests
             .WithFileContent(Encoding.UTF8.GetBytes("This is very cool file content B-)"))
             .Build();
 
-        var describesNode = fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom).Select(q => q.Object.ToString()).First();
+        var describesNode = (await fileRecord.TriplesWithPredicate(Namespaces.Prov.WasDerivedFrom)).Select(q => q.Object.ToString()).First();
         describesNode.Should().Be(httpsExampleComDescribes.ToString());
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenModelTypeIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenModelTypeIsMissing()
     {
         {
-            var fileRecord = default(Record);
+            var fileRecord = default(Immutable.Record);
             var scopes = TestData.CreateObjectList(3, "scope");
 
 
-            var fileRecordBuilder = () =>
+            var fileRecordBuilder = async () =>
             {
-                fileRecord = new FileRecordBuilder()
+                fileRecord = await new FileRecordBuilder()
                 .WithId(TestData.CreateRecordId("fileRecordId"))
                 .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
                 .WithScopes(scopes)
@@ -131,24 +130,24 @@ public class FileRecordBuilderTests
                 .Build();
             };
 
-            fileRecordBuilder.Should()
-                .Throw<FileRecordException>()
+            await fileRecordBuilder.Should()
+                .ThrowAsync<FileRecordException>()
                 .WithMessage("Failure in building file record. File record needs model type.");
 
             fileRecord.Should().BeNull();
         }
     }
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenDocumentTypeIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenDocumentTypeIsMissing()
     {
         {
-            var fileRecord = default(Record);
+            var fileRecord = default(Immutable.Record);
             var scopes = TestData.CreateObjectList(3, "scope");
 
 
-            var fileRecordBuilder = () =>
+            var fileRecordBuilder = async () =>
             {
-                fileRecord = new FileRecordBuilder()
+                fileRecord = await new FileRecordBuilder()
                 .WithId(TestData.CreateRecordId("fileRecordId"))
                 .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
                 .WithScopes(scopes)
@@ -160,8 +159,8 @@ public class FileRecordBuilderTests
                 .Build();
             };
 
-            fileRecordBuilder.Should()
-                .Throw<FileRecordException>()
+            await fileRecordBuilder.Should()
+                .ThrowAsync<FileRecordException>()
                 .WithMessage("Failure in building file record. File record needs the document type of the file.");
 
             fileRecord.Should().BeNull();
@@ -170,14 +169,14 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenContentIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenContentIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
         var scopes = TestData.CreateObjectList(3, "scope");
 
-        var fileRecordBuilder = () =>
+        var fileRecordBuilder = async () =>
         {
-            fileRecord = new FileRecordBuilder()
+            fileRecord = await new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
             .WithFileExtension("xslx")
@@ -189,8 +188,8 @@ public class FileRecordBuilderTests
             .Build();
         };
 
-        fileRecordBuilder.Should()
-            .Throw<FileRecordException>()
+        await fileRecordBuilder.Should()
+            .ThrowAsync<FileRecordException>()
             .WithMessage("Failure in building file record. File record needs content.");
 
         fileRecord.Should().BeNull();
@@ -198,14 +197,14 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenFileNameIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenFileNameIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
         var scopes = TestData.CreateObjectList(3, "scope");
 
-        var fileRecordBuilder = () =>
+        var fileRecordBuilder = async () =>
         {
-            fileRecord = new FileRecordBuilder()
+            fileRecord = await new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
             .WithScopes(scopes)
@@ -217,8 +216,8 @@ public class FileRecordBuilderTests
             .Build();
         };
 
-        fileRecordBuilder.Should()
-            .Throw<FileRecordException>()
+        await fileRecordBuilder.Should()
+            .ThrowAsync<FileRecordException>()
             .WithMessage("Failure in building file record. File record needs a file name.");
 
         fileRecord.Should().BeNull();
@@ -226,14 +225,14 @@ public class FileRecordBuilderTests
 
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenFileExtensionIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenFileExtensionIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
         var scopes = TestData.CreateObjectList(3, "scope");
 
-        var fileRecordBuilder = () =>
+        var fileRecordBuilder = async () =>
         {
-            fileRecord = new FileRecordBuilder()
+            fileRecord = await new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
             .WithScopes(scopes)
@@ -245,21 +244,21 @@ public class FileRecordBuilderTests
             .Build();
         };
 
-        fileRecordBuilder.Should()
-            .Throw<FileRecordException>()
+        await fileRecordBuilder.Should()
+            .ThrowAsync<FileRecordException>()
             .WithMessage("Failure in building file record. File record needs the file extension.");
 
         fileRecord.Should().BeNull();
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowException__WhenScopesIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowException__WhenScopesIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
 
-        var fileRecordBuilder = () =>
+        var fileRecordBuilder = async () =>
         {
-            fileRecord = new FileRecordBuilder()
+            fileRecord = await new FileRecordBuilder()
             .WithId(TestData.CreateRecordId("fileRecordId"))
             .WithIsSubRecordOf(TestData.CreateRecordId("superRecordId"))
             .WithFileName("fileName")
@@ -271,26 +270,26 @@ public class FileRecordBuilderTests
             .Build();
         };
 
-        fileRecordBuilder.Should()
-            .Throw<FileRecordException>()
+        await fileRecordBuilder.Should()
+            .ThrowAsync<FileRecordException>()
             .WithMessage("Failure in building file record. File record needs scopes.");
 
         fileRecord.Should().BeNull();
     }
 
     [Fact]
-    public void FileRecordBuilder__ShouldThrowAggregateException__WhenSeveralValuesIsMissing()
+    public async Task FileRecordBuilder__ShouldThrowAggregateException__WhenSeveralValuesIsMissing()
     {
-        var fileRecord = default(Record);
+        var fileRecord = default(Immutable.Record);
 
-        var fileRecordBuilder = () =>
+        var fileRecordBuilder = async () =>
         {
-            fileRecord = new FileRecordBuilder()
+            fileRecord = await new FileRecordBuilder()
             .Build();
         };
 
-        fileRecordBuilder.Should()
-            .Throw<AggregateException>();
+        await fileRecordBuilder.Should()
+            .ThrowAsync<AggregateException>();
 
         fileRecord.Should().BeNull();
     }

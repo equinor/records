@@ -162,7 +162,7 @@ public record FileRecordBuilder
 
     #endregion
 
-    public Record Build()
+    public Task<Record> Build()
     {
         _storage.FileId ??= new Uri($"{Namespaces.FileContent.Att}file/{Guid.NewGuid()}");
 

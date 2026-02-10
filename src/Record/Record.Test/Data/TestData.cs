@@ -22,7 +22,7 @@ public static class TestData
         return graph;
     }
 
-    public static Immutable.Record ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static Task<Immutable.Record> ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
         return ValidRecordBeforeBuildComplete(id, numberScopes, numberDescribes, numberQuads).Build();
     }
@@ -52,29 +52,38 @@ public static class TestData
             .WithAdditionalContentProvenance(ProvenanceBuilder.WithAdditionalTool("https://example.com/software/v1"));
     }
 
-    public static string ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static Task<string> ValidJsonLdRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<JsonLdWriter>(id, numberScopes, numberDescribes, numberQuads);
-    public static string ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static Task<string> ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<NQuadsWriter>(id, numberScopes, numberDescribes, numberQuads);
 
-    public static string ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
+    public static async Task<string> ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
     {
-        var record = ValidRecord(id, numberScopes, numberDescribes, numberQuads);
-        return record.ToString<T>();
+        var record = await ValidRecord(id, numberScopes, numberDescribes, numberQuads);
+        return await record.ToString<T>();
     }
 
+    public static async Task<string> ValidRecordString(IStoreWriter writer, string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    {
+        var record = await ValidRecord(id, numberScopes, numberDescribes, numberQuads);
+        return await record.ToString(writer);
+    }
     public static List<string> CreateObjectList(int numberOfObjects, string subset)
         => Enumerable.Range(1, numberOfObjects)
             .Select(i => CreateRecordIri(subset, i.ToString()))
             .ToList();
 
     public static List<Triple> CreateTripleList(int numberOfQuads, string graphLabel)
-        => Enumerable.Range(1, numberOfQuads)
+        => Enumerable.Range(1, numberOfQuads - 1)
             .Select(i =>
             {
                 var (s, p, o) = CreateRecordTripleStringTuple(i.ToString());
                 return new Triple(new UriNode(new Uri(s)), new UriNode(new Uri(p)), new UriNode(new Uri(o)));
             })
+            .Append(new Triple(new UriNode(new Uri(CreateRecordSubject("1"))),
+                new UriNode(new Uri("http://www.w3.org/2000/01/rdf-schema#label")),
+                new UriNode(new Uri(CreateRecordObject("1"))
+                )))
             .ToList();
 
     public static string CreateRecordId(string id) => $"https://ssi.example.com/record/{id}";
@@ -96,6 +105,10 @@ public static class TestData
     public static (string subject, string predicate, string @object) CreateRecordTripleStringTuple(string id)
     {
         return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id));
+    }
+    public static (string subject, string predicate, string @object) CreateLabelTripleStringTuple(string id)
+    {
+        return (CreateRecordSubject(id), "http://www.w3.org/2000/01/rdf-schema#label", CreateRecordObject(id));
     }
 
     public static (string subject, string predicate, string @object, string graphLabel) CreateRecordQuadStringTuple(string id)

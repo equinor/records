@@ -14,6 +14,7 @@ public class RecordContent : StringContent
         Headers.ContentType = new("application/ld+json");
     }
 
-    public RecordContent(Immutable.Record record) : this(record.ToString<JsonLdWriter>()) { }
+    public static async Task<RecordContent> CreateAsync(Immutable.Record record) =>
+        new(await record.ToString<JsonLdWriter>());
 
 }
