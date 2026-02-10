@@ -41,7 +41,7 @@ public class RecordBuilderTests
         var scopes = CreateObjectList(2, "scope");
         var describes = CreateObjectList(2, "describes");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithId(id)
