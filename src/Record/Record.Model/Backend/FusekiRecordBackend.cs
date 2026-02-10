@@ -134,7 +134,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
     {
-        string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} <https://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?label . }} }}";
+        string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} <http://www.w3.org/2000/01/rdf-schema#label> ?label . }} }}";
         var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>

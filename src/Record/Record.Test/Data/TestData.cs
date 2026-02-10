@@ -74,12 +74,16 @@ public static class TestData
             .ToList();
 
     public static List<Triple> CreateTripleList(int numberOfQuads, string graphLabel)
-        => Enumerable.Range(1, numberOfQuads)
+        => Enumerable.Range(1, numberOfQuads-1)
             .Select(i =>
             {
                 var (s, p, o) = CreateRecordTripleStringTuple(i.ToString());
                 return new Triple(new UriNode(new Uri(s)), new UriNode(new Uri(p)), new UriNode(new Uri(o)));
             })
+            .Append(new Triple(new UriNode(new Uri(CreateRecordSubject("1"))),
+                new UriNode(new Uri("http://www.w3.org/2000/01/rdf-schema#label")),
+                new UriNode(new Uri(CreateRecordObject("1"))
+                )))
             .ToList();
 
     public static string CreateRecordId(string id) => $"https://ssi.example.com/record/{id}";
@@ -102,7 +106,11 @@ public static class TestData
     {
         return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id));
     }
-
+    public static (string subject, string predicate, string @object) CreateLabelTripleStringTuple(string id)
+    {
+        return (CreateRecordSubject(id), "http://www.w3.org/2000/01/rdf-schema#label", CreateRecordObject(id));
+    }
+    
     public static (string subject, string predicate, string @object, string graphLabel) CreateRecordQuadStringTuple(string id)
     {
         return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id), CreateRecordId(id));
