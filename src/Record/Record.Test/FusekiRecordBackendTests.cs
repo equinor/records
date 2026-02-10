@@ -22,7 +22,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidRecordString(rdfMediaType.GetStoreWriter());
         var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, rdfMediaType, _httpClient);
         Assert.NotNull(backend);
-        var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
+        var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata?.Count;
         result.Should().Be(14);
 
@@ -34,7 +34,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidJsonLdRecordString();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromJsonLdAsync(recordString, _httpClient);
         Assert.NotNull(backend);
-        var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
+        var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);

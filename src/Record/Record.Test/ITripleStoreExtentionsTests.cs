@@ -85,15 +85,15 @@ public class ITripleStoreExtentionsTests
 
         var tripleStore = new TripleStore();
 
-        var firstRecord = TestData.ValidRecord(firstId);
-        var secondRecord = TestData.ValidRecord(secondId);
+        var firstRecord = await TestData.ValidRecord(firstId);
+        var secondRecord = await TestData.ValidRecord(secondId);
 
         tripleStore.LoadFromString(firstRecord.ToString(), new NQuadsParser());
         tripleStore.LoadFromString(secondRecord.ToString(), new NQuadsParser());
 
 
         // Act
-        var foundRecords = tripleStore.FindRecords(ignoreDescribesConstraint: true);
+        var foundRecords = await tripleStore.FindRecords(ignoreDescribesConstraint: true);
         var recordIds = foundRecords.Select(r => r.Id);
 
         var foundFirstRecord = foundRecords.Where(r => r.Id.Equals(firstId)).Single();

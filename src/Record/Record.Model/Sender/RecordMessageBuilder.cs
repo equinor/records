@@ -1,6 +1,7 @@
 ﻿using IriTools;
 using Microsoft.AspNetCore.WebUtilities;
 using Records.Backend;
+using Records.Immutable;
 
 namespace Records.Sender;
 
@@ -38,7 +39,7 @@ public record RecordMessageBuilder
             _recordId = record.Id
         };
 
-    public RecordMessageBuilder WithRecord(string record) => WithRecord(new Immutable.Record(new DotNetRdfRecordBackend(record)));
+    public async Task<RecordMessageBuilder> WithRecord(string record) => WithRecord(await Record.CreateAsync(new DotNetRdfRecordBackend(record)));
 
     public RecordMessageBuilder WithRecordId(string recordId) =>
     this with

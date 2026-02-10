@@ -336,7 +336,7 @@ public record RecordBuilder
     #endregion
     #endregion
 
-    public Record Build()
+    public async Task<Record> Build()
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
@@ -346,7 +346,7 @@ public record RecordBuilder
         {
             var metadataTs = new TripleStore();
             metadataTs.Add(metadataGraph);
-            return new Record(new DotNetRdfRecordBackend(metadataTs));
+            return await Record.CreateAsync(new DotNetRdfRecordBackend(metadataTs));
         }
 
         var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
@@ -370,7 +370,7 @@ public record RecordBuilder
 
         var ts = CreateTripleStore(metadataGraph, contentGraph);
 
-        return new Record(new DotNetRdfRecordBackend(ts), _storage.DescribesConstraintMode);
+        return await Record.CreateAsync(new DotNetRdfRecordBackend(ts), _storage.DescribesConstraintMode);
     }
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)

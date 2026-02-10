@@ -22,7 +22,7 @@ public static class TestData
         return graph;
     }
 
-    public static Immutable.Record ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static Task<Immutable.Record> ValidRecord(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
         return ValidRecordBeforeBuildComplete(id, numberScopes, numberDescribes, numberQuads).Build();
     }
@@ -57,16 +57,16 @@ public static class TestData
     public static Task<string> ValidNQuadRecordString(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
         => ValidRecordString<NQuadsWriter>(id, numberScopes, numberDescribes, numberQuads);
 
-    public static Task<string> ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
+    public static async Task<string> ValidRecordString<T>(string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) where T : IStoreWriter, new()
     {
-        var record = ValidRecord(id, numberScopes, numberDescribes, numberQuads);
-        return record.ToString<T>();
+        var record = await ValidRecord(id, numberScopes, numberDescribes, numberQuads);
+        return await record.ToString<T>();
     }
 
-    public static Task<string> ValidRecordString(IStoreWriter writer, string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
+    public static async Task<string> ValidRecordString(IStoreWriter writer, string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
-        var record = ValidRecord(id, numberScopes, numberDescribes, numberQuads);
-        return record.ToString(writer);
+        var record = await ValidRecord(id, numberScopes, numberDescribes, numberQuads);
+        return await record.ToString(writer);
     }
     public static List<string> CreateObjectList(int numberOfObjects, string subset)
         => Enumerable.Range(1, numberOfObjects)

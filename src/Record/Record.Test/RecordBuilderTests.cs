@@ -27,7 +27,7 @@ public class RecordBuilderTests
         var scopes = TestData.CreateObjectList(2, "scope");
         var describes = TestData.CreateObjectList(2, "describes");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithId(id)
@@ -53,7 +53,7 @@ public class RecordBuilderTests
         var describes = TestData.CreateObjectList(2, "describes");
         var related = TestData.CreateObjectList(2, "related");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithRelated(related)
@@ -94,7 +94,7 @@ public class RecordBuilderTests
                 new UriNode(new Uri(Namespaces.Rdfs.Label)),
                 new LiteralNode(i.ToString())));
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(TestData.CreateRecordIri("describes", Guid.NewGuid().ToString()))
             .WithScopes(scopes)
@@ -128,7 +128,7 @@ public class RecordBuilderTests
         var with = TestData.CreateObjectList(2, "with");
         var locations = TestData.CreateObjectList(2, "location");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithAdditionalContentProvenance(
@@ -163,8 +163,8 @@ public class RecordBuilderTests
 
         var builder2 = builder1.WithScopes(scope1);
 
-        var record1 = builder1.Build();
-        var record2 = builder2.Build();
+        var record1 = await builder1.Build();
+        var record2 = await builder2.Build();
 
         record1.Scopes.Should().NotContain(scope1);
         record2.Scopes.Should().Contain(scope1);
@@ -188,7 +188,7 @@ public class RecordBuilderTests
             triples.Add(triple);
         }
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithId(id1)
             .WithScopes(scope)
             .WithDescribes(desc)
@@ -226,9 +226,9 @@ public class RecordBuilderTests
             .WithAdditionalContent(triples)
             .WithReplaces(id0);
 
-        var result = () => builder.Build();
+        var result = async () => await builder.Build();
 
-        result.Should().ThrowExactly<RecordException>().WithMessage("A record must either be a subrecord or have at least one scope");
+        await result.Should().ThrowExactlyAsync<RecordException>().WithMessage("A record must either be a subrecord or have at least one scope");
     }
 
     [Fact]
@@ -341,7 +341,7 @@ public class RecordBuilderTests
 
         var scopes = new List<string>() { "https://example.com/scope/1", "https://example.com/scope/2" };
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithId(recordId)
             .WithScopes(scopes)
             .WithContent(graph.Triples)
@@ -379,14 +379,14 @@ public class RecordBuilderTests
         }
 
         var record = default(Immutable.Record);
-        var result = () => record = new RecordBuilder()
+        var result = async () => record = await new RecordBuilder()
             .WithId(id0)
             .WithScopes(scope)
             .WithDescribes(desc)
             .WithContent(graph.Triples.ToList())
             .Build();
 
-        result.Should().NotThrow();
+        await result.Should().NotThrowAsync();
 
         record.Should().NotBeNull();
         for (var i = 0; i < numberOfTriples; i++)
@@ -417,8 +417,8 @@ public class RecordBuilderTests
             .WithContent(content);
 
         // Act
-        var buildAction = () => recordBuilder.Build();
-        buildAction.Should().NotThrow<Exception>();
+        var buildAction = async () => await recordBuilder.Build();
+        await buildAction.Should().NotThrowAsync();
     }
 
 
@@ -443,8 +443,8 @@ public class RecordBuilderTests
             .WithContent(content);
 
         // Act
-        var buildAction = () => recordBuilder.Build();
-        buildAction.Should().NotThrow<Exception>();
+        var buildAction = async () => await recordBuilder.Build();
+        await buildAction.Should().NotThrowAsync();
     }
 
 
@@ -469,8 +469,8 @@ public class RecordBuilderTests
             .WithContent(content);
 
         // Act
-        var buildAction = () => recordBuilder.Build();
-        buildAction.Should().Throw<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
+        var buildAction = async () => await recordBuilder.Build();
+        await buildAction.Should().ThrowAsync<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
     }
 
 
@@ -497,8 +497,8 @@ public class RecordBuilderTests
             .WithContent(content);
 
         // Assert
-        var buildAction = () => recordBuilder.Build();
-        buildAction.Should().Throw<Exception>().WithMessage("All described nodes on the metadata graph must exist as nodes on the content graph.");
+        var buildAction = async () => await recordBuilder.Build();
+        await buildAction.Should().ThrowAsync<Exception>().WithMessage("All described nodes on the metadata graph must exist as nodes on the content graph.");
     }
 
 
@@ -521,10 +521,10 @@ public class RecordBuilderTests
             .WithContent(connectedContent.Concat(disconnectedContent));
 
         // Act
-        var buildAction = () => recordBuilder.Build();
+        var buildAction = async () => await recordBuilder.Build();
 
         // Assert
-        buildAction.Should().Throw<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
+        await buildAction.Should().ThrowAsync<Exception>().WithMessage("All nodes on the content graph must be reachable through the describes predicate on the metadata graph.");
     }
 
 
@@ -539,7 +539,7 @@ public class RecordBuilderTests
         var scope = TestData.CreateRecordIri("scope", "0");
         var desc = TestData.CreateRecordIri("describes", "0");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithContent(rdfString)
             .WithScopes(scope)
             .WithId(g)
@@ -578,11 +578,11 @@ public class RecordBuilderTests
             .WithScopes(scope)
             .WithContent(triples.GetRange(0, halfMark));
 
-        var record1 = builder
+        var record1 = await builder
             .WithContent(triples.GetRange(halfMark, numberOfTriples - halfMark))
             .Build();
 
-        var record2 = builder
+        var record2 = await builder
             .WithAdditionalContent(triples.GetRange(halfMark, numberOfTriples - halfMark))
             .Build();
 
@@ -618,9 +618,9 @@ public class RecordBuilderTests
             .WithIsSubRecordOf(superRecordId);
 
         var record = default(Immutable.Record);
-        var buildProcess = () => record = builder.Build();
+        var buildProcess = async () => record = await builder.Build();
 
-        buildProcess.Should().NotThrow();
+        await buildProcess.Should().NotThrowAsync();
         record.Should().NotBeNull();
 
         record!.IsSubRecordOf.Should().Be(superRecordId);
@@ -653,9 +653,9 @@ public class RecordBuilderTests
             .WithIsSubRecordOf(superRecordId2);
 
         var record = default(Immutable.Record);
-        var buildProcess = () => record = builder.Build();
+        var buildProcess = async () => record = await builder.Build();
 
-        buildProcess.Should().NotThrow();
+        await buildProcess.Should().NotThrowAsync();
         record.Should().NotBeNull();
 
         record!.IsSubRecordOf.Should().Be(superRecordId2);
@@ -687,7 +687,7 @@ public class RecordBuilderTests
 
         var scopes = TestData.CreateObjectList(2, "scope");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithId(g)
             .WithScopes(scopes)
             .WithContent(triples)
@@ -721,17 +721,17 @@ public class RecordBuilderTests
 
         var record = default(Immutable.Record);
 
-        var recordBuilder = () =>
+        var recordBuilder = async () =>
         {
-            record = new RecordBuilder()
+            record = await new RecordBuilder()
               .WithId(recordId)
               .WithIsSubRecordOf(superRecord)
               .WithContent(new Triple(new UriNode(new Uri(recordId)), Namespaces.Record.UriNodes.IsSubRecordOf, new UriNode(new Uri(superDuperRecord))))
               .Build();
         };
 
-        recordBuilder.Should()
-            .Throw<RecordException>()
+        await recordBuilder.Should()
+            .ThrowAsync<RecordException>()
             .WithMessage("Content may not make metadata statements.");
 
         record.Should().BeNull();
@@ -743,7 +743,7 @@ public class RecordBuilderTests
         var firstGraph = TestData.CreateGraph("https://example.com/1");
         var secondGraph = TestData.CreateGraph("https://example.com/2");
 
-        var record = TestData.RecordBuilderWithProvenanceAndWithoutContent()
+        var record = await TestData.RecordBuilderWithProvenanceAndWithoutContent()
             .WithContent(firstGraph)
             .WithAdditionalContent(secondGraph)
             .Build();
@@ -760,7 +760,7 @@ public class RecordBuilderTests
         var @object = new LiteralNode("date", UriFactory.Create("http://www.w3.org/2001/XMLSchema#date"));
         var additionalMetadata = new Triple(subject, predicate, @object);
 
-        var record = TestData.ValidRecordBeforeBuildComplete()
+        var record = await TestData.ValidRecordBeforeBuildComplete()
             .WithAdditionalMetadata(additionalMetadata)
             .Build();
 
@@ -782,16 +782,16 @@ public class RecordBuilderTests
 
         var record = default(Immutable.Record);
 
-        var recordBuilder = () =>
+        var recordBuilder = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
                 .WithAdditionalMetadata(additionalMetadata)
                 .Build();
         };
 
-        recordBuilder
+        await recordBuilder
             .Should()
-            .Throw<RecordException>()
+            .ThrowAsync<RecordException>()
             .WithMessage("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
 
         record.Should().BeNull();
@@ -809,7 +809,7 @@ public class RecordBuilderTests
         var hashY = CanonicalisationExtensions.HashGraph(contentGraphY);
 
         // Act
-        var record = TestData.RecordBuilderWithProvenanceAndWithoutContent()
+        var record = await TestData.RecordBuilderWithProvenanceAndWithoutContent()
             .WithContent(contentGraphX)
             .WithAdditionalContent(contentGraphY)
             .Build();
@@ -848,7 +848,7 @@ public class RecordBuilderTests
         var recordBuilder = TestData.RecordBuilderWithProvenanceAndWithoutContent();
 
         // Act
-        var record = recordBuilder.Build();
+        var record = await recordBuilder.Build();
 
         // Assert
         record.MetadataGraph().Should().NotBeNull();

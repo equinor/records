@@ -23,7 +23,7 @@ public static class ITripleStoreExtensions
         return graph;
     }
 
-    public static IEnumerable<Immutable.Record> FindRecords(this TripleStore store, bool ignoreDescribesConstraint = false)
+    public static async Task<IEnumerable<Immutable.Record>> FindRecords(this TripleStore store, bool ignoreDescribesConstraint = false)
     {
         var typeNode = Namespaces.Rdf.UriNodes.Type;
         var recordTypeNode = Namespaces.Record.UriNodes.RecordType;
@@ -64,7 +64,7 @@ public static class ITripleStoreExtensions
             foreach (var contentGraph in localContentGraphs)
                 recordStore.Add(contentGraph);
 
-            records.Add(new Immutable.Record(new DotNetRdfRecordBackend(recordStore)));
+            records.Add(await Immutable.Record.CreateAsync(new DotNetRdfRecordBackend(recordStore)));
         }
 
         return records;

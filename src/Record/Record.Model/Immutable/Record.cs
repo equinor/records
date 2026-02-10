@@ -24,43 +24,62 @@ public class Record : IEquatable<Record>, IAsyncDisposable
     public string? IsSubRecordOf { get; set; }
 
 
-    public Record(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+    private Record(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
         _describesConstraintMode = describesConstraintMode;
         _backend = backend;
         Id = _backend.GetRecordId().AbsoluteUri;
-        Metadata = [.. TriplesWithSubject(Id).Result];
+    }
 
-        Scopes = [.. TriplesWithPredicate(Namespaces.Record.IsInScope).Result.Select(q => q.Object.ToString()).OrderBy(s => s)];
-        Describes = [.. TriplesWithPredicate(Namespaces.Record.Describes).Result.Select(q => q.Object.ToString()).OrderBy(d => d)];
+    public static async Task<Record> CreateAsync(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+    {
+        var Id = new UriNode(backend.GetRecordId());
+        List<Triple> Metadata = [.. await backend.TriplesWithSubject(Id)];
 
-        Replaces = [.. TriplesWithPredicate(Namespaces.Record.Replaces).Result.Select(q => q.Object.ToString())];
-        Related = [.. TriplesWithPredicate(Namespaces.Record.Related).Result.Select(q => q.Object.ToString()).OrderBy(r => r)];
+        List<string> Scopes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsInScope))))
+            .Select(q => q.Object.ToString()).OrderBy(s => s)];
+        List<string> Describes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Describes))))
+            .Select(q => q.Object.ToString()).OrderBy(d => d)];
 
-        var subRecordOf = TriplesWithPredicate(Namespaces.Record.IsSubRecordOf).Result.Select(q => q.Object.ToString()).ToArray();
+        List<string> Replaces = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Replaces))))
+            .Select(q => q.Object.ToString())];
+        HashSet<string> Related = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Related))))
+            .Select(q => q.Object.ToString()).OrderBy(r => r)];
+
+        var subRecordOf = (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsSubRecordOf))))
+            .Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
 
-        IsSubRecordOf = subRecordOf.FirstOrDefault();
+        var IsSubRecordOf = subRecordOf.FirstOrDefault();
+        var record = new Record(backend, describesConstraintMode)
+        {
+            Metadata = Metadata,
+            Scopes = Scopes.ToHashSet(),
+            Describes = Describes.ToHashSet(),
+            Replaces = Replaces,
+            Related = Related,
+            IsSubRecordOf = IsSubRecordOf
+        };
+        await record.ValidateDescribes();
+        return record;
+    }
 
-        ValidateDescribes().Wait();
-    }
-    public Record(ITripleStore store, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-           : this(new DotNetRdfRecordBackend(store), describesConstraintMode)
-    {
-    }
-    public Record(string rdfString, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-           : this(new DotNetRdfRecordBackend(rdfString), describesConstraintMode)
-    {
-    }
-    public Record(IGraph graph, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-           : this(new DotNetRdfRecordBackend(graph), describesConstraintMode)
-    {
-    }
-    public Record(string rdfString, IStoreReader reader, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
-           : this(new DotNetRdfRecordBackend(rdfString, reader), describesConstraintMode)
-    {
-    }
+    public static Task<Record> CreateAsync(ITripleStore store,
+        DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) =>
+        CreateAsync(new DotNetRdfRecordBackend(store), describesConstraintMode);
+
+    public static Task<Record> CreateAsync(string rdfString,
+        DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) =>
+        CreateAsync(new DotNetRdfRecordBackend(rdfString), describesConstraintMode);
+
+    public static Task<Record> CreateAsync(IGraph graph,
+        DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) =>
+        CreateAsync(new DotNetRdfRecordBackend(graph), describesConstraintMode);
+
+    public static Task<Record> CreateAsync(string rdfString, IStoreReader reader,
+        DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) =>
+        CreateAsync(new DotNetRdfRecordBackend(rdfString, reader), describesConstraintMode);
 
     public ValueTask DeleteDatasetAsync() =>
         _backend.DeleteDatasetAsync();

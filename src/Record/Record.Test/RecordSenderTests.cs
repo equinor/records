@@ -15,7 +15,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Can_Add_Record_To_HttpRequestMessage()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                         .WithId("https://example.com/record/1")
                         .WithScopes("https://example.com/scope/1")
                         .WithDescribes("https://example.com/object/1")
@@ -37,7 +37,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Can_Add_RecordString_To_HttpRequestMessage()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                         .WithId("https://example.com/record/1")
                         .WithScopes("https://example.com/scope/1")
                         .WithDescribes("https://example.com/object/1")
@@ -59,7 +59,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Can_Implicitly_Cast_Record_To_HttpRequestMessage()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                         .WithId("https://example.com/record/1")
                         .WithScopes("https://example.com/scope/1")
                         .WithDescribes("https://example.com/object/1")
@@ -83,7 +83,7 @@ public class RecordSenderTests
     public async Task Can_Add_RecordId_To_HttpRequestMessage()
     {
         var recordId = "https://example.com/record/1";
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId(recordId)
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -102,7 +102,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Can_Build_RecordSender()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -132,7 +132,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Can_Build_RecordRetracter()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -157,7 +157,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Fail_Build_RecordSender()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
         .WithId("https://example.com/record/1")
         .WithScopes("https://example.com/scope/1")
         .WithDescribes("https://example.com/object/1")
@@ -175,7 +175,7 @@ public class RecordSenderTests
     [Fact]
     public async Task Record_Can_Create_Builder()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")
@@ -205,7 +205,7 @@ public class RecordSenderTests
     [Fact]
     public async Task HttpRequestData_Can_Be_ParsedTo_Record()
     {
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
                 .WithId("https://example.com/record/1")
                 .WithScopes("https://example.com/scope/1")
                 .WithDescribes("https://example.com/object/1")

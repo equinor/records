@@ -38,7 +38,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Has_Metadata(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = record.Metadata!.Count();
 
         result.Should().Be(14);
@@ -49,7 +49,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Finds_Id(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -59,9 +59,9 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Record_CanBeCreated_FromGraph()
     {
         ITripleStore store = new TripleStore();
-        var graph = await TestData.ValidRecord().GetMergedGraphs();
+        var graph = await (await TestData.ValidRecord()).GetMergedGraphs();
 
-        var record = new Immutable.Record(graph);
+        var record = await Immutable.Record.CreateAsync( graph);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");
@@ -72,7 +72,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Do_Queries(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var queryResult = await record.Sparql(
             $"construct {{ ?s ?p ?o }} where {{ " +
             $"graph ?g {{ " +
@@ -91,7 +91,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
         var rdf = $"<{s}> <{p}> <{o}> <{g}> .";
 
-        var result = async () => new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdf));
+        var result = async () => await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdf));
 
         await result.Should().ThrowAsync<RecordException>().WithMessage("A record must have exactly one metadata graph.");
     }
@@ -103,7 +103,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Creating_Record_From_Invalid_JsonLD_Throws(BackendType backendType)
     {
         var invalidJsonLdString = await TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
-        var result = async () => new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, invalidJsonLdString));
+        var result = async () => await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, invalidJsonLdString));
         await result.Should().ThrowAsync<RecordException>();
     }
 
@@ -112,7 +112,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Be_Serialised_Nquad(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
         var recordString = await record.ToString<NQuadsWriter>();
         var result = recordString.Split("\n").Length;
@@ -126,7 +126,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Be_Serialised_Nquad_With_Direct_Writer(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
         var result = (await record.ToString(new NQuadsWriter())).Split("\n").Length;
 
@@ -141,7 +141,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Produce_Quads(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = (await record.Triples()).Count();
 
         // This is how many quads should be extraced from the JSON-LD
@@ -153,7 +153,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Has_Scopes_And_Describes(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
 
         var scopes = record.Scopes;
         var describes = record.Describes;
@@ -173,8 +173,8 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var rdfString1 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
         var rdfString2 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("2"));
 
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString1));
-        var record2 = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString2));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdfString1));
+        var record2 = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdfString2));
 
         record.Should().Be(record2);
     }
@@ -190,15 +190,15 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var rdfString1 = await TestData.ValidNQuadRecordString(id1, 3, 2);
         var rdfString2 = await TestData.ValidNQuadRecordString(id2, 3, 2);
 
-        var record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString1));
-        var record2 = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString2));
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdfString1));
+        var record2 = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdfString2));
 
         record.Should().Be(record2);
 
         var id3 = TestData.CreateRecordId("3");
         var rdfString3 = await TestData.ValidNQuadRecordString(id3, 2, 2);
 
-        var record3 = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, rdfString3));
+        var record3 = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdfString3));
         record.Should().NotBe(record3);
     }
 
@@ -207,7 +207,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Write_To_JsonLd(BackendType backendType)
     {
-        var record = new Immutable.Record(await CreateBackend(backendType,
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType,
             RdfMediaType.Quads,
             await TestData.ValidNQuadRecordString()));
 
@@ -229,17 +229,17 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     }
 
     [Fact]
-    public void Record_Can_Be_SubRecord()
+    public async Task Record_Can_Be_SubRecord()
     {
         var record = default(Immutable.Record);
         var superRecordId = TestData.CreateRecordId("super");
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
                 .WithIsSubRecordOf(superRecordId)
                 .Build();
         };
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         record.Should().NotBeNull();
 
@@ -253,7 +253,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Record_Does_Not_Need_SubRecordOf(BackendType backendType)
     {
         var record = default(Immutable.Record);
-        var loadResult = async () => record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var loadResult = async () => record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         await loadResult.Should().NotThrowAsync();
 
         record.Should().NotBeNull();
@@ -268,14 +268,14 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var record = default(Immutable.Record);
         var loadResult = async () =>
         {
-            var immutable = TestData.ValidRecordBeforeBuildComplete()
+            var immutable = await TestData.ValidRecordBeforeBuildComplete()
                 .WithIsSubRecordOf(TestData.CreateRecordId("super"))
                 .Build();
 
             var recordString = await immutable.ToString(new NQuadsWriter());
             recordString += $"<{immutable.Id}> <{Namespaces.Record.IsSubRecordOf}> <{TestData.CreateRecordId("supersuper")}>  <{immutable.Id}> .\n";
 
-            record = new Immutable.Record(await CreateBackend(backendType, RdfMediaType.Quads, recordString));
+            record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, recordString));
         };
         await loadResult.Should()
             .ThrowAsync<RecordException>()
@@ -288,13 +288,13 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Record_Content_Does_Not_Include_Metadata()
     {
         var record = default(Immutable.Record);
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
             .WithIsSubRecordOf(TestData.CreateRecordId(1))
             .Build();
         };
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         var metadata = await record!.MetadataAsTriples();
         var content = await record.ContentAsTriples();
@@ -307,14 +307,14 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Record_Can_Copy_Of_Internal_Graph()
     {
         var record = default(Immutable.Record);
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
             .WithIsSubRecordOf(TestData.CreateRecordId(1))
             .Build();
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         var tripleStore = await record!.TripleStore();
         (await record.Triples()).Should().Contain(tripleStore.Triples);
@@ -324,14 +324,14 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     public async Task Record_Can_Be_Copied_To_New_Record_Via_ITripleStore()
     {
         var record = default(Immutable.Record);
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
             .WithIsSubRecordOf(TestData.CreateRecordId(1))
             .Build();
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         var tripleStore = await record!.TripleStore();
         var metadataGraph = await record.MetadataGraph();
@@ -339,7 +339,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
 
         (await record.Triples()).Should().Contain(tripleStore.Triples);
 
-        var newRecord = new Immutable.Record(tripleStore);
+        var newRecord = await Immutable.Record.CreateAsync(tripleStore);
         newRecord.Should().Be(record);
         newRecord.Id.Should().Be(record.Id);
         (await newRecord.Triples()).Should().Contain(await record.Triples());
@@ -354,15 +354,15 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
         var content = new Triple(subjectExample, Namespaces.Rdf.UriNodes.Type, typeExample);
 
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
             .WithIsSubRecordOf(TestData.CreateRecordId(1))
             .WithAdditionalContent(content)
             .Build();
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         var subjects = await record!.SubjectWithType(typeExample);
 
@@ -379,15 +379,15 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var subjectExample = new UriNode(new Uri("https://example.com/subject/123"));
         var content = new Triple(subjectExample, Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete()
+            record = await TestData.ValidRecordBeforeBuildComplete()
             .WithIsSubRecordOf(TestData.CreateRecordId(1))
             .WithAdditionalContent(content)
             .Build();
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         var labels = await record!.LabelsOfSubject(subjectExample);
 
@@ -410,16 +410,16 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var typeExample = new UriNode(new Uri("https://example.com/type/Example"));
         var typeTriple = new Triple(subjectExample, Namespaces.Rdf.UriNodes.Type, typeExample);
 
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = TestData.ValidRecordBeforeBuildComplete(recordId)
+            record = await TestData.ValidRecordBeforeBuildComplete(recordId)
             .WithIsSubRecordOf(TestData.CreateRecordId(1))
             .WithAdditionalContent(labelTriple)
             .WithAdditionalContent(typeTriple)
             .Build();
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         var labelTriples = await record!.TriplesWithPredicateAndObject(Namespaces.Rdfs.UriNodes.Label, new LiteralNode(labelExample));
 
@@ -445,12 +445,12 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var recordString = await TestData.ValidJsonLdRecordString();
         var reader = new JsonLdParser();
 
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            var record = new Immutable.Record(recordString, reader);
+            var record = await Immutable.Record.CreateAsync(recordString, reader);
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -459,18 +459,18 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var recordString = await TestData.ValidJsonLdRecordString();
         var reader = new NQuadsParser();
 
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            var record = new Immutable.Record(recordString, reader);
+            var record = await Immutable.Record.CreateAsync(recordString, reader);
         };
 
-        loadResult.Should().Throw<RdfParseException>();
+        await loadResult.Should().ThrowAsync<RdfParseException>();
     }
 
     [Fact]
     public async Task Record_Can_Load_From_TripleStore()
     {
-        var originalRecord = TestData.ValidRecord();
+        var originalRecord = await TestData.ValidRecord();
 
         var recordString = await originalRecord.ToString<JsonLdWriter>();
         var store = new TripleStore();
@@ -478,12 +478,12 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
 
         var record = default(Immutable.Record);
 
-        var loadResult = () =>
+        var loadResult = async () =>
         {
-            record = new Immutable.Record(store);
+            record = await Immutable.Record.CreateAsync(store);
         };
 
-        loadResult.Should().NotThrow();
+        await loadResult.Should().NotThrowAsync();
 
         record.Should().NotBeNull();
         record!.Id.Should().Be(originalRecord.Id);
@@ -495,7 +495,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         // Arrange
         var recordId = "https://example.com/1";
 
-        var record = TestData.ValidRecord(TestData.CreateRecordId(recordId));
+        var record = await TestData.ValidRecord(TestData.CreateRecordId(recordId));
         var tripleStore = await record.TripleStore();
 
         var collapsedGraph = tripleStore.Collapse(recordId);
@@ -515,11 +515,11 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         // Arrange
         var recordId = "https://example.com/1";
 
-        var record = TestData.ValidRecord(recordId);
+        var record = await TestData.ValidRecord(recordId);
         var graph = await record.GetMergedGraphs();
 
         // Act
-        var result = new Immutable.Record(graph);
+        var result = await Immutable.Record.CreateAsync(graph);
 
         // Assert
         result.Should().Be(record);
@@ -532,7 +532,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         // Arrange
         var recordId = "https://example.com/1";
 
-        var record = TestData.ValidRecord(recordId);
+        var record = await TestData.ValidRecord(recordId);
 
         // Act
         var result = await record.GetContentGraphs();
