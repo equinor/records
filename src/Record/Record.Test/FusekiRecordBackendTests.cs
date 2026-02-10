@@ -82,10 +82,10 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidRecordString<TriGWriter>();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
-        var triplesWithSubjectObject = await backend.TriplesWithSubjectPredicate(
+        var recordScopes = await backend.TriplesWithSubjectPredicate(
             new UriNode(new Uri("https://ssi.example.com/record/1")),
             new UriNode(new Uri("https://rdf.equinor.com/ontology/record/isInScope")));
-        Assert.Single(triplesWithSubjectObject);
+        Assert.Equal(5, recordScopes.Count());
     }
 
     [Fact]
