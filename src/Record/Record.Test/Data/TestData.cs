@@ -74,7 +74,7 @@ public static class TestData
             .ToList();
 
     public static List<Triple> CreateTripleList(int numberOfQuads, string graphLabel)
-        => Enumerable.Range(1, numberOfQuads-1)
+        => Enumerable.Range(1, numberOfQuads - 1)
             .Select(i =>
             {
                 var (s, p, o) = CreateRecordTripleStringTuple(i.ToString());
@@ -110,7 +110,7 @@ public static class TestData
     {
         return (CreateRecordSubject(id), "http://www.w3.org/2000/01/rdf-schema#label", CreateRecordObject(id));
     }
-    
+
     public static (string subject, string predicate, string @object, string graphLabel) CreateRecordQuadStringTuple(string id)
     {
         return (CreateRecordSubject(id), CreateRecordPredicate(id), CreateRecordObject(id), CreateRecordId(id));

@@ -48,10 +48,10 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
         var labels = await backend.LabelsOfSubject(new UriNode(new Uri("https://ssi.example.com/subject/1")));
-        Assert.Single( labels);
+        Assert.Single(labels);
     }
 
-    
+
     [Fact]
     public async Task GetPredicateObjectTriples()
     {
@@ -61,7 +61,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var triplesWithPredicateAndObject = await backend.TriplesWithPredicateAndObject(
             new UriNode(new Uri("https://ssi.example.com/predicate/1")),
             new UriNode(new Uri("https://ssi.example.com/object/1")));
-        Assert.Single( triplesWithPredicateAndObject);
+        Assert.Single(triplesWithPredicateAndObject);
     }
 
     [Fact]
@@ -73,9 +73,9 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var triplesWithSubjectObject = await backend.TriplesWithSubjectObject(
             new UriNode(new Uri("https://ssi.example.com/subject/2")),
             new UriNode(new Uri("https://ssi.example.com/object/2")));
-        Assert.Single( triplesWithSubjectObject);
+        Assert.Single(triplesWithSubjectObject);
     }
-    
+
     [Fact]
     public async Task GetSubjectPredicateTriples()
     {
@@ -85,9 +85,9 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var triplesWithSubjectObject = await backend.TriplesWithSubjectPredicate(
             new UriNode(new Uri("https://ssi.example.com/record/1")),
             new UriNode(new Uri("https://rdf.equinor.com/ontology/record/isInScope")));
-        Assert.Single( triplesWithSubjectObject);
+        Assert.Single(triplesWithSubjectObject);
     }
-    
+
     [Fact]
     public async Task SubjectsOfTypes()
     {
