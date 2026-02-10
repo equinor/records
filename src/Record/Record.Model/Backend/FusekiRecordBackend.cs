@@ -13,65 +13,45 @@ namespace Records.Backend;
 
 public class FusekiRecordBackend : RecordBackendBase
 {
-    private readonly Uri BaseAddress;
-    private Uri SparqlEndpointUrl() => new($"{BaseAddress}{_datasetName}/sparql");
-    private Uri UpdateEndpointUrl() => new($"{BaseAddress}{_datasetName}/update");
-    private Uri DataEndpointUrl() => new($"{BaseAddress}{_datasetName}/data");
-    private Uri CreateDatasetEndpointUrl() => new($"{BaseAddress}$/datasets");
-    private Uri DatasetEndpointUrl() => new($"{BaseAddress}$/datasets/{_datasetName}");
-    private readonly Func<Task<string>>? _authorization;
+    private readonly HttpClient _httpClient;
+    private Uri SparqlEndpointUrl() => new($"{_datasetName}/sparql");
+    private Uri UpdateEndpointUrl() => new($"{_datasetName}/update");
+    private Uri DataEndpointUrl() => new($"{_datasetName}/data");
+    private Uri CreateDatasetEndpointUrl() => new($"$/datasets");
+    private Uri DatasetEndpointUrl() => new($"$/datasets/{_datasetName}");
     private readonly string _datasetName;
 
-    private FusekiRecordBackend(Uri baseAddress, Func<Task<string>>? authorization = null)
+    private FusekiRecordBackend(HttpClient httpClient)
     {
         _datasetName = $"record_{Guid.NewGuid()}";
-        _authorization = authorization;
-        BaseAddress = baseAddress ?? throw new ArgumentNullException(nameof(baseAddress), "Base address cannot be null.");
+        _httpClient = httpClient;
     }
-    public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
-        CreateAsync(rdfString, RdfMediaType.Trig, baseAddress, authorization);
+    public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, HttpClient httpClient) =>
+        CreateAsync(rdfString, RdfMediaType.Trig, httpClient);
 
-    public static Task<FusekiRecordBackend> CreateFromJsonLdAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
-        CreateAsync(rdfString, RdfMediaType.JsonLd, baseAddress, authorization);
+    public static Task<FusekiRecordBackend> CreateFromJsonLdAsync(string rdfString, HttpClient httpClient) =>
+        CreateAsync(rdfString, RdfMediaType.JsonLd, httpClient);
 
-    public static Task<FusekiRecordBackend> CreateFromNQuadsAsync(string rdfString, Uri baseAddress, Func<Task<string>>? authorization = null) =>
-        CreateAsync(rdfString, RdfMediaType.Quads, baseAddress, authorization);
+    public static Task<FusekiRecordBackend> CreateFromNQuadsAsync(string rdfString, HttpClient httpClient) =>
+        CreateAsync(rdfString, RdfMediaType.Quads, httpClient);
 
 
-    public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, Uri baseAddress, Func<Task<string>>? authorization = null)
+    public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, HttpClient httpClient)
     {
-        var client = new FusekiRecordBackend(baseAddress, authorization);
+        var client = new FusekiRecordBackend(httpClient);
         await client.CreateDatasetAsync();
         await client.UploadRdfData(rdfString, contentType);
         await client.InitializeMetadata();
         return client;
     }
 
-    private async Task<HttpClient> CreateSparqlClientAsync()
-    {
-        var client = new HttpClient { BaseAddress = SparqlEndpointUrl() };
-        if (_authorization != null)
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authorization());
-
-        return client;
-    }
-
-    private async Task<HttpClient> CreateClientAsync()
-    {
-        var client = new HttpClient { };
-        if (_authorization != null)
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await _authorization());
-
-        return client;
-    }
-
+    
     private async Task CreateDatasetAsync()
     {
-        var client = await CreateClientAsync();
         var query = $"dbName={_datasetName}&dbType=mem";
         var fullUri = $"{CreateDatasetEndpointUrl()}?{query}";
         var content = new StringContent("");
-        var response = await client.PostAsync(fullUri, content);
+        var response = await _httpClient.PostAsync(fullUri, content);
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
@@ -81,10 +61,9 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async ValueTask DeleteDatasetAsync()
     {
-        var client = await CreateClientAsync();
         var jsonContent = $"{{\"name\": \"{_datasetName}\", \"type\": \"memory\"}}";
         var reqContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-        var response = await client.DeleteAsync(DataEndpointUrl());
+        var response = await _httpClient.DeleteAsync(DatasetEndpointUrl());
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
@@ -94,13 +73,12 @@ public class FusekiRecordBackend : RecordBackendBase
 
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
     {
-        using var client = await CreateClientAsync();
         if (contentType == RdfMediaType.JsonLd)
             ValidateJsonLd(rdfData);
-        var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointUrl());
+        var request = new HttpRequestMessage(HttpMethod.Post, CreateDatasetEndpointUrl());
         request.Content = new StringContent(rdfData, contentType.GetMediaTypeHeaderValue());
 
-        var response = await client.SendAsync(request);
+        var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
@@ -108,8 +86,8 @@ public class FusekiRecordBackend : RecordBackendBase
         }
     }
 
-    internal async Task<SparqlQueryClient> GetSparqlQueryClient() =>
-        new SparqlQueryClient(await CreateSparqlClientAsync(), SparqlEndpointUrl());
+    internal SparqlQueryClient GetSparqlQueryClient() =>
+        new SparqlQueryClient(_httpClient, SparqlEndpointUrl());
 
 
     public override async Task<ITripleStore> TripleStore()
@@ -128,10 +106,10 @@ public class FusekiRecordBackend : RecordBackendBase
 
     internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
-        using var client = await CreateClientAsync();
+        
         var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointUrl());
         request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
-        var response = await client.SendAsync(request);
+        var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
@@ -145,26 +123,16 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IEnumerable<INode>> SubjectWithType(UriNode type)
     {
-        string x = "x";
-        var queryBuilder = QueryBuilder
-            .Select(new string[] { x })
-            .Where(triplePatternBuilder =>
-            {
-                triplePatternBuilder
-                    .Subject(x)
-                    .PredicateUri(new Uri("http://www.w3.org/2000/01/rdf-schema#type"))
-                    .Object(type.Uri);
-            });
-        var queryString = queryBuilder.BuildQuery().ToString();
-        var queryClient = await GetSparqlQueryClient();
+        var queryString = $"SELECT ?x WHERE {{ GRAPH ?g {{ ?x a {type.ToString(new TurtleFormatter())} . }} }}";
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
-        return sparqlResultSet.Select(result => result.Value(x));
+        return sparqlResultSet.Select(result => result.Value("x"));
     }
 
     public override async Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
     {
         string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} rdfs:label ?label . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             result.Value("label").ToString(new TurtleFormatter())
@@ -176,7 +144,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
     {
         string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} ?p ?o . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(subject,
@@ -188,7 +156,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
     {
         string queryString = $"SELECT ?s ?o WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(new TurtleFormatter())} ?o . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -200,7 +168,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
     {
         string queryString = $"SELECT ?s ?p WHERE {{ GRAPH ?g {{ ?s ?p {@object.ToString(new TurtleFormatter())} . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -213,7 +181,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?s WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(turtleFormatter)} {@object.ToString(turtleFormatter)} . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -226,7 +194,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?p WHERE {{ GRAPH ?g{{ {subject.ToString(turtleFormatter)} ?p {@object.ToString(turtleFormatter)} . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(subject,
@@ -238,8 +206,8 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
     {
         var turtleFormatter = new TurtleFormatter();
-        string queryString = $"SELECT ?o WHERE {{ {subject.ToString(turtleFormatter)} {predicate.ToString(turtleFormatter)} ?o . }}";
-        var queryClient = await GetSparqlQueryClient();
+        string queryString = $"SELECT ?o WHERE {{ GRAPH ?g {{ {subject.ToString(turtleFormatter)} {predicate.ToString(turtleFormatter)} ?o . }} }}";
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(subject,
@@ -250,19 +218,19 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IGraph> ConstructQuery(SparqlQuery query)
     {
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         return await queryClient.QueryWithResultGraphAsync(query.ToString());
     }
 
     public override async Task<SparqlResultSet> Query(SparqlQuery query)
     {
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         return await queryClient.QueryWithResultSetAsync(query.ToString());
     }
 
     public override async Task<IEnumerable<string>> Sparql(string queryString)
     {
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var command = queryString.Split().First();
         return command.ToLower() switch
         {
@@ -279,7 +247,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IGraph> GetMergedGraphs()
     {
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         return await queryClient.QueryWithResultGraphAsync("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . } }");
     }
 
@@ -292,7 +260,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> Triples()
     {
         string queryString = $"SELECT ?s ?p ?o WHERE {{ GRAPH ?g {{ ?s ?p ?o . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -304,7 +272,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<bool> ContainsTriple(Triple triple)
     {
         var queryString = $"ASK WHERE {{ GRAPH ?g {{ {triple.Subject.ToString(new TurtleFormatter())} {triple.Predicate.ToString(new TurtleFormatter())} {triple.Object.ToString(new TurtleFormatter())} . }} }}";
-        var queryClient = await GetSparqlQueryClient();
+        var queryClient =GetSparqlQueryClient();
         var qResult = await queryClient.QueryWithResultSetAsync(queryString);
         return qResult.Result;
     }
