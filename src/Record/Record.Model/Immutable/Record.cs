@@ -84,10 +84,10 @@ public class Record : IEquatable<Record>, IAsyncDisposable
     public ValueTask DeleteDatasetAsync() =>
         _backend.DeleteDatasetAsync();
 
-    public static implicit operator HttpRequestMessage(Record record)
+    public static async Task<HttpRequestMessage> ToHttpRequestMessageAsync(Record record)
     {
         var message = new HttpRequestMessage();
-        message.AddRecord(record).Wait();
+        await message.AddRecord(record);
         return message;
     }
 

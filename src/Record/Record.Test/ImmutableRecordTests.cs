@@ -61,7 +61,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         ITripleStore store = new TripleStore();
         var graph = await (await TestData.ValidRecord()).GetMergedGraphs();
 
-        var record = await Immutable.Record.CreateAsync( graph);
+        var record = await Immutable.Record.CreateAsync(graph);
         var result = record.Id;
 
         result.Should().Be("https://ssi.example.com/record/1");

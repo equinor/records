@@ -30,6 +30,6 @@ public static class HttpExtensions
         if (string.IsNullOrEmpty(recordString))
             throw new ArgumentException("message.ReadAsString() returned null or empty.");
 
-        return await Immutable.Record.CreateAsync(new  DotNetRdfRecordBackend(recordString));
+        return await Immutable.Record.CreateAsync(new DotNetRdfRecordBackend(recordString));
     }
 }
