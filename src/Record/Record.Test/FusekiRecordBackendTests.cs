@@ -70,18 +70,18 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
         Assert.Equal(14, subjectWithType.Count());
     }
-    
+
     [Fact]
     public async Task SparqlInjectionIsBlocked()
     {
         var maliciousInput = "?o \" } } . DELETE WHERE { ?s ?p ?o }";
-        INode testNode = new LiteralNode(maliciousInput); 
+        INode testNode = new LiteralNode(maliciousInput);
 
         var recordString = await TestData.ValidRecordString<TriGWriter>();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
 
         var subjectWithType = await backend.TriplesWithObject(testNode);
-        Assert.Equal(0, subjectWithType.Count());
+        Assert.Empty(subjectWithType);
     }
 }
