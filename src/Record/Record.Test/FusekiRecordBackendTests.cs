@@ -11,19 +11,19 @@ namespace Records.Tests;
 public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerManager)
 {
     private readonly HttpClient  _httpClient = new(){BaseAddress = fusekiContainerManager.address};
-    [Fact]
-    public async Task CanCreateFusekiRecordBackend()
+    [Theory]
+    [InlineData(RdfMediaType.JsonLd)]
+    [InlineData(RdfMediaType.Trig)]
+    [InlineData(RdfMediaType.Quads)]
+    public async Task CanCreateFusekiRecordBackend(RdfMediaType rdfMediaType)
     {
-        ITripleStore store = new TripleStore();
-        var graph = await TestData.ValidRecord().TripleStore();
-        var writer = new TriGWriter();
-        var recordString = VDS.RDF.Writing.StringWriter.Write(graph, writer);
-        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var recordString = await TestData.ValidRecordString(rdfMediaType.GetStoreWriter());
+        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync( recordString, rdfMediaType, _httpClient);
         Assert.NotNull(backend);
         var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
         var result = record.Metadata?.Count;
-
         result.Should().Be(14);
+        
     }
 
     [Fact]
@@ -38,4 +38,27 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         result.Should().Be(14);
     }
 
+    
+    [Fact]
+    public async Task ReadLabelTriples()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        Assert.NotNull(backend);
+        var labels = await backend.LabelsOfSubject(new UriNode(new Uri("https://example.com/record/1")));
+        Assert.Empty(labels);
+
+    }
+    
+    
+    [Fact]
+    public async Task SubjectsOfTypes()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        Assert.NotNull(backend);
+        var labels = await backend.LabelsOfSubject(new UriNode(new Uri("https://example.com/record/1")));
+        Assert.Empty(labels);
+
+    }
 }

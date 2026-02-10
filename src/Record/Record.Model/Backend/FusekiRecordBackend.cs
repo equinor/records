@@ -14,17 +14,19 @@ namespace Records.Backend;
 public class FusekiRecordBackend : RecordBackendBase
 {
     private readonly HttpClient _httpClient;
-    private Uri SparqlEndpointUrl() => new($"{_datasetName}/sparql");
-    private Uri UpdateEndpointUrl() => new($"{_datasetName}/update");
-    private Uri DataEndpointUrl() => new($"{_datasetName}/data");
-    private Uri CreateDatasetEndpointUrl() => new($"$/datasets");
-    private Uri DatasetEndpointUrl() => new($"$/datasets/{_datasetName}");
+    private readonly Uri _baseUri;
+    private Uri SparqlEndpointUri() => new($"{_baseUri}{_datasetName}/sparql");
+    private string UpdateEndpointPath() => new($"{_datasetName}/update");
+    private string DataEndpointPath() => new($"{_datasetName}/data");
+    private string CreateDatasetEndpointPath() => new($"$/datasets");
+    private string DatasetEndpointPath() => new($"$/datasets/{_datasetName}");
     private readonly string _datasetName;
 
     private FusekiRecordBackend(HttpClient httpClient)
     {
         _datasetName = $"record_{Guid.NewGuid()}";
         _httpClient = httpClient;
+        _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
     }
     public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.Trig, httpClient);
@@ -49,7 +51,7 @@ public class FusekiRecordBackend : RecordBackendBase
     private async Task CreateDatasetAsync()
     {
         var query = $"dbName={_datasetName}&dbType=mem";
-        var fullUri = $"{CreateDatasetEndpointUrl()}?{query}";
+        var fullUri = $"{CreateDatasetEndpointPath()}?{query}";
         var content = new StringContent("");
         var response = await _httpClient.PostAsync(fullUri, content);
         if (!response.IsSuccessStatusCode)
@@ -63,7 +65,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var jsonContent = $"{{\"name\": \"{_datasetName}\", \"type\": \"memory\"}}";
         var reqContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-        var response = await _httpClient.DeleteAsync(DatasetEndpointUrl());
+        var response = await _httpClient.DeleteAsync(DatasetEndpointPath());
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
@@ -75,7 +77,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         if (contentType == RdfMediaType.JsonLd)
             ValidateJsonLd(rdfData);
-        var request = new HttpRequestMessage(HttpMethod.Post, CreateDatasetEndpointUrl());
+        var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointPath());
         request.Content = new StringContent(rdfData, contentType.GetMediaTypeHeaderValue());
 
         var response = await _httpClient.SendAsync(request);
@@ -87,7 +89,7 @@ public class FusekiRecordBackend : RecordBackendBase
     }
 
     internal SparqlQueryClient GetSparqlQueryClient() =>
-        new SparqlQueryClient(_httpClient, SparqlEndpointUrl());
+        new SparqlQueryClient(_httpClient,  SparqlEndpointUri());
 
 
     public override async Task<ITripleStore> TripleStore()
@@ -107,7 +109,7 @@ public class FusekiRecordBackend : RecordBackendBase
     internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
         
-        var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointUrl());
+        var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
         request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
@@ -131,7 +133,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
     {
-        string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} rdfs:label ?label . }} }}";
+        string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} <https://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?label . }} }}";
         var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
