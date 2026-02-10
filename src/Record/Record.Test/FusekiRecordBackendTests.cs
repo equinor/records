@@ -10,7 +10,7 @@ namespace Records.Tests;
 [Collection("Integration Testing Collection")]
 public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerManager)
 {
-    private readonly HttpClient  _httpClient = new(){BaseAddress = fusekiContainerManager.address};
+    private readonly HttpClient _httpClient = new() { BaseAddress = fusekiContainerManager.address };
     private UriNode _recordIduriNode = new UriNode(new Uri("https://ssi.example.com/record/1"));
 
     [Theory]
@@ -20,12 +20,12 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     public async Task CanCreateFusekiRecordBackend(RdfMediaType rdfMediaType)
     {
         var recordString = await TestData.ValidRecordString(rdfMediaType.GetStoreWriter());
-        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync( recordString, rdfMediaType, _httpClient);
+        var backend = await Records.Backend.FusekiRecordBackend.CreateAsync(recordString, rdfMediaType, _httpClient);
         Assert.NotNull(backend);
         var record = new Records.Immutable.Record(backend, DescribesConstraintMode.None);
         var result = record.Metadata?.Count;
         result.Should().Be(14);
-        
+
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         result.Should().Be(14);
     }
 
-    
+
     [Fact]
     public async Task ReadLabelTriples()
     {
@@ -50,7 +50,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var labels = await backend.LabelsOfSubject(new UriNode(new Uri("https://example.com/record/1")));
         Assert.Empty(labels);
     }
-    
+
     [Fact]
     public async Task SubjectsOfTypes()
     {
@@ -66,8 +66,22 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidRecordString<TriGWriter>();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
-        
+
         var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
         Assert.Equal(14, subjectWithType.Count());
+    }
+    
+    [Fact]
+    public async Task SparqlInjectionIsBlocked()
+    {
+        var maliciousInput = "?o \" } } . DELETE WHERE { ?s ?p ?o }";
+        INode testNode = new LiteralNode(maliciousInput); 
+
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        Assert.NotNull(backend);
+
+        var subjectWithType = await backend.TriplesWithObject(testNode);
+        Assert.Equal(0, subjectWithType.Count());
     }
 }

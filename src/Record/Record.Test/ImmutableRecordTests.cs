@@ -24,7 +24,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         HttpClient httpClient = new HttpClient() { BaseAddress = _connectionUri };
         IRecordBackend backend = backendType switch
         {
-            
+
             BackendType.Fuseki => await FusekiRecordBackend.CreateAsync(rdfstring, mediaType, httpClient),
             BackendType.DotNetRdf => new DotNetRdfRecordBackend(rdfstring),
             _ => throw new ArgumentException("Invalid backend type")

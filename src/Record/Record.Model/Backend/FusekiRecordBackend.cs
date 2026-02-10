@@ -47,7 +47,7 @@ public class FusekiRecordBackend : RecordBackendBase
         return client;
     }
 
-    
+
     private async Task CreateDatasetAsync()
     {
         var query = $"dbName={_datasetName}&dbType=mem";
@@ -89,7 +89,7 @@ public class FusekiRecordBackend : RecordBackendBase
     }
 
     internal SparqlQueryClient GetSparqlQueryClient() =>
-        new SparqlQueryClient(_httpClient,  SparqlEndpointUri());
+        new SparqlQueryClient(_httpClient, SparqlEndpointUri());
 
 
     public override async Task<ITripleStore> TripleStore()
@@ -108,7 +108,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
-        
+
         var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
         request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
         var response = await _httpClient.SendAsync(request);
@@ -146,7 +146,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
     {
         string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} ?p ?o . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(subject,
@@ -158,7 +158,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
     {
         string queryString = $"SELECT ?s ?o WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(new TurtleFormatter())} ?o . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -170,7 +170,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
     {
         string queryString = $"SELECT ?s ?p WHERE {{ GRAPH ?g {{ ?s ?p {@object.ToString(new TurtleFormatter())} . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -183,7 +183,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?s WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(turtleFormatter)} {@object.ToString(turtleFormatter)} . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -196,7 +196,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?p WHERE {{ GRAPH ?g{{ {subject.ToString(turtleFormatter)} ?p {@object.ToString(turtleFormatter)} . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(subject,
@@ -209,7 +209,7 @@ public class FusekiRecordBackend : RecordBackendBase
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?o WHERE {{ GRAPH ?g {{ {subject.ToString(turtleFormatter)} {predicate.ToString(turtleFormatter)} ?o . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(subject,
@@ -220,19 +220,19 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IGraph> ConstructQuery(SparqlQuery query)
     {
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         return await queryClient.QueryWithResultGraphAsync(query.ToString());
     }
 
     public override async Task<SparqlResultSet> Query(SparqlQuery query)
     {
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         return await queryClient.QueryWithResultSetAsync(query.ToString());
     }
 
     public override async Task<IEnumerable<string>> Sparql(string queryString)
     {
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var command = queryString.Split().First();
         return command.ToLower() switch
         {
@@ -249,7 +249,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<IGraph> GetMergedGraphs()
     {
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         return await queryClient.QueryWithResultGraphAsync("CONSTRUCT { ?s ?p ?o . } WHERE { GRAPH ?g { ?s ?p ?o . } }");
     }
 
@@ -262,7 +262,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IEnumerable<Triple>> Triples()
     {
         string queryString = $"SELECT ?s ?p ?o WHERE {{ GRAPH ?g {{ ?s ?p ?o . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
             new Triple(result.Value("s"),
@@ -274,7 +274,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<bool> ContainsTriple(Triple triple)
     {
         var queryString = $"ASK WHERE {{ GRAPH ?g {{ {triple.Subject.ToString(new TurtleFormatter())} {triple.Predicate.ToString(new TurtleFormatter())} {triple.Object.ToString(new TurtleFormatter())} . }} }}";
-        var queryClient =GetSparqlQueryClient();
+        var queryClient = GetSparqlQueryClient();
         var qResult = await queryClient.QueryWithResultSetAsync(queryString);
         return qResult.Result;
     }

@@ -63,7 +63,7 @@ public static class TestData
         return record.ToString<T>();
     }
 
-    public static Task<string> ValidRecordString(IStoreWriter writer, string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10) 
+    public static Task<string> ValidRecordString(IStoreWriter writer, string? id = null, int numberScopes = 5, int numberDescribes = 5, int numberQuads = 10)
     {
         var record = ValidRecord(id, numberScopes, numberDescribes, numberQuads);
         return record.ToString(writer);
