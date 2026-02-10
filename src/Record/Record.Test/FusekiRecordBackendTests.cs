@@ -11,6 +11,8 @@ namespace Records.Tests;
 public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerManager)
 {
     private readonly HttpClient  _httpClient = new(){BaseAddress = fusekiContainerManager.address};
+    private UriNode _recordIduriNode = new UriNode(new Uri("https://ssi.example.com/record/1"));
+
     [Theory]
     [InlineData(RdfMediaType.JsonLd)]
     [InlineData(RdfMediaType.Trig)]
@@ -47,9 +49,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         Assert.NotNull(backend);
         var labels = await backend.LabelsOfSubject(new UriNode(new Uri("https://example.com/record/1")));
         Assert.Empty(labels);
-
     }
-    
     
     [Fact]
     public async Task SubjectsOfTypes()
@@ -57,8 +57,17 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidRecordString<TriGWriter>();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
-        var labels = await backend.LabelsOfSubject(new UriNode(new Uri("https://example.com/record/1")));
-        Assert.Empty(labels);
-
+        var subjectWithType = await backend.SubjectWithType(new UriNode(new Uri("https://rdf.equinor.com/ontology/record/Record")));
+        Assert.Single(subjectWithType);
+    }
+    [Fact]
+    public async Task TriplesWithSubject()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        Assert.NotNull(backend);
+        
+        var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
+        Assert.Equal(14, subjectWithType.Count());
     }
 }
