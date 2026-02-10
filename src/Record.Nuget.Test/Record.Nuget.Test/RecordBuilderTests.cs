@@ -10,14 +10,14 @@ public class RecordBuilderTests
 {
 
     [Fact]
-    public void Can__Create__Record()
+    public async Task Can__Create__Record()
     {
         var id = CreateRecordId("0");
         var scopes = CreateObjectList(2, "scope");
         var describes = CreateObjectList(2, "describes");
         var used = CreateObjectList(2, "used");
 
-        var record = new RecordBuilder()
+        var record = await new RecordBuilder()
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithId(id)
