@@ -231,7 +231,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
                         "WHERE {" +
                             "GRAPH @Id { @Id <https://rdf.equinor.com/ontology/record/hasContent> ?contentGraph }" +
                             "GRAPH ?contentGraph { ?s ?p ?o } }");
-        
+
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
         var contentQuery = new SparqlQueryParser().ParseFromString(contentQueryString);
