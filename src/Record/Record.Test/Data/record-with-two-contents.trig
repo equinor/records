@@ -1,0 +1,20 @@
+﻿<https://bravo.equinor.com/record-7b4d1521-2a71-4bc5-b1c1-f55d70c054db> {
+           <https://bravo.equinor.com/record-7b4d1521-2a71-4bc5-b1c1-f55d70c054db> a <https://rdf.equinor.com/ontology/record/Record>;
+            <https://rdf.equinor.com/ontology/record/describes>  <https://bravo.equinor.com/monthlyprocurementpackagereportcollection/BOUVET/M.999A.999/1234567890/2025/04>;
+            <https://rdf.equinor.com/ontology/record/describes>  <https://bravo.equinor.com/monthlyprocurementpackagereportcollection/BOUVET/M.999A.999/1234567890/2025/05>;
+            <https://rdf.equinor.com/ontology/record/hasContent>  <https://bravo.equinor.com/record-7b4d1521-2a71-4bc5-b1c1-f55d70c054db#content>;
+            <https://rdf.equinor.com/ontology/record/hasContent>  <https://bravo.equinor.com/record-7b4d1521-2a71-4bc5-b1c1-f55d70c054db#content2>;
+            <https://rdf.equinor.com/ontology/record/isInScope>  <https://rdf.equinor.com/asset/ProcurementPackage>.
+}
+
+<https://bravo.equinor.com/record-7b4d1521-2a71-4bc5-b1c1-f55d70c054db#content> {
+    <https://bravo.equinor.com/monthlyprocurementpackagereportcollection/BOUVET/M.999A.999/1234567890/2025/04>
+            a       <https://rdf.equinor.com/asset/Contract>;
+            <http://www.w3.org/2000/01/rdf-schema#label>  "1234567890".
+}
+
+<https://bravo.equinor.com/record-7b4d1521-2a71-4bc5-b1c1-f55d70c054db#content2> {
+    <https://bravo.equinor.com/monthlyprocurementpackagereportcollection/BOUVET/M.999A.999/1234567890/2025/05>
+            a       <https://rdf.equinor.com/asset/Contract>;
+            <http://www.w3.org/2000/01/rdf-schema#label>  "1234567890".
+}

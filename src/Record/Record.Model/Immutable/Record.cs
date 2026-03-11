@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Records.Exceptions;
+﻿using Records.Exceptions;
 using Records.Sender;
 using System.Diagnostics;
 using Records.Backend;
@@ -184,17 +183,6 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     }
 
-
-    private static void ValidateJsonLd(string rdfString)
-    {
-        try { JsonConvert.DeserializeObject(rdfString); }
-        catch (JsonReaderException ex)
-        {
-            var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
-            throw recordException;
-        }
-    }
-
     public Task<ITripleStore> TripleStore() => _backend.TripleStore();
 
     public Task<IGraph> GetMergedGraphs() => _backend.GetMergedGraphs();
@@ -235,19 +223,20 @@ public class Record : IEquatable<Record>, IAsyncDisposable
     public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
 
 
-
     public Task<IEnumerable<Triple>> Triples() => _backend.Triples();
     public async Task<IEnumerable<Triple>> ContentAsTriples()
     {
-        var parser = new SparqlQueryParser();
-        var metadata = await MetadataAsTriples();
-
-        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
+        var parameterizedQuery = new SparqlParameterizedString(
+            "CONSTRUCT {?s ?p ?o}" +
+                        "WHERE {" +
+                            "GRAPH @Id { @Id <https://rdf.equinor.com/ontology/record/hasContent> ?contentGraph }" +
+                            "GRAPH ?contentGraph { ?s ?p ?o } }");
+        
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
-        var contentQuery = parser.ParseFromString(contentQueryString);
+        var contentQuery = new SparqlQueryParser().ParseFromString(contentQueryString);
         var content = await _backend.ConstructQuery(contentQuery);
-        return content.Triples.Except(metadata);
+        return content.Triples.Except(await MetadataAsTriples());
     }
 
     public async Task<IEnumerable<Triple>> MetadataAsTriples() => (await _backend.GetMetadataGraph()).Triples;

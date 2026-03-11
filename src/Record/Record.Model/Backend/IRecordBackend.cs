@@ -1,4 +1,3 @@
-using Lucene.Net.Util;
 using VDS.RDF;
 using VDS.RDF.Query;
 

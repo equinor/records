@@ -1,14 +1,8 @@
-using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
-using IriTools;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
-using VDS.RDF.Query.Builder;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
-using StringWriter = VDS.RDF.Writing.StringWriter;
 
 namespace Records.Backend;
 

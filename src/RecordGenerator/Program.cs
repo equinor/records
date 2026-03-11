@@ -3,7 +3,6 @@
 using VDS.RDF;
 using VDS.RDF.Writing;
 using System.Collections;
-using VDS.RDF.JsonLd.Syntax;
 using VDS.RDF.Parsing;
 
 namespace RecordGenerator;
