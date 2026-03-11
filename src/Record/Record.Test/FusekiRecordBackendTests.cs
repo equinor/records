@@ -1,9 +1,7 @@
-using System.Net.Http.Headers;
 using FluentAssertions;
 using Record.Test.TestInfrastructure;
 using VDS.RDF;
 using VDS.RDF.Writing;
-using StringWriter = System.IO.StringWriter;
 
 namespace Records.Tests;
 

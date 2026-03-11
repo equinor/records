@@ -1,7 +1,5 @@
-﻿
-using DotNet.Testcontainers.Builders;
+﻿using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using Records.Backend;
 
 namespace Record.Test.TestInfrastructure;
 

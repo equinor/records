@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Records.Exceptions;
+﻿using Records.Exceptions;
 using Records.Sender;
 using System.Diagnostics;
 using Records.Backend;
@@ -33,17 +32,17 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     public static async Task<Record> CreateAsync(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        var Id = new UriNode(backend.GetRecordId());
-        List<Triple> Metadata = [.. await backend.TriplesWithSubject(Id)];
+        var id = new UriNode(backend.GetRecordId());
+        List<Triple> metadata = [.. await backend.TriplesWithSubject(id)];
 
-        List<string> Scopes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsInScope))))
+        List<string> scopes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsInScope))))
             .Select(q => q.Object.ToString()).OrderBy(s => s)];
-        List<string> Describes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Describes))))
+        List<string> describes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Describes))))
             .Select(q => q.Object.ToString()).OrderBy(d => d)];
 
-        List<string> Replaces = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Replaces))))
+        List<string> replaces = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Replaces))))
             .Select(q => q.Object.ToString())];
-        HashSet<string> Related = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Related))))
+        HashSet<string> related = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Related))))
             .Select(q => q.Object.ToString()).OrderBy(r => r)];
 
         var subRecordOf = (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsSubRecordOf))))
@@ -51,15 +50,15 @@ public class Record : IEquatable<Record>, IAsyncDisposable
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
 
-        var IsSubRecordOf = subRecordOf.FirstOrDefault();
+        var isSubRecordOf = subRecordOf.FirstOrDefault();
         var record = new Record(backend, describesConstraintMode)
         {
-            Metadata = Metadata,
-            Scopes = Scopes.ToHashSet(),
-            Describes = Describes.ToHashSet(),
-            Replaces = Replaces,
-            Related = Related,
-            IsSubRecordOf = IsSubRecordOf
+            Metadata = metadata,
+            Scopes = scopes.ToHashSet(),
+            Describes = describes.ToHashSet(),
+            Replaces = replaces,
+            Related = related,
+            IsSubRecordOf = isSubRecordOf
         };
         await record.ValidateDescribes();
         return record;
@@ -184,26 +183,11 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     }
 
-
-
-    private static void ValidateJsonLd(string rdfString)
-    {
-        try { JsonConvert.DeserializeObject(rdfString); }
-        catch (JsonReaderException ex)
-        {
-            var recordException = new RecordException($"Invalid JSON-LD. See inner exception for details.", inner: ex);
-            throw recordException;
-        }
-    }
-
     public Task<ITripleStore> TripleStore() => _backend.TripleStore();
 
     public Task<IGraph> GetMergedGraphs() => _backend.GetMergedGraphs();
 
     public Task<IEnumerable<IGraph>> GetContentGraphs() => _backend.GetContentGraphs();
-
-
-
 
 
     public Task<IEnumerable<INode>> SubjectWithType(string type) => SubjectWithType(new Uri(type));
@@ -239,19 +223,19 @@ public class Record : IEquatable<Record>, IAsyncDisposable
     public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate) => _backend.TriplesWithSubjectPredicate((subject), (predicate));
 
 
-
     public Task<IEnumerable<Triple>> Triples() => _backend.Triples();
     public async Task<IEnumerable<Triple>> ContentAsTriples()
     {
-        var parser = new SparqlQueryParser();
-        var metadata = await MetadataAsTriples();
+        var parameterizedQuery = new SparqlParameterizedString(
+            "CONSTRUCT {?s ?p ?o}" +
+                        "WHERE {" +
+                            "GRAPH @Id { @Id <https://rdf.equinor.com/ontology/record/hasContent> ?contentGraph }" +
+                            "GRAPH ?contentGraph { ?s ?p ?o } }");
 
-        var parameterizedQuery = new SparqlParameterizedString("CONSTRUCT {?s ?p ?o} WHERE { GRAPH @Id { ?s ?p ?o FILTER(?s != @Id)} }");
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
-        var contentQuery = parser.ParseFromString(contentQueryString);
-        var content = await _backend.ConstructQuery(contentQuery);
-        return content.Triples.Except(metadata);
+        var contentQuery = new SparqlQueryParser().ParseFromString(contentQueryString);
+        return (await _backend.ConstructQuery(contentQuery)).Triples;
     }
 
     public async Task<IEnumerable<Triple>> MetadataAsTriples() => (await _backend.GetMetadataGraph()).Triples;

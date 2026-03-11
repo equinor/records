@@ -1,5 +1,4 @@
-﻿using IriTools;
-using VDS.RDF.Writing;
+﻿using VDS.RDF.Writing;
 using Microsoft.Azure.Functions.Worker.Http;
 using Records.Backend;
 

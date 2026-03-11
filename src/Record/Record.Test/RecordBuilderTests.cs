@@ -9,7 +9,6 @@ using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using Xunit.Abstractions;
 using static Records.ProvenanceBuilder;
-using Record = Records.Immutable.Record;
 
 namespace Records.Tests;
 
@@ -44,7 +43,6 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
     }
 
-
     [Fact]
     public async Task Can__Add__Related()
     {
@@ -71,7 +69,6 @@ public class RecordBuilderTests
 
         record.Id.Should().Be(id);
     }
-
 
     [Fact]
     public async Task WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph()
@@ -115,8 +112,6 @@ public class RecordBuilderTests
         additionalMetadataIsIncludedOnContentGraph.Should().BeFalse();
         contentIsCopiedToMetadataGraph.Should().BeFalse();
     }
-
-
 
     [Fact]
     public async Task Can_Add_Provenance()
