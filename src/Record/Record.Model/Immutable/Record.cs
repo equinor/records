@@ -235,8 +235,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
         parameterizedQuery.SetUri("Id", new Uri(Id));
         var contentQueryString = parameterizedQuery.ToString();
         var contentQuery = new SparqlQueryParser().ParseFromString(contentQueryString);
-        var content = await _backend.ConstructQuery(contentQuery);
-        return content.Triples.Except(await MetadataAsTriples());
+        return (await _backend.ConstructQuery(contentQuery)).Triples;
     }
 
     public async Task<IEnumerable<Triple>> MetadataAsTriples() => (await _backend.GetMetadataGraph()).Triples;
