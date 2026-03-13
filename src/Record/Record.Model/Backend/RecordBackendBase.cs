@@ -32,7 +32,7 @@ public abstract class RecordBackendBase : IRecordBackend
 
         var result = await ((IRecordBackend)this).ConstructQuery(metadataQuery);
         if (result == null || result.IsEmpty) 
-            throw new RecordException("Could not find a metadata graph. A record must have exactl one metadata graph");
+            throw new RecordException("Could not find a metadata graph. A record must have exactly one metadata graph");
 
         var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
         if (string.IsNullOrEmpty(graphName)) 
