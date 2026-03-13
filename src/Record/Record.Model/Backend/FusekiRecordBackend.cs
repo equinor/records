@@ -1,8 +1,10 @@
+using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
+using StringWriter = System.IO.StringWriter;
 
 namespace Records.Backend;
 
@@ -66,6 +68,22 @@ public class FusekiRecordBackend : RecordBackendBase
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
         }
+    }
+
+    public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
+    {
+        var originalRecordString = await GetRdfDataAsString(RdfMediaType.Quads);
+        
+        var ts = new TripleStore();
+        var metadataGraph = new Graph(RecordId);
+        metadataGraph.Assert(additionalMetadata.Triples);
+        ts.Add(metadataGraph);
+        var nquadsWriter = new NQuadsWriter();
+        var stringWRiter = new StringWriter();
+        nquadsWriter.Save(ts, stringWRiter);
+        var newRecordString = stringWRiter.ToString();
+        var combinedRecordString = $"{originalRecordString}\n{newRecordString}";
+        return await FusekiRecordBackend.CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
     }
 
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)

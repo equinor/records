@@ -1,6 +1,7 @@
 ﻿using Records.Exceptions;
 using Records.Sender;
 using System.Diagnostics;
+using IriTools;
 using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -33,7 +34,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
     public static async Task<Record> CreateAsync(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
         var id = new UriNode(backend.GetRecordId());
-        List<Triple> metadata = [.. await backend.TriplesWithSubject(id)];
+        List<Triple> metadata = [.. (await backend.GetMetadataGraph()).Triples];
 
         List<string> scopes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsInScope))))
             .Select(q => q.Object.ToString()).OrderBy(s => s)];
@@ -106,7 +107,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
                 break;
         }
     }
-
+    public async Task<Record> WithAdditionalMetadata(IGraph additionalMetadata) => await CreateAsync(await _backend.WithAdditionalMetadata(additionalMetadata), _describesConstraintMode);
     public Task<IEnumerable<string>> Sparql(string queryString) => _backend.Sparql(queryString);
 
     public Task<IGraph> ConstructQuery(SparqlQuery sparqlQuery) => _backend.ConstructQuery(sparqlQuery);

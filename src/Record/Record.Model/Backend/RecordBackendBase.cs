@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Records.Exceptions;
+using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -30,10 +31,12 @@ public abstract class RecordBackendBase : IRecordBackend
         var metadataQuery = parser.ParseFromString(metadataQueryString);
 
         var result = await ((IRecordBackend)this).ConstructQuery(metadataQuery);
-        if (result == null || result.IsEmpty) throw new RecordException("A record must have exactly one metadata graph.");
+        if (result == null || result.IsEmpty) 
+            throw new RecordException("Could not find a metadata graph. A record must have exactl one metadata graph");
 
         var graphName = result.Triples.FirstOrDefault(t => t.Object.ToString().Equals(Namespaces.Record.RecordType))?.Subject.ToString();
-        if (string.IsNullOrEmpty(graphName)) throw new RecordException("A record must have exactly one metadata graph.");
+        if (string.IsNullOrEmpty(graphName)) 
+            throw new RecordException("Could not find graph name on metadata graph. A record must have exactly one metadata graph with name which is the record id.");
 
         result.BaseUri = new Uri(graphName);
         return result;
@@ -67,4 +70,5 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract Task<bool> ContainsTriple(Triple triple);
     public abstract Task<string> ToCanonString();
     public abstract ValueTask DeleteDatasetAsync();
+    public abstract Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
 }

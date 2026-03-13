@@ -43,6 +43,25 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         result.Should().Be(14);
     }
 
+    
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Record_Can_Add_Metadata(BackendType backendType)
+    {
+        var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
+        var result1 = record.Metadata!.Count();
+        var g = new Graph();
+        g.Assert(new Triple(new UriNode(new Uri("https://example.com/subject/123")), new UriNode(new Uri("https://example.com/predicate/456")), new LiteralNode("Example value")));
+        var newRecord = await record.WithAdditionalMetadata(g);
+        var result2 = record.Metadata!.Count();
+        var result3 = newRecord.Metadata!.Count();
+        
+
+        result1.Should().Be(21);
+        result2.Should().Be(21);
+        result3.Should().Be(22);
+    }
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
