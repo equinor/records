@@ -74,7 +74,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
         CreateAsync(new DotNetRdfRecordBackend(rdfString), describesConstraintMode);
 
 
-    
+
     public static Task<Record> CreateAsync(IGraph graph,
         DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None) =>
         CreateAsync(new DotNetRdfRecordBackend(graph), describesConstraintMode);

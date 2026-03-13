@@ -272,7 +272,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     }
 
     public override ValueTask DeleteDatasetAsync() => new ValueTask();
-    
+
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
         var originalMetadata = MetadataGraph ?? throw new InvalidOperationException("Cannot add metadata before it is intialized");

@@ -43,7 +43,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         result.Should().Be(21);
     }
 
-    
+
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
@@ -56,7 +56,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var newRecord = await record.WithAdditionalMetadata(g);
         var result2 = record.Metadata!.Count();
         var result3 = newRecord.Metadata!.Count();
-        
+
 
         result1.Should().Be(21);
         result2.Should().Be(21);

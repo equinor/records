@@ -73,7 +73,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
         var originalRecordString = await GetRdfDataAsString(RdfMediaType.Quads);
-        
+
         var ts = new TripleStore();
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
