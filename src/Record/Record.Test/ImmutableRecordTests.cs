@@ -40,7 +40,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = record.Metadata!.Count();
 
-        result.Should().Be(14);
+        result.Should().Be(21);
     }
 
     
@@ -111,7 +111,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
 
         var result = async () => await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdf));
 
-        await result.Should().ThrowAsync<RecordException>().WithMessage("A record must have exactly one metadata graph.");
+        await result.Should().ThrowAsync<RecordException>().WithMessage("Could not find a metadata graph. A record must have exactly one metadata graph.");
     }
 
 

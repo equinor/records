@@ -22,7 +22,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         Assert.NotNull(backend);
         var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata?.Count;
-        result.Should().Be(14);
+        result.Should().Be(21);
 
     }
 
@@ -35,7 +35,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata!.Count();
 
-        result.Should().Be(14);
+        result.Should().Be(21);
     }
 
 
