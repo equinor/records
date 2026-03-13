@@ -78,12 +78,13 @@ public class FusekiRecordBackend : RecordBackendBase
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
         ts.Add(metadataGraph);
-        var nquadsWriter = new NQuadsWriter();
-        var stringWRiter = new StringWriter();
-        nquadsWriter.Save(ts, stringWRiter);
-        var newRecordString = stringWRiter.ToString();
+        
+        var stringWriter = new StringWriter();
+        (new NQuadsWriter()).Save(ts, stringWriter);
+        var newRecordString = stringWriter.ToString();
+        
         var combinedRecordString = $"{originalRecordString}\n{newRecordString}";
-        return await FusekiRecordBackend.CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
+        return await CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
     }
 
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
