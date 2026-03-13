@@ -1,3 +1,4 @@
+using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Query;
 
@@ -76,4 +77,5 @@ public interface IRecordBackend
     Task<bool> ContainsTriple(Triple triple);
     Task<string> ToCanonString();
     ValueTask DeleteDatasetAsync();
+    internal Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
 }

@@ -1,4 +1,6 @@
+using Grpc.Core;
 using Records.Exceptions;
+using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -270,6 +272,23 @@ public class DotNetRdfRecordBackend : RecordBackendBase
     }
 
     public override ValueTask DeleteDatasetAsync() => new ValueTask();
+
+    public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
+    {
+        var originalMetadata = MetadataGraph ?? throw new InvalidOperationException("Cannot add metadata before it is intialized");
+        var newMetadata = new Graph(GetRecordId());
+        newMetadata.Merge(originalMetadata);
+        newMetadata.Merge(additionalMetadata);
+        var tripleStore = new TripleStore();
+        tripleStore.Add(newMetadata);
+        foreach (var graph in await GetContentGraphs())
+        {
+            if (graph.Name?.ToString() != this.RecordId?.AbsoluteUri)
+                tripleStore.Add(graph);
+        }
+
+        return new DotNetRdfRecordBackend(tripleStore);
+    }
 
 
     public bool Equals(DotNetRdfRecordBackend? other)
