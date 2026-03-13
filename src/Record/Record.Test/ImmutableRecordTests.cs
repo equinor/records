@@ -54,10 +54,10 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var oldRecordMetadataCount = record.Metadata!.Count();
         var g = new Graph();
         g.Assert(new Triple(new UriNode(new Uri(record.Id)), new UriNode(new Uri("https://rdf.equinor.com/ontology/record/replaces")), new UriNode(new Uri(TestData.CreateRecordId("2")))));
-        
+
         // Act
         var newRecord = await record.WithAdditionalMetadata(g);
-        
+
         // Assert
         newRecord.Replaces.Should().Contain(TestData.CreateRecordId("2"));
         newRecord.Replaces.Count().Should().Be(1);

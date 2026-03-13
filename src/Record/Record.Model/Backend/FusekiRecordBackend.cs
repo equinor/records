@@ -78,11 +78,11 @@ public class FusekiRecordBackend : RecordBackendBase
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
         ts.Add(metadataGraph);
-        
+
         var stringWriter = new StringWriter();
         (new NQuadsWriter()).Save(ts, stringWriter);
         var newRecordString = stringWriter.ToString();
-        
+
         var combinedRecordString = $"{originalRecordString}\n{newRecordString}";
         return await CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
     }
