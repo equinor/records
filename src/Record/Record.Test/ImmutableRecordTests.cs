@@ -49,18 +49,24 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [InlineData(BackendType.Fuseki)]
     public async Task Record_Can_Add_Metadata(BackendType backendType)
     {
+        // Arrange
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
-        var result1 = record.Metadata!.Count();
+        var oldRecordMetadataCount = record.Metadata!.Count();
         var g = new Graph();
-        g.Assert(new Triple(new UriNode(new Uri("https://example.com/subject/123")), new UriNode(new Uri("https://example.com/predicate/456")), new LiteralNode("Example value")));
+        g.Assert(new Triple(new UriNode(new Uri(record.Id)), new UriNode(new Uri("https://rdf.equinor.com/ontology/record/replaces")), new UriNode(new Uri(TestData.CreateRecordId("2")))));
+        
+        // Act
         var newRecord = await record.WithAdditionalMetadata(g);
-        var result2 = record.Metadata!.Count();
-        var result3 = newRecord.Metadata!.Count();
-
-
-        result1.Should().Be(21);
-        result2.Should().Be(21);
-        result3.Should().Be(22);
+        
+        // Assert
+        newRecord.Replaces.Should().Contain(TestData.CreateRecordId("2"));
+        newRecord.Replaces.Count().Should().Be(1);
+        record.Replaces!.Count().Should().Be(0);
+        var oldRecordMetadataCountAfterAdditional = record.Metadata!.Count();
+        var newRecordMetadataCount = newRecord.Metadata!.Count();
+        oldRecordMetadataCount.Should().Be(21);
+        oldRecordMetadataCountAfterAdditional.Should().Be(21);
+        newRecordMetadataCount.Should().Be(22);
     }
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
@@ -111,7 +117,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
 
         var result = async () => await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.Quads, rdf));
 
-        await result.Should().ThrowAsync<RecordException>().WithMessage("Could not find a metadata graph. A record must have exactly one metadata graph.");
+        await result.Should().ThrowAsync<RecordException>().WithMessage("Could not find a metadata graph. A record must have exactly one metadata graph");
     }
 
 
