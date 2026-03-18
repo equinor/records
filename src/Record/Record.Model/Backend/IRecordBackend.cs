@@ -78,4 +78,5 @@ public interface IRecordBackend
     Task<string> ToCanonString();
     ValueTask DeleteDatasetAsync();
     internal Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
+    public Task<IEnumerable<Record>> ParseMultipleRecords(string rdfstring, RdfMediaType mimeType);
 }

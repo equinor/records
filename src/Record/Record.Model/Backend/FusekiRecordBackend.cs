@@ -15,7 +15,7 @@ public class FusekiRecordBackend : RecordBackendBase
     private Uri SparqlEndpointUri() => new($"{_baseUri}{_datasetName}/sparql");
     private string UpdateEndpointPath() => new($"{_datasetName}/update");
     private string DataEndpointPath() => new($"{_datasetName}/data");
-    private string CreateDatasetEndpointPath() => new($"$/datasets");
+    private string CreateDatasetEndpointPath() => new("$/datasets");
     private string DatasetEndpointPath() => new($"$/datasets/{_datasetName}");
     private readonly string _datasetName;
 
@@ -34,7 +34,7 @@ public class FusekiRecordBackend : RecordBackendBase
     public static Task<FusekiRecordBackend> CreateFromNQuadsAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.Quads, httpClient);
 
-
+    
     public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, HttpClient httpClient)
     {
         var client = new FusekiRecordBackend(httpClient);
@@ -68,6 +68,22 @@ public class FusekiRecordBackend : RecordBackendBase
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
         }
+    }
+    
+    public static async Task<IEnumerable<Records.Immutable.Record>> ParseMultipleRecords(HttpClient _httpClient, string recordsString, RdfMediaType mediaType)
+    {
+        var tempDataset = CreateAsync(recordsString, mediaType, _httpClient).Result;
+        var turtleFormatter = new TurtleFormatter();
+        string recordIdsQuery = $"SELECT ?record WHERE {{ GRAPH ?record {{ ?record a  https://rdf.equinor.com/ontology/record/Record . }} }}";
+        var queryClient =  tempDataset.GetSparqlQueryClient();
+        var sparqlResultSet = await queryClient.QueryWithResultSetAsync(recordIdsQuery);
+        var recordIds = sparqlResultSet.Select(result => result.Value("record"));
+        return recordIds.Select(recordId =>
+        {
+             WHERE {{ GRAPH ?record {{ ?record a  https://rdf.equinor.com/ontology/record/Record . }} }}";
+
+        })
+        
     }
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)

@@ -290,6 +290,19 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return new DotNetRdfRecordBackend(tripleStore);
     }
 
+    public override async Task<IEnumerable<Records.Immutable.Record>> ParseMultipleRecords(string recordsString, RdfMediaType mediaType)
+    {
+        
+        var store = new TripleStore();
+        var parser =  mediaType.GetParser();
+        store.LoadFromString(recordsString, parser);
+
+        var records = await store.FindRecords();
+
+        return records;
+
+    }
+
 
     public bool Equals(DotNetRdfRecordBackend? other)
     {

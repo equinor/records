@@ -71,4 +71,5 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract Task<string> ToCanonString();
     public abstract ValueTask DeleteDatasetAsync();
     public abstract Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
+    public abstract Task<IEnumerable<Record>> ParseMultipleRecords(string rdfstring, RdfMediaType mimeType);
 }

@@ -37,6 +37,13 @@ public static class RdfMediaTypesExtensions
         RdfMediaType.JsonLd => new VDS.RDF.Writing.JsonLdWriter(),
         _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
     };
+    public static IStoreReader GetParser(this RdfMediaType mediaType) => mediaType switch
+    {
+        RdfMediaType.Trig => new VDS.RDF.Parsing.TriGParser(),
+        RdfMediaType.Quads => new VDS.RDF.Parsing.NQuadsParser(),
+        RdfMediaType.JsonLd => new VDS.RDF.Parsing.JsonLdParser(),
+        _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
+    };
     public static RdfMediaType GetRdfMediaType(this IStoreWriter writer) => writer switch
     {
         VDS.RDF.Writing.TriGWriter => RdfMediaType.Trig,
