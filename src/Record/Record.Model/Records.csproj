@@ -18,12 +18,12 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
-		<PackageReference Include="dotNetRdf" Version="3.4.1" />
+		<PackageReference Include="dotNetRdf" Version="3.5.1" />
 		<PackageReference Include="IriTools" Version="2.4.0" />
 		<PackageReference Include="json-ld.net" Version="1.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.201" PrivateAssets="All" />
 		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Update="Properties\commit.url">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
