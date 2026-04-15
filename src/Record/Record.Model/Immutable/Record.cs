@@ -52,7 +52,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
             .ToDictionary(g => g.Key, g => g.ToList());
 
         IEnumerable<Triple> Get(UriNode node) =>
-            byPredicate.TryGetValue(node.Uri.AbsoluteUri, out var ts) ? ts : [];
+            byPredicate.TryGetValue(node.Uri.AbsoluteUri, out var triples) ? triples : [];
 
         List<string> scopes = [.. Get(scopeNode).Select(q => q.Object.ToString()).OrderBy(s => s)];
         List<string> describes = [.. Get(describesNode).Select(q => q.Object.ToString()).OrderBy(d => d)];
