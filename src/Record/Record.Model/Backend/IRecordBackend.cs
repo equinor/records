@@ -15,6 +15,7 @@ public interface IRecordBackend
     public Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);
     public Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject);
     public Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate);
+    public Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<UriNode> predicates);
     public Task<IEnumerable<Triple>> TriplesWithObject(INode @object);
     public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
     public Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object);

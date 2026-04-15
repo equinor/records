@@ -169,16 +169,30 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
+    public override Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate) =>
+        TriplesWithPredicates([predicate]);
+
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<UriNode> predicates)
     {
-        string queryString = $"SELECT ?s ?o WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(new TurtleFormatter())} ?o . }} }}";
+        var predicateList = predicates.ToList();
+        if (predicateList.Count == 0) throw new ArgumentNullException(nameof(predicates));
+
+        var turtleFormatter = new TurtleFormatter();
+        var inList = string.Join(", ", predicateList.Select(p => p.ToString(turtleFormatter)));
+        var queryString = $"SELECT ?s ?p ?o WHERE {{ GRAPH ?g {{ ?s ?p ?o . FILTER(?p IN ({inList})) }} }}";
+
+        var predicateDict = predicateList.ToDictionary(p => p.Uri.AbsoluteUri);
+
         var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
-            new Triple(result.Value("s"),
-                predicate,
-                result.Value("o")
-            ));
+        {
+            var pAbsUri = ((UriNode)result.Value("p")).Uri.AbsoluteUri;
+            var predicateNode = predicateDict.TryGetValue(pAbsUri, out var orig)
+                ? orig
+                : throw new Exception($"Expected p in result to be one of {string.Join(", ", predicateDict.Keys)}, but got: {pAbsUri}.");
+            return new Triple(result.Value("s"), predicateNode, result.Value("o"));
+        });
     }
 
     public override async Task<IEnumerable<Triple>> TriplesWithObject(INode @object)

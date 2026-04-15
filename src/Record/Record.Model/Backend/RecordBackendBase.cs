@@ -57,6 +57,13 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);
     public abstract Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject);
     public abstract Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate);
+
+    public virtual async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<UriNode> predicates)
+    {
+        var predicateList = predicates.ToList();
+        var results = await Task.WhenAll(predicateList.Select(TriplesWithPredicate));
+        return results.SelectMany(r => r);
+    }
     public abstract Task<IEnumerable<Triple>> TriplesWithObject(INode @object);
     public abstract Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
     public abstract Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object);
