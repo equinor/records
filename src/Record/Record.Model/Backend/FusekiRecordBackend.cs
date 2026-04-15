@@ -188,8 +188,8 @@ public class FusekiRecordBackend : RecordBackendBase
         return sparqlResultSet.Select(result =>
         {
             var pAbsUri = ((UriNode)result.Value("p")).Uri.AbsoluteUri;
-            var predicateNode = predicateDict.TryGetValue(pAbsUri, out var orig) 
-                ? orig 
+            var predicateNode = predicateDict.TryGetValue(pAbsUri, out var orig)
+                ? orig
                 : throw new Exception($"Expected p in result to be one of {string.Join(", ", predicateDict.Keys)}, but got: {pAbsUri}.");
             return new Triple(result.Value("s"), predicateNode, result.Value("o"));
         });

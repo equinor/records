@@ -33,13 +33,13 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     public static async Task<Record> CreateAsync(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        var scopeNode       = new UriNode(new Uri(Namespaces.Record.IsInScope));
-        var describesNode   = new UriNode(new Uri(Namespaces.Record.Describes));
-        var replacesNode    = new UriNode(new Uri(Namespaces.Record.Replaces));
-        var relatedNode     = new UriNode(new Uri(Namespaces.Record.Related));
+        var scopeNode = new UriNode(new Uri(Namespaces.Record.IsInScope));
+        var describesNode = new UriNode(new Uri(Namespaces.Record.Describes));
+        var replacesNode = new UriNode(new Uri(Namespaces.Record.Replaces));
+        var relatedNode = new UriNode(new Uri(Namespaces.Record.Related));
         var subRecordOfNode = new UriNode(new Uri(Namespaces.Record.IsSubRecordOf));
 
-        var metadataTask   = backend.GetMetadataGraph();
+        var metadataTask = backend.GetMetadataGraph();
         var predicatesTask = backend.TriplesWithPredicates(
             [scopeNode, describesNode, replacesNode, relatedNode, subRecordOfNode]);
 
@@ -54,10 +54,10 @@ public class Record : IEquatable<Record>, IAsyncDisposable
         IEnumerable<Triple> Get(UriNode node) =>
             byPredicate.TryGetValue(node.Uri.AbsoluteUri, out var ts) ? ts : [];
 
-        List<string> scopes   = [.. Get(scopeNode)    .Select(q => q.Object.ToString()).OrderBy(s => s)];
+        List<string> scopes = [.. Get(scopeNode).Select(q => q.Object.ToString()).OrderBy(s => s)];
         List<string> describes = [.. Get(describesNode).Select(q => q.Object.ToString()).OrderBy(d => d)];
-        List<string> replaces  = [.. Get(replacesNode) .Select(q => q.Object.ToString())];
-        HashSet<string> related = [.. Get(relatedNode) .Select(q => q.Object.ToString()).OrderBy(r => r)];
+        List<string> replaces = [.. Get(replacesNode).Select(q => q.Object.ToString())];
+        HashSet<string> related = [.. Get(relatedNode).Select(q => q.Object.ToString()).OrderBy(r => r)];
 
         var subRecordOf = Get(subRecordOfNode).Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
