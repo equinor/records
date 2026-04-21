@@ -105,7 +105,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
         Assert.Equal(14, subjectWithType.Count());
     }
-    
+
     [Fact]
     public async Task CreateDatasetAsync_IsIdempotent_WhenCalledTwice()
     {
