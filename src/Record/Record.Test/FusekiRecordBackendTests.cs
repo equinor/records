@@ -107,6 +107,16 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     }
 
     [Fact]
+    public async Task CreateDatasetAsync_IsIdempotent_WhenCalledTwice()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+
+        var act = async () => await backend.CreateDatasetAsync();
+        await act.Should().NotThrowAsync("a retry of dataset creation should be treated as idempotent");
+    }
+
+    [Fact]
     public async Task SparqlInjectionIsBlocked()
     {
         var maliciousInput = "?o \" } } . DELETE WHERE { ?s ?p ?o }";

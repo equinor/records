@@ -45,16 +45,32 @@ public class FusekiRecordBackend : RecordBackendBase
     }
 
 
-    private async Task CreateDatasetAsync()
+    internal async Task CreateDatasetAsync()
     {
         var query = $"dbName={_datasetName}&dbType=mem";
         var fullUri = $"{CreateDatasetEndpointPath()}?{query}";
         var content = new StringContent("");
-        var response = await _httpClient.PostAsync(fullUri, content);
+        using var response = await _httpClient.PostAsync(fullUri, content);
+        if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            await EnsureDatasetExistsAsync();
+            return;
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
+        }
+    }
+
+    private async Task EnsureDatasetExistsAsync()
+    {
+        var response = await _httpClient.GetAsync(DatasetEndpointPath());
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Dataset conflict encountered, but existing dataset '{_datasetName}' could not be verified at '{DatasetEndpointPath()}': {response.StatusCode} - {errorMessage}");
         }
     }
 
