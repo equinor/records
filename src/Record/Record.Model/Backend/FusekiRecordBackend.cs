@@ -70,7 +70,7 @@ public class FusekiRecordBackend : RecordBackendBase
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Dataset conflict encountered, but existing dataset could not be verified: {response.StatusCode} - {errorMessage}");
+            throw new Exception($"Dataset conflict encountered, but existing dataset '{_datasetName}' could not be verified at '{DatasetEndpointPath()}': {response.StatusCode} - {errorMessage}");
         }
     }
 
