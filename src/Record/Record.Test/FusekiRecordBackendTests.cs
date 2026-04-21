@@ -112,8 +112,6 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidRecordString<TriGWriter>();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
 
-        // Simulate a retry: calling CreateDatasetAsync again on the same instance
-        // (same GUID dataset name) must not throw.
         var act = async () => await backend.CreateDatasetAsync();
         await act.Should().NotThrowAsync("a retry of dataset creation should be treated as idempotent");
     }
