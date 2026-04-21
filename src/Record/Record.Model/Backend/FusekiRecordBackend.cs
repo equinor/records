@@ -50,7 +50,7 @@ public class FusekiRecordBackend : RecordBackendBase
         var query = $"dbName={_datasetName}&dbType=mem";
         var fullUri = $"{CreateDatasetEndpointPath()}?{query}";
         var content = new StringContent("");
-        var response = await _httpClient.PostAsync(fullUri, content);
+        using var response = await _httpClient.PostAsync(fullUri, content);
         if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
             await EnsureDatasetExistsAsync();

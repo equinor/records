@@ -105,13 +105,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
         Assert.Equal(14, subjectWithType.Count());
     }
-
-    /// <summary>
-    /// Reproduces the "Name already registered" Conflict error that occurs when
-    /// CreateDatasetAsync is called twice for the same backend instance
-    /// (e.g. due to an HTTP retry policy in a surrounding pipeline).
-    /// Before the fix this would throw; after the fix it must complete without error.
-    /// </summary>
+    
     [Fact]
     public async Task CreateDatasetAsync_IsIdempotent_WhenCalledTwice()
     {
