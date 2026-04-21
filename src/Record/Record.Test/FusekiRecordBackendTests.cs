@@ -106,6 +106,24 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         Assert.Equal(14, subjectWithType.Count());
     }
 
+    /// <summary>
+    /// Reproduces the "Name already registered" Conflict error that occurs when
+    /// CreateDatasetAsync is called twice for the same backend instance
+    /// (e.g. due to an HTTP retry policy in a surrounding pipeline).
+    /// Before the fix this would throw; after the fix it must complete without error.
+    /// </summary>
+    [Fact]
+    public async Task CreateDatasetAsync_IsIdempotent_WhenCalledTwice()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+
+        // Simulate a retry: calling CreateDatasetAsync again on the same instance
+        // (same GUID dataset name) must not throw.
+        var act = async () => await backend.CreateDatasetAsync();
+        await act.Should().NotThrowAsync("a retry of dataset creation should be treated as idempotent");
+    }
+
     [Fact]
     public async Task SparqlInjectionIsBlocked()
     {
