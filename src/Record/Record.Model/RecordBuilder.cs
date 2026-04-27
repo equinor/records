@@ -1,10 +1,8 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Records.Backend;
 using Records.Exceptions;
 using VDS.RDF;
 using VDS.RDF.Parsing;
-using VDS.RDF.Shacl;
-using VDS.RDF.Shacl.Validation;
 using Triple = VDS.RDF.Triple;
 using Record = Records.Immutable.Record;
 using static Records.ProvenanceBuilder;
@@ -17,15 +15,23 @@ public record RecordBuilder
     private Storage _storage;
     private ProvenanceBuilder _metadataProvenance;
     private ProvenanceBuilder _contentProvenance;
-    private ShapesGraph _processor;
+    private readonly IRecordBackend? _backendTemplate;
+    private ShaclValidationRequest? _shaclValidationRequest;
 
-    public RecordBuilder(RecordCanonicalisation canon = RecordCanonicalisation.None, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
+    public ShaclValidationOutcome? LastShaclValidationOutcome { get; private set; }
+
+    public RecordBuilder(
+        RecordCanonicalisation canon = RecordCanonicalisation.None,
+        DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None,
+        IRecordBackend? backendTemplate = null)
     {
         _storage = new Storage
         {
             DescribesConstraintMode = describesConstraintMode,
             Canon = canon,
         };
+
+        _backendTemplate = backendTemplate;
 
         _metadataProvenance =
             WithAdditionalTool(CreateRecordVersionUri())
@@ -37,15 +43,7 @@ public record RecordBuilder
             WithAdditionalComments(
                 "This is the process that generated the record content.")
         (new ProvenanceBuilder());
-        var shapes = new Graph();
-        var outputFolderPath = Assembly.GetExecutingAssembly()
-                                   .GetManifestResourceStream("Records.Schema.record-single-syntax.shacl.ttl") ??
-                               throw new Exception("Could not get assembly path.");
-        var shapeString = new StreamReader(outputFolderPath).ReadToEnd();
-        shapes.LoadFromString(shapeString);
-        _processor = new ShapesGraph(shapes);
     }
-
     #region With-Methods
 
     #region Metadata-Methods
@@ -292,6 +290,12 @@ public record RecordBuilder
             }
         };
     public RecordBuilder WithContent(IEnumerable<string> rdfStrings) => WithContent(rdfStrings.ToArray());
+
+    public RecordBuilder ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri, bool failOnViolation = false) =>
+        this with
+        {
+            _shaclValidationRequest = new ShaclValidationRequest(shaclShapePaths.ToList(), describesIri, failOnViolation)
+        };
     #endregion
 
     #region With-Additional-Content
@@ -341,37 +345,59 @@ public record RecordBuilder
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
         var metadataGraph = CreateMetadataGraph();
+        var ts = new TripleStore();
+        ts.Add(metadataGraph);
 
-        if (_storage.ContentGraphs.Count == 0 && _storage.ContentTriples.Count == 0 && _storage.RdfStrings.Count == 0)
+        if (_storage.ContentGraphs.Count != 0 || _storage.ContentTriples.Count != 0 || _storage.RdfStrings.Count != 0)
         {
-            var metadataTs = new TripleStore();
-            metadataTs.Add(metadataGraph);
-            return await Record.CreateAsync(new DotNetRdfRecordBackend(metadataTs));
+            var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
+            var contentGraph = CreateContentGraph(contentGraphId);
+
+            var contentGraphs = _storage.ContentGraphs
+                .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples))
+                .ToList();
+
+            if (!contentGraph.IsEmpty)
+                contentGraphs.Add(contentGraph);
+
+            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId));
+
+            if (_storage.Canon is RecordCanonicalisation.dotNetRdf)
+            {
+                var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs);
+                metadataGraph.Assert(contentGraphChecksumTriples);
+            }
+
+            foreach (var graph in _storage.ContentGraphs)
+            {
+                ts.Add(graph);
+                metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, graph.Name));
+            }
+
+            ts.Add(contentGraph);
         }
 
-        var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
-        var contentGraph = CreateContentGraph(contentGraphId, metadataGraph);
+        var backend = await CreateBackend(ts);
+        var record = await Record.CreateAsync(backend, _storage.DescribesConstraintMode);
 
-
-        var contentGraphs = _storage.ContentGraphs
-            .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples))
-            .ToList();
-
-        if (!contentGraph.IsEmpty)
-            contentGraphs.Add(contentGraph);
-
-        metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId));
-
-        if (_storage.Canon is RecordCanonicalisation.dotNetRdf)
+        if (_shaclValidationRequest is not null)
         {
-            var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs);
-            metadataGraph.Assert(contentGraphChecksumTriples);
+            var outcome = await backend.ValidateContentWithShacl(_shaclValidationRequest.ShaclShapePaths, _shaclValidationRequest.DescribesIri);
+            LastShaclValidationOutcome = outcome;
+
+            if (!outcome.Conforms && _shaclValidationRequest.FailOnViolation)
+            {
+                throw new RecordException(string.Join('\n', outcome.Messages));
+            }
         }
 
-        var ts = CreateTripleStore(metadataGraph, contentGraph);
-
-        return await Record.CreateAsync(new DotNetRdfRecordBackend(ts), _storage.DescribesConstraintMode);
+        return record;
     }
+
+    private async Task<IRecordBackend> CreateBackend(ITripleStore tripleStore) =>
+        _backendTemplate is null
+            ? new DotNetRdfRecordBackend(tripleStore)
+            : await _backendTemplate.CreateFromTripleStore(tripleStore);
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
     {
@@ -410,7 +436,7 @@ public record RecordBuilder
         return metadataGraph;
     }
 
-    private Graph CreateContentGraph(IRefNode contentGraphId, Graph metadataGraph)
+    private Graph CreateContentGraph(IRefNode contentGraphId)
     {
         var contentGraph = new Graph(contentGraphId);
 
@@ -418,9 +444,6 @@ public record RecordBuilder
         contentGraph.Assert(tripleList);
 
         CheckContentGraph();
-
-        var report = _processor.Validate(metadataGraph);
-        if (!report.Conforms) throw ShaclException(report);
 
         return contentGraph;
     }
@@ -477,6 +500,8 @@ public record RecordBuilder
 
     private List<Triple> CreateMetadataTriples()
     {
+        ValidateRecordScopeConstraint();
+
         var metadataTriples = new List<Triple>();
         var typeQuad = new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Rdf.Type)), new UriNode(new Uri(Namespaces.Record.RecordType)));
         metadataTriples.Add(typeQuad);
@@ -490,6 +515,12 @@ public record RecordBuilder
         metadataTriples.AddRange(_storage.Describes.Select(CreateDescribesTriple).Select(q => q));
 
         return metadataTriples;
+    }
+
+    private void ValidateRecordScopeConstraint()
+    {
+        if (_storage.IsSubRecordOf == null && _storage.Scopes.Count == 0)
+            throw new RecordException("A record must either be a subrecord or have at least one scope");
     }
 
     private static IEnumerable<string> GetRecordPredicates()
@@ -521,20 +552,6 @@ public record RecordBuilder
     #endregion
 
     #region Private-Helper-Methods
-    private Exception ShaclException(Report report)
-    {
-        var validationStore = new TripleStore();
-        validationStore.Add(report.Graph);
-        var messageNode = report.Graph.GetUriNode(new Uri(Namespaces.Shacl.ResultMessage));
-
-        var errorMessages = validationStore
-            .GetTriplesWithPredicate(messageNode)
-            .Select(t => t.Object.ToSafeString().Split("^^http").First())
-            .ToList();
-
-        return new RecordException(string.Join('\n', errorMessages));
-    }
-
     private IEnumerable<Triple> TripleListFromRdfString(string rdfString)
     {
         ArgumentNullException.ThrowIfNull(_storage.Id);
@@ -556,7 +573,7 @@ public record RecordBuilder
         var outputFolderPath = Assembly.GetExecutingAssembly()
                                    .GetManifestResourceStream("Records.Properties.commit.url") ??
                                throw new Exception("Could not get Records commit url.");
-        var shapeString = new StreamReader(outputFolderPath).ReadLine();
+        var shapeString = new StreamReader(outputFolderPath).ReadLine() ?? throw new InvalidOperationException("Could not get Records commit url.");
         return shapeString;
     }
     private Triple CreateTripleWithPredicateAndObject(string predicate, string @object)
@@ -582,6 +599,8 @@ public record RecordBuilder
 
 
     #endregion
+    private sealed record ShaclValidationRequest(List<string> ShaclShapePaths, string DescribesIri, bool FailOnViolation);
+
 #pragma warning disable IDE1006 // Naming Styles
     private record Storage
     {

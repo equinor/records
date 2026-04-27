@@ -3,6 +3,7 @@ using Records.Exceptions;
 using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Shacl;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
@@ -203,21 +204,21 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         };
 
 
-    public override Task<IEnumerable<INode>> SubjectWithType(UriNode type)
+    public override Task<IEnumerable<INode>> SubjectWithType(IUriNode type)
         => Task.FromResult(_store
         .GetTriplesWithPredicateObject(Namespaces.Rdf.UriNodes.Type, type)
         .Select(t => t.Subject));
 
-    public override Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
+    public override Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject)
         => Task.FromResult(_store
         .GetTriplesWithSubjectPredicate(subject, Namespaces.Rdfs.UriNodes.Label)
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value));
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
+    public override Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject)
         => Task.FromResult(_store
             .GetTriplesWithSubject(subject));
-    public override Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
+    public override Task<IEnumerable<Triple>> TriplesWithPredicate(IUriNode predicate)
         => Task.FromResult(_store
             .GetTriplesWithPredicate(predicate));
 
@@ -225,16 +226,16 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         => Task.FromResult(_store
             .GetTriplesWithObject(@object));
 
-    public override Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
+    public override Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(IUriNode predicate, INode @object)
         => Task.FromResult(_store
             .GetTriplesWithPredicateObject(predicate, @object));
 
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
+    public override Task<IEnumerable<Triple>> TriplesWithSubjectObject(IUriNode subject, INode @object)
         => Task.FromResult(_store
             .GetTriplesWithSubjectObject(subject, @object));
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
+    public override Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(IUriNode subject, IUriNode predicate)
         => Task.FromResult(_store
             .GetTriplesWithSubjectPredicate(subject, predicate));
 
@@ -290,6 +291,55 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return new DotNetRdfRecordBackend(tripleStore);
     }
 
+    public override Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore) =>
+        Task.FromResult<IRecordBackend>(new DotNetRdfRecordBackend(tripleStore));
+
+    public override async Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri)
+    {
+        var contentGraph = await GetMergedGraphs();
+
+        var shapes = new Graph();
+        foreach (var shapePath in shaclShapePaths)
+            shapes.LoadFromFile(shapePath);
+
+        var report = new ShapesGraph(shapes).Validate(contentGraph);
+        var messages = report.Results
+            .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
+            .ToList();
+
+        var describesNode = contentGraph.CreateUriNode(new Uri(describesIri));
+        var hasDescribesSubject = (await TriplesWithSubject(describesNode)).Any();
+        if (!hasDescribesSubject)
+            messages.Add($"Describes IRI <{describesIri}> does not exist as a subject in the content graph.");
+
+        return new ShaclValidationOutcome(report.Conforms && hasDescribesSubject, messages);
+    }
+
+    public override Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+        => Task.FromResult(ValidateShaclStatic(content, contentType, shaclShapePaths));
+
+    public static ShaclValidationOutcome ValidateShaclStatic(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+    {
+        var contentStore = new TripleStore();
+        contentStore.LoadFromString(content, contentType.GetStoreReader());
+
+        var contentGraph = new Graph();
+        foreach (var g in contentStore.Graphs)
+            contentGraph.Merge(g);
+
+        var shapes = new Graph();
+        foreach (var shapePath in shaclShapePaths)
+            shapes.LoadFromFile(shapePath);
+
+        var report = new ShapesGraph(shapes).Validate(contentGraph);
+        var messages = report.Conforms
+            ? new List<string>()
+            : report.Results
+                .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
+                .ToList();
+
+        return new ShaclValidationOutcome(report.Conforms, messages);
+    }
 
     public bool Equals(DotNetRdfRecordBackend? other)
     {

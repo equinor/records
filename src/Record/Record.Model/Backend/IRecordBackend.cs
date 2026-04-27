@@ -10,16 +10,16 @@ public interface IRecordBackend
     public Uri GetRecordId();
     public Task<IGraph> GetMetadataGraph();
     public Task<string> ToString(RdfMediaType mediaType);
-    public Task<IEnumerable<INode>> SubjectWithType(UriNode type);
+    public Task<IEnumerable<INode>> SubjectWithType(IUriNode type);
 
-    public Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);
-    public Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject);
-    public Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate);
-    public Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<UriNode> predicates);
+    public Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject);
+    public Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject);
+    public Task<IEnumerable<Triple>> TriplesWithPredicate(IUriNode predicate);
+    public Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<IUriNode> predicates);
     public Task<IEnumerable<Triple>> TriplesWithObject(INode @object);
-    public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
-    public Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object);
-    public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate);
+    public Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(IUriNode predicate, INode @object);
+    public Task<IEnumerable<Triple>> TriplesWithSubjectObject(IUriNode subject, INode @object);
+    public Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(IUriNode subject, IUriNode predicate);
 
     /// <summary>
     /// This method allows you to do select and ask SPARQL queries on your record.
@@ -78,5 +78,8 @@ public interface IRecordBackend
     Task<bool> ContainsTriple(Triple triple);
     Task<string> ToCanonString();
     ValueTask DeleteDatasetAsync();
+    Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore);
+    Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri);
+    Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths);
     internal Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
 }

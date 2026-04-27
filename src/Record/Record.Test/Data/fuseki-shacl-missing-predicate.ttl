@@ -1,0 +1,9 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+[] a sh:NodeShape ;
+   sh:targetNode <https://ssi.example.com/subject/1> ;
+   sh:property [
+       sh:path <https://ssi.example.com/predicate/missing> ;
+       sh:minCount 1 ;
+       sh:message "Missing predicate" ;
+   ] .

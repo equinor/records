@@ -11,11 +11,11 @@
      [
        rdf:type fuseki:Service ;
        fuseki:name "ds" ;
-       fuseki:serviceQuery "sparql" ;
-       fuseki:serviceUpdate "update" ;
-       fuseki:serviceUpload "upload" ;
-       fuseki:serviceReadWriteGraphStore "data" ;
-
+       fuseki:endpoint [ fuseki:operation fuseki:query ; fuseki:name "sparql" ] ;
+       fuseki:endpoint [ fuseki:operation fuseki:update ; fuseki:name "update" ] ;
+       fuseki:endpoint [ fuseki:operation fuseki:upload ; fuseki:name "upload" ] ;
+       fuseki:endpoint [ fuseki:operation fuseki:gsp-rw ; fuseki:name "data" ] ;
+       fuseki:endpoint [ fuseki:operation fuseki:shacl ; fuseki:name "shacl" ] ;
        fuseki:dataset [
          rdf:type ja:MemoryDataset ;
        ]

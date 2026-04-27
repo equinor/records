@@ -129,4 +129,25 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var subjectWithType = await backend.TriplesWithObject(testNode);
         Assert.Empty(subjectWithType);
     }
+
+    [Fact]
+    public async Task ValidateContentWithShacl_UsesFusekiShaclEndpoint()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        Assert.NotNull(backend);
+
+        var shapeFile = "Data/fuseki-shacl-missing-predicate.ttl";
+
+        try
+        {
+            var outcome = await backend.ValidateContentWithShacl([shapeFile], TestData.CreateRecordSubject("1"));
+            outcome.Conforms.Should().BeFalse();
+            outcome.Messages.Should().Contain(message => message.Contains("Missing predicate"));
+        }
+        finally
+        {
+            await backend.DeleteDatasetAsync();
+        }
+    }
 }

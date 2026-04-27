@@ -41,5 +41,8 @@
         <Content Include="Data\record-with-two-contents.trig">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <None Update="Data\fuseki-shacl-missing-predicate.ttl">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 </Project>
