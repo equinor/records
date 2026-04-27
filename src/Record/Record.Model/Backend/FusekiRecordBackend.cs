@@ -401,7 +401,7 @@ public class FusekiRecordBackend : RecordBackendBase
         {
             await temp.CreateDatasetAsync();
             await temp.UploadRdfData(content, contentType);
-            
+
             var report = await temp.ReadShaclReportAsync(shapePaths);
             var conforms = ParseConformsFromReport(report);
             var messages = conforms ? new List<string>() : ParseMessagesFromReport(report);
