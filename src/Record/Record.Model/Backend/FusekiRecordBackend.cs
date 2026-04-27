@@ -409,7 +409,7 @@ public class FusekiRecordBackend : RecordBackendBase
         }
         finally
         {
-            try { await temp.DeleteDatasetAsync(); } catch { /* best-effort cleanup */ }
+            await temp.DeleteDatasetAsync();
         }
     }
 
