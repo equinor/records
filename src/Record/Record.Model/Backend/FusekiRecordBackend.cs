@@ -381,6 +381,38 @@ public class FusekiRecordBackend : RecordBackendBase
         return new ShaclValidationOutcome(conforms && hasDescribesSubject, messages);
     }
 
+    public override Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+        => ValidateShaclAsync(content, contentType, shaclShapePaths, _httpClient);
+
+    /// <summary>
+    /// Validate arbitrary RDF content against SHACL shapes by spinning up a dedicated
+    /// Fuseki dataset, uploading the content and shapes, and reading the SHACL report.
+    /// The dataset is deleted after validation. Reuses the standard dataset creation,
+    /// upload and SHACL endpoint code paths.
+    /// </summary>
+    public static async Task<ShaclValidationOutcome> ValidateShaclAsync(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths, HttpClient httpClient)
+    {
+        var shapePaths = shaclShapePaths.ToList();
+        if (shapePaths.Count == 0)
+            throw new ArgumentNullException(nameof(shaclShapePaths), "Expected non-empty shacl shape");
+
+        var temp = new FusekiRecordBackend(httpClient);
+        try
+        {
+            await temp.CreateDatasetAsync();
+            await temp.UploadRdfData(content, contentType);
+            
+            var report = await temp.ReadShaclReportAsync(shapePaths);
+            var conforms = ParseConformsFromReport(report);
+            var messages = conforms ? new List<string>() : ParseMessagesFromReport(report);
+            return new ShaclValidationOutcome(conforms, messages);
+        }
+        finally
+        {
+            try { await temp.DeleteDatasetAsync(); } catch { /* best-effort cleanup */ }
+        }
+    }
+
     private async Task<string> ReadShaclReportAsync(IEnumerable<string> shaclShapePaths)
     {
         var shapesPayload = string.Join(Environment.NewLine, shaclShapePaths.Select(System.IO.File.ReadAllText));

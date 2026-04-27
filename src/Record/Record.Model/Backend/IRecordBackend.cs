@@ -80,5 +80,6 @@ public interface IRecordBackend
     ValueTask DeleteDatasetAsync();
     Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore);
     Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri);
+    Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths);
     internal Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
 }

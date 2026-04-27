@@ -315,6 +315,32 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return new ShaclValidationOutcome(report.Conforms && hasDescribesSubject, messages);
     }
 
+    public override Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+        => Task.FromResult(ValidateShaclStatic(content, contentType, shaclShapePaths));
+
+    public static ShaclValidationOutcome ValidateShaclStatic(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+    {
+        var contentStore = new TripleStore();
+        contentStore.LoadFromString(content, contentType.GetStoreReader());
+
+        var contentGraph = new Graph();
+        foreach (var g in contentStore.Graphs)
+            contentGraph.Merge(g);
+
+        var shapes = new Graph();
+        foreach (var shapePath in shaclShapePaths)
+            shapes.LoadFromFile(shapePath);
+
+        var report = new ShapesGraph(shapes).Validate(contentGraph);
+        var messages = report.Conforms
+            ? new List<string>()
+            : report.Results
+                .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
+                .ToList();
+
+        return new ShaclValidationOutcome(report.Conforms, messages);
+    }
+
     public bool Equals(DotNetRdfRecordBackend? other)
     {
         if (ReferenceEquals(null, other)) return false;

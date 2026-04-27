@@ -79,5 +79,6 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract ValueTask DeleteDatasetAsync();
     public abstract Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore);
     public abstract Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri);
+    public abstract Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths);
     public abstract Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
 }
