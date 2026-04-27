@@ -1,12 +1,12 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
-using VDS.RDF.Shacl;
 using VDS.RDF.Query;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 using StringWriter = System.IO.StringWriter;
-
 namespace Records.Backend;
 
 public class FusekiRecordBackend : RecordBackendBase
@@ -16,6 +16,7 @@ public class FusekiRecordBackend : RecordBackendBase
     private Uri SparqlEndpointUri() => new($"{_baseUri}{_datasetName}/sparql");
     private string UpdateEndpointPath() => new($"{_datasetName}/update");
     private string DataEndpointPath() => new($"{_datasetName}/data");
+    private string ShaclEndpointPath() => new($"{_datasetName}/shacl");
     private string CreateDatasetEndpointPath() => new($"$/datasets");
     private string DatasetEndpointPath() => new($"$/datasets/{_datasetName}");
     private readonly string _datasetName;
@@ -48,10 +49,8 @@ public class FusekiRecordBackend : RecordBackendBase
 
     internal async Task CreateDatasetAsync()
     {
-        var query = $"dbName={_datasetName}&dbType=mem";
-        var fullUri = $"{CreateDatasetEndpointPath()}?{query}";
-        var content = new StringContent("");
-        using var response = await _httpClient.PostAsync(fullUri, content);
+        using var content = new StringContent(BuildDatasetAssembler(), Encoding.UTF8, "text/turtle");
+        using var response = await _httpClient.PostAsync(CreateDatasetEndpointPath(), content);
         if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
             await EnsureDatasetExistsAsync();
@@ -64,6 +63,24 @@ public class FusekiRecordBackend : RecordBackendBase
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
         }
     }
+
+    private string BuildDatasetAssembler() => string.Join(Environment.NewLine,
+        [
+            "@prefix fuseki: <http://jena.apache.org/fuseki#> .",
+            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
+            "@prefix ja: <http://jena.hpl.hp.com/2005/11/Assembler#> .",
+            "",
+            "<#service> rdf:type fuseki:Service ;",
+            $"    fuseki:name \"{_datasetName}\" ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:query ; fuseki:name \"sparql\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:update ; fuseki:name \"update\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:upload ; fuseki:name \"upload\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:gsp-rw ; fuseki:name \"data\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:shacl ; fuseki:name \"shacl\" ] ;",
+            "    fuseki:dataset <#dataset> .",
+            "",
+            "<#dataset> rdf:type ja:MemoryDataset ."
+        ]);
 
     private async Task EnsureDatasetExistsAsync()
     {
@@ -347,22 +364,73 @@ public class FusekiRecordBackend : RecordBackendBase
 
     public override async Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri)
     {
-        var contentGraph = await GetMergedGraphs();
+        var shapePaths = shaclShapePaths.ToList();
+        var messages = new List<string>();
+        var conforms = true;
 
-        var shapes = new Graph();
-        foreach (var shapePath in shaclShapePaths)
-            shapes.LoadFromFile(shapePath);
+        if (shapePaths.Count != 0)
+        {
+            var report = await ReadShaclReportAsync(shapePaths);
+            conforms = ParseConformsFromReport(report);
+            if (!conforms)
+                messages.AddRange(ParseMessagesFromReport(report));
+        }
 
-        var report = new ShapesGraph(shapes).Validate(contentGraph);
-        var messages = report.Results
-            .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
-            .ToList();
-
-        var describesNode = contentGraph.CreateUriNode(new Uri(describesIri));
-        var hasDescribesSubject = (await TriplesWithSubject(describesNode)).Any();
+        var hasDescribesSubject = await ContainsSubjectInContentAsync(describesIri);
         if (!hasDescribesSubject)
             messages.Add($"Describes IRI <{describesIri}> does not exist as a subject in the content graph.");
 
-        return new ShaclValidationOutcome(report.Conforms && hasDescribesSubject, messages);
+        return new ShaclValidationOutcome(conforms && hasDescribesSubject, messages);
+    }
+
+    private async Task<string> ReadShaclReportAsync(IEnumerable<string> shaclShapePaths)
+    {
+        var shapesPayload = string.Join(Environment.NewLine, shaclShapePaths.Select(System.IO.File.ReadAllText));
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{ShaclEndpointPath()}?graph=union");
+        request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/turtle"));
+        request.Content = new StringContent(shapesPayload, Encoding.UTF8, "text/turtle");
+
+        using var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to validate RDF with Fuseki SHACL endpoint: {response.StatusCode} - {errorMessage}");
+        }
+
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    private static bool ParseConformsFromReport(string report)
+    {
+        var match = Regex.Match(
+            report,
+            "(?:sh:conforms|<http://www\\.w3\\.org/ns/shacl#conforms>|Conforms:)\\s*(true|false)",
+            RegexOptions.IgnoreCase);
+
+        if (!match.Success)
+            throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}");
+
+        return bool.Parse(match.Groups[1].Value);
+    }
+
+    private static List<string> ParseMessagesFromReport(string report)
+    {
+        var matches = Regex.Matches(
+            report,
+            "(?:sh:resultMessage|<http://www\\.w3\\.org/ns/shacl#resultMessage>)\\s+\\\"((?:[^\\\"\\\\]|\\\\.)*)\\\"",
+            RegexOptions.Singleline);
+
+        if (matches.Count == 0)
+            return [report.Trim()];
+
+        return matches.Select(match => Regex.Unescape(match.Groups[1].Value)).ToList();
+    }
+
+    private async Task<bool> ContainsSubjectInContentAsync(string iri)
+    {
+        var queryClient = GetSparqlQueryClient();
+        var results = await queryClient.QueryWithResultSetAsync($"SELECT ?p WHERE {{ GRAPH ?g {{ <{iri}> ?p ?o . }} }} LIMIT 1");
+        return results.Any();
     }
 }

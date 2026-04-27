@@ -9,6 +9,7 @@ COPY config/in_memory.ttl /opt/jena/config.ttl
 COPY config/shiro.ini /opt/jena/jena-fuseki2/run/shiro.ini
 
 WORKDIR /opt/jena/jena-fuseki2
+ENV JVM_ARGS="-Xmx4G -Dfuseki:allowAddByConfigFile=true"
 EXPOSE 3030
 
 ENTRYPOINT ["./fuseki-server", "--config", "/opt/jena/config.ttl"]

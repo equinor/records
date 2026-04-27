@@ -129,4 +129,29 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var subjectWithType = await backend.TriplesWithObject(testNode);
         Assert.Empty(subjectWithType);
     }
+
+    [Fact]
+    public async Task ValidateContentWithShacl_UsesFusekiShaclEndpoint()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        Assert.NotNull(backend);
+
+        var shapeFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{Guid.NewGuid()}.ttl");
+        await System.IO.File.WriteAllTextAsync(
+            shapeFile,
+            "@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n[] a sh:NodeShape ;\n   sh:targetNode <https://ssi.example.com/subject/1> ;\n   sh:property [\n       sh:path <https://ssi.example.com/predicate/missing> ;\n       sh:minCount 1 ;\n       sh:message \"Missing predicate\" ;\n   ] .\n");
+
+        try
+        {
+            var outcome = await backend.ValidateContentWithShacl([shapeFile], TestData.CreateRecordSubject("1"));
+            outcome.Conforms.Should().BeFalse();
+            outcome.Messages.Should().Contain(message => message.Contains("Missing predicate"));
+        }
+        finally
+        {
+            System.IO.File.Delete(shapeFile);
+            await backend.DeleteDatasetAsync();
+        }
+    }
 }
