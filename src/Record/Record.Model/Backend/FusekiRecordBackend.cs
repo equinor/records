@@ -1,6 +1,4 @@
 using System.Text;
-using System.Text.RegularExpressions;
-using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -401,30 +399,48 @@ public class FusekiRecordBackend : RecordBackendBase
         return await response.Content.ReadAsStringAsync();
     }
 
+    private static IGraph LoadReportGraph(string report)
+    {
+        var graph = new Graph();
+        try
+        {
+            new TurtleParser().Load(graph, new System.IO.StringReader(report));
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}", ex);
+        }
+        return graph;
+    }
+
     private static bool ParseConformsFromReport(string report)
     {
-        var match = Regex.Match(
-            report,
-            "(?:sh:conforms|<http://www\\.w3\\.org/ns/shacl#conforms>|Conforms:)\\s*(true|false)",
-            RegexOptions.IgnoreCase);
+        var graph = LoadReportGraph(report);
+        var results = graph.ExecuteQuery(
+            "PREFIX sh: <http://www.w3.org/ns/shacl#> SELECT ?conforms WHERE { ?s sh:conforms ?conforms . } LIMIT 1")
+            as SparqlResultSet;
 
-        if (!match.Success)
+        if (results == null || results.Count == 0 || results[0]["conforms"] is not ILiteralNode literal)
             throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}");
 
-        return bool.Parse(match.Groups[1].Value);
+        return bool.Parse(literal.Value);
     }
 
     private static List<string> ParseMessagesFromReport(string report)
     {
-        var matches = Regex.Matches(
-            report,
-            "(?:sh:resultMessage|<http://www\\.w3\\.org/ns/shacl#resultMessage>)\\s+\\\"((?:[^\\\"\\\\]|\\\\.)*)\\\"",
-            RegexOptions.Singleline);
+        var graph = LoadReportGraph(report);
+        var results = graph.ExecuteQuery(
+            "PREFIX sh: <http://www.w3.org/ns/shacl#> SELECT ?message WHERE { ?s sh:resultMessage ?message . }")
+            as SparqlResultSet;
 
-        if (matches.Count == 0)
+        if (results == null || results.Count == 0)
             return [report.Trim()];
 
-        return matches.Select(match => Regex.Unescape(match.Groups[1].Value)).ToList();
+        return results
+            .Select(r => r["message"])
+            .OfType<ILiteralNode>()
+            .Select(l => l.Value)
+            .ToList();
     }
 
     private async Task<bool> ContainsSubjectInContentAsync(string iri)
