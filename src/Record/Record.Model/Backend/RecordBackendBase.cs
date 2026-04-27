@@ -53,21 +53,21 @@ public abstract class RecordBackendBase : IRecordBackend
 
     public abstract Task<ITripleStore> TripleStore();
     public abstract Task<string> ToString(RdfMediaType mediaType);
-    public abstract Task<IEnumerable<INode>> SubjectWithType(UriNode type);
-    public abstract Task<IEnumerable<string>> LabelsOfSubject(UriNode subject);
-    public abstract Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject);
-    public abstract Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate);
+    public abstract Task<IEnumerable<INode>> SubjectWithType(IUriNode type);
+    public abstract Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject);
+    public abstract Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject);
+    public abstract Task<IEnumerable<Triple>> TriplesWithPredicate(IUriNode predicate);
 
-    public virtual async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<UriNode> predicates)
+    public virtual async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<IUriNode> predicates)
     {
         var predicateList = predicates.ToList();
         var results = await Task.WhenAll(predicateList.Select(TriplesWithPredicate));
         return results.SelectMany(r => r);
     }
     public abstract Task<IEnumerable<Triple>> TriplesWithObject(INode @object);
-    public abstract Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object);
-    public abstract Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object);
-    public abstract Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate);
+    public abstract Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(IUriNode predicate, INode @object);
+    public abstract Task<IEnumerable<Triple>> TriplesWithSubjectObject(IUriNode subject, INode @object);
+    public abstract Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(IUriNode subject, IUriNode predicate);
     public abstract Task<IGraph> ConstructQuery(SparqlQuery query);
     public abstract Task<SparqlResultSet> Query(SparqlQuery query);
     public abstract Task<IEnumerable<string>> Sparql(string queryString);
@@ -77,5 +77,7 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract Task<bool> ContainsTriple(Triple triple);
     public abstract Task<string> ToCanonString();
     public abstract ValueTask DeleteDatasetAsync();
+    public abstract Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore);
+    public abstract Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri);
     public abstract Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
 }

@@ -1,6 +1,7 @@
 using Records.Immutable;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Shacl;
 using VDS.RDF.Query;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
@@ -153,7 +154,7 @@ public class FusekiRecordBackend : RecordBackendBase
         return fusekiDatasetReponse;
     }
 
-    public override async Task<IEnumerable<INode>> SubjectWithType(UriNode type)
+    public override async Task<IEnumerable<INode>> SubjectWithType(IUriNode type)
     {
         var queryString = $"SELECT ?x WHERE {{ GRAPH ?g {{ ?x a {type.ToString(new TurtleFormatter())} . }} }}";
         var queryClient = GetSparqlQueryClient();
@@ -161,7 +162,7 @@ public class FusekiRecordBackend : RecordBackendBase
         return sparqlResultSet.Select(result => result.Value("x"));
     }
 
-    public override async Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
+    public override async Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject)
     {
         string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} <http://www.w3.org/2000/01/rdf-schema#label> ?label . }} }}";
         var queryClient = GetSparqlQueryClient();
@@ -173,7 +174,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
 
 
-    public override async Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject)
     {
         string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} ?p ?o . }} }}";
         var queryClient = GetSparqlQueryClient();
@@ -185,10 +186,10 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate) =>
+    public override Task<IEnumerable<Triple>> TriplesWithPredicate(IUriNode predicate) =>
         TriplesWithPredicates([predicate]);
 
-    public override async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<UriNode> predicates)
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<IUriNode> predicates)
     {
         var predicateList = predicates.ToList();
         if (predicateList.Count == 0) throw new ArgumentNullException(nameof(predicates));
@@ -203,7 +204,7 @@ public class FusekiRecordBackend : RecordBackendBase
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
         {
-            var pAbsUri = ((UriNode)result.Value("p")).Uri.AbsoluteUri;
+            var pAbsUri = ((IUriNode)result.Value("p")).Uri.AbsoluteUri;
             var predicateNode = predicateDict.TryGetValue(pAbsUri, out var orig)
                 ? orig
                 : throw new Exception($"Expected p in result to be one of {string.Join(", ", predicateDict.Keys)}, but got: {pAbsUri}.");
@@ -223,7 +224,7 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(IUriNode predicate, INode @object)
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?s WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(turtleFormatter)} {@object.ToString(turtleFormatter)} . }} }}";
@@ -236,7 +237,7 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubjectObject(IUriNode subject, INode @object)
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?p WHERE {{ GRAPH ?g{{ {subject.ToString(turtleFormatter)} ?p {@object.ToString(turtleFormatter)} . }} }}";
@@ -249,7 +250,7 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(IUriNode subject, IUriNode predicate)
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?o WHERE {{ GRAPH ?g {{ {subject.ToString(turtleFormatter)} {predicate.ToString(turtleFormatter)} ?o . }} }}";
@@ -334,5 +335,34 @@ public class FusekiRecordBackend : RecordBackendBase
         writer.Save(canonStore, stringWriter);
         var result = stringWriter.ToString();
         return result;
+    }
+
+    public override async Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore)
+    {
+        var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
+        var stringWriter = new StringWriter();
+        writer.Save(tripleStore, stringWriter);
+        return await CreateAsync(stringWriter.ToString(), RdfMediaType.Quads, _httpClient);
+    }
+
+    public override async Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri)
+    {
+        var contentGraph = await GetMergedGraphs();
+
+        var shapes = new Graph();
+        foreach (var shapePath in shaclShapePaths)
+            shapes.LoadFromFile(shapePath);
+
+        var report = new ShapesGraph(shapes).Validate(contentGraph);
+        var messages = report.Results
+            .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
+            .ToList();
+
+        var describesNode = contentGraph.CreateUriNode(new Uri(describesIri));
+        var hasDescribesSubject = (await TriplesWithSubject(describesNode)).Any();
+        if (!hasDescribesSubject)
+            messages.Add($"Describes IRI <{describesIri}> does not exist as a subject in the content graph.");
+
+        return new ShaclValidationOutcome(report.Conforms && hasDescribesSubject, messages);
     }
 }
