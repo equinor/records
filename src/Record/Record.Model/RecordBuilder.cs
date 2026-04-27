@@ -210,8 +210,8 @@ public record RecordBuilder
             _storage = _storage with
             {
                 MetadataTriples = _storage.MetadataTriples.Concat(triples).ToList(),
-                MetadataRdfStrings = _storage.RdfStrings.ToList(),
-                MetadataGraphs = _storage.ContentGraphs.ToList()
+                MetadataRdfStrings = _storage.MetadataRdfStrings.ToList(),
+                MetadataGraphs = _storage.MetadataGraphs.ToList()
             }
         };
 
@@ -222,9 +222,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataRdfStrings = _storage.RdfStrings.Concat(rdfStrings).ToList(),
+                MetadataRdfStrings = _storage.MetadataRdfStrings.Concat(rdfStrings).ToList(),
                 MetadataTriples = _storage.MetadataTriples.ToList(),
-                MetadataGraphs = _storage.ContentGraphs.ToList()
+                MetadataGraphs = _storage.MetadataGraphs.ToList()
             }
         };
 
