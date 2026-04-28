@@ -361,8 +361,8 @@ public record RecordBuilder
         var backend = await _backendFactory();
 
         // ── Metadata graph ──────────────────────────────────────────────────────
-        var structuralTriples = CreateMetadataTriples();
-        await backend.AddTriplesToGraphAsync(_storage.Id, structuralTriples);
+        var metadataTriples = CreateMetadataTriples();
+        await backend.AddTriplesToGraphAsync(_storage.Id, metadataTriples);
 
         // In-memory metadata triples: validate then push
         var recordPredicates = GetRecordPredicates();
