@@ -365,35 +365,38 @@ public record RecordBuilder
 
         var backend = await _backendFactory();
 
-        // ── Metadata graph ──────────────────────────────────────────────────────
-        var metadataTriples = CreateMetadataTriples();
-        await backend.AddTriplesToGraphAsync(_storage.Id, metadataTriples);
-
-        // In-memory metadata triples: validate then push
-        var recordPredicates = GetRecordPredicates().ToList();
-        CheckMetadataTriples(recordPredicates);
-        await backend.AddTriplesToGraphAsync(_storage.Id, _storage.AdditionalMetadataTriples);
-
-        // IGraph metadata: validate then push triples into metadata named graph
-        CheckMetadataGraph(recordPredicates);
-        foreach (var g in _storage.AdditionalMetadataGraphs)
-            await backend.AddTriplesToGraphAsync(_storage.Id, g.Triples);
-
-        // RDF-string metadata: backend parses (validated post-finalize via SPARQL)
-        foreach (var s in _storage.AdditionalMetadataRdfStrings)
-            await backend.ParseRdfStringIntoGraphAsync(s, _storage.Id);
-
-        // Provenance: pure computation, backend stores
-        var provenanceFactory = new Graph(_storage.Id);
-        await backend.AddTriplesToGraphAsync(
-            _storage.Id, _metadataProvenance.Build(provenanceFactory, provenanceFactory.Name!));
-        await backend.AddTriplesToGraphAsync(
-            _storage.Id, _contentProvenance.Build(provenanceFactory, provenanceFactory.Name!));
+        await BuildMetadata(backend);
 
         // ── Content ─────────────────────────────────────────────────────────────
+        await BuildContent(backend);
+
+        // ── Finalise ─────────────────────────────────────────────────────────────
+        await backend.FinalizeAsync();
+
+        // Post-finalize: validate any metadata RDF strings didn't inject bad predicates
+        if (_storage.AdditionalMetadataRdfStrings.Count > 0)
+            await ValidateMetadataRdfStrings(backend);
+
+        var record = await Record.CreateAsync(backend, _storage.DescribesConstraintMode);
+
+        if (_shaclValidationRequest is not null)
+        {
+            var outcome = await backend.ValidateContentWithShacl(
+                _shaclValidationRequest.ShaclShapePaths, _shaclValidationRequest.DescribesIri);
+            LastShaclValidationOutcome = outcome;
+
+            if (!outcome.Conforms && _shaclValidationRequest.FailOnViolation)
+                throw new RecordException(string.Join('\n', outcome.Messages));
+        }
+
+        return record;
+    }
+
+    private async Task BuildContent(IRecordBuildableBackend backend)
+    {
         bool hasContent = _storage.ContentGraphs.Count != 0
-                       || _storage.ContentTriples.Count != 0
-                       || _storage.RdfStrings.Count != 0;
+                          || _storage.ContentTriples.Count != 0
+                          || _storage.RdfStrings.Count != 0;
 
         if (hasContent)
         {
@@ -461,27 +464,34 @@ public record RecordBuilder
                 ]);
             }
         }
+    }
 
-        // ── Finalise ─────────────────────────────────────────────────────────────
-        await backend.FinalizeAsync();
+    private async Task BuildMetadata(IRecordBuildableBackend backend)
+    {
+        // ── Metadata graph ──────────────────────────────────────────────────────
+        var metadataTriples = CreateMetadataTriples();
+        await backend.AddTriplesToGraphAsync(_storage.Id, metadataTriples);
 
-        // Post-finalize: validate any metadata RDF strings didn't inject bad predicates
-        if (_storage.AdditionalMetadataRdfStrings.Count > 0)
-            await ValidateMetadataRdfStrings(backend);
+        // In-memory metadata triples: validate then push
+        var recordPredicates = GetRecordPredicates().ToList();
+        CheckMetadataTriples(recordPredicates);
+        await backend.AddTriplesToGraphAsync(_storage.Id, _storage.AdditionalMetadataTriples);
 
-        var record = await Record.CreateAsync(backend, _storage.DescribesConstraintMode);
+        // IGraph metadata: validate then push triples into metadata named graph
+        CheckMetadataGraph(recordPredicates);
+        foreach (var g in _storage.AdditionalMetadataGraphs)
+            await backend.AddTriplesToGraphAsync(_storage.Id, g.Triples);
 
-        if (_shaclValidationRequest is not null)
-        {
-            var outcome = await backend.ValidateContentWithShacl(
-                _shaclValidationRequest.ShaclShapePaths, _shaclValidationRequest.DescribesIri);
-            LastShaclValidationOutcome = outcome;
+        // RDF-string metadata: backend parses (validated post-finalize via SPARQL)
+        foreach (var s in _storage.AdditionalMetadataRdfStrings)
+            await backend.ParseRdfStringIntoGraphAsync(s, _storage.Id);
 
-            if (!outcome.Conforms && _shaclValidationRequest.FailOnViolation)
-                throw new RecordException(string.Join('\n', outcome.Messages));
-        }
-
-        return record;
+        // Provenance: pure computation, backend stores
+        var provenanceFactory = new Graph(_storage.Id);
+        await backend.AddTriplesToGraphAsync(
+            _storage.Id, _metadataProvenance.Build(provenanceFactory, provenanceFactory.Name!));
+        await backend.AddTriplesToGraphAsync(
+            _storage.Id, _contentProvenance.Build(provenanceFactory, provenanceFactory.Name!));
     }
 
     /// <summary>
