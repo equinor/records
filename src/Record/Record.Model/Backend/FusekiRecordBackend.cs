@@ -7,7 +7,7 @@ using VDS.RDF.Writing.Formatting;
 using StringWriter = System.IO.StringWriter;
 namespace Records.Backend;
 
-public class FusekiRecordBackend : RecordBackendBase
+public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 {
     private readonly HttpClient _httpClient;
     private readonly Uri _baseUri;
@@ -43,6 +43,92 @@ public class FusekiRecordBackend : RecordBackendBase
         await client.InitializeMetadata();
         return client;
     }
+
+    /// <summary>
+    /// Creates an empty Fuseki dataset ready to receive build-time data via
+    /// <see cref="IRecordBuildableBackend"/> methods. Call <see cref="FinalizeAsync"/>
+    /// when all data has been pushed.
+    /// </summary>
+    public static async Task<FusekiRecordBackend> CreateForBuildAsync(HttpClient httpClient)
+    {
+        var client = new FusekiRecordBackend(httpClient);
+        await client.CreateDatasetAsync();
+        return client;
+    }
+
+    #region IRecordBuildableBackend
+
+    private string GraphEndpointPath(Uri graphUri) =>
+        $"{DataEndpointPath()}?graph={Uri.EscapeDataString(graphUri.AbsoluteUri)}";
+
+    /// <inheritdoc/>
+    public async Task AddGraphAsync(IGraph graph)
+    {
+        if (graph.Name is not IUriNode nameNode)
+            throw new ArgumentException("Graph must have a URI name.");
+
+        var sw = new StringWriter();
+        new NTriplesWriter().Save(graph, sw);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, GraphEndpointPath(nameNode.Uri));
+        request.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/n-triples");
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to add graph to Fuseki: {response.StatusCode} - {err}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task AddTriplesToGraphAsync(Uri graphName, IEnumerable<Triple> triples)
+    {
+        var tripleList = triples.ToList();
+        if (tripleList.Count == 0) return;
+
+        var tempGraph = new Graph();
+        tempGraph.Assert(tripleList);
+
+        var sw = new StringWriter();
+        new NTriplesWriter().Save(tempGraph, sw);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, GraphEndpointPath(graphName));
+        request.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/n-triples");
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to add triples to Fuseki graph: {response.StatusCode} - {err}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task ParseRdfStringIntoGraphAsync(string rdfString, Uri graphName)
+    {
+        var path = GraphEndpointPath(graphName);
+
+        // Try Turtle first (most common content format)
+        var request = new HttpRequestMessage(HttpMethod.Post, path);
+        request.Content = new StringContent(rdfString, Encoding.UTF8, "text/turtle");
+        var response = await _httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode) return;
+
+        // Fall back to JSON-LD
+        ValidateJsonLd(rdfString);
+        var request2 = new HttpRequestMessage(HttpMethod.Post, path);
+        request2.Content = new StringContent(rdfString, Encoding.UTF8, "application/ld+json");
+        var response2 = await _httpClient.SendAsync(request2);
+        if (!response2.IsSuccessStatusCode)
+        {
+            var err = await response2.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to parse and upload RDF string to Fuseki: {response2.StatusCode} - {err}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task FinalizeAsync() => InitializeMetadata();
+
+    #endregion
 
 
     internal async Task CreateDatasetAsync()
