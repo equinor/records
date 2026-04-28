@@ -370,12 +370,8 @@ public record RecordBuilder
         await backend.AddTriplesToGraphAsync(_storage.Id, metadataTriples);
 
         // In-memory metadata triples: validate then push
-        var recordPredicates = GetRecordPredicates();
-        if (_storage.AdditionalMetadataTriples.Any(q =>
-                !q.Subject.ToString().Equals(_storage.Id.ToString())
-                && recordPredicates.Contains($"<{q.Predicate}>")))
-            throw new RecordException(
-                "For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+        var recordPredicates = GetRecordPredicates().ToList();
+        CheckMetadataTriples(recordPredicates);
         await backend.AddTriplesToGraphAsync(_storage.Id, _storage.AdditionalMetadataTriples);
 
         // IGraph metadata: validate then push triples into metadata named graph
@@ -528,6 +524,17 @@ public record RecordBuilder
     }
 
     #region Private-Builder-Helper-Methods
+
+    private void CheckMetadataTriples(IEnumerable<string> recordPredicates)
+    {
+        ArgumentNullException.ThrowIfNull(_storage.Id);
+
+        if (_storage.AdditionalMetadataTriples.Any(q =>
+                !q.Subject.ToString().Equals(_storage.Id.ToString())
+                && recordPredicates.Contains($"<{q.Predicate}>")))
+            throw new RecordException(
+                "For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+    }
 
     private void CheckMetadataGraph(IEnumerable<string> recordPredicates)
     {
