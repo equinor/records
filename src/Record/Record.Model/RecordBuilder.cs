@@ -56,17 +56,6 @@ public record RecordBuilder
         (new ProvenanceBuilder());
     }
 
-    /// <summary>
-    /// Creates a RecordBuilder backed by a specific backend factory.
-    /// Equivalent to <c>new RecordBuilder(canon, describesConstraintMode, backendFactory)</c>.
-    /// </summary>
-    [Obsolete("Use the RecordBuilder constructor directly.")]
-    public static RecordBuilder CreateRecordBuilder(
-        RecordCanonicalisation canon = RecordCanonicalisation.None,
-        DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None,
-        Func<Task<IRecordBuildableBackend>>? backendFactory = null)
-        => new(canon, describesConstraintMode, backendFactory);
-
     #region With-Methods
 
     #region Metadata-Methods
