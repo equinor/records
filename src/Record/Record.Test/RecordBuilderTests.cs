@@ -2,6 +2,8 @@
 using Newtonsoft.Json.Linq;
 using Records.Exceptions;
 using Records.Utils;
+using Records.Backend;
+using Record.Test.TestInfrastructure;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -12,21 +14,38 @@ using static Records.ProvenanceBuilder;
 
 namespace Records.Tests;
 
-public class RecordBuilderTests
+[Collection("Integration Testing Collection")]
+public class RecordBuilderTests(ITestOutputHelper outputHelper, FusekiContainerManager fusekiContainerManager)
 {
-    private ITestOutputHelper _outputHelper;
+    private ITestOutputHelper _outputHelper = outputHelper;
+    readonly Uri _connectionUri = fusekiContainerManager.address;
 
-    public RecordBuilderTests(ITestOutputHelper outputHelper) =>
-        _outputHelper = outputHelper;
+    public enum BackendType
+    {
+        DotNetRdf,
+        Fuseki
+    }
 
-    [Fact]
-    public async Task Can_Add_Scopes()
+    private async Task<RecordBuilder> CreateRecordBuilder(BackendType backendType)
+    {
+        if (backendType == BackendType.DotNetRdf)
+            return new RecordBuilder();
+
+        var httpClient = new HttpClient() { BaseAddress = _connectionUri };
+        return new RecordBuilder(backendFactory: () => 
+            FusekiRecordBackend.CreateForBuildAsync(httpClient).ContinueWith(t => (IRecordBuildableBackend)t.Result));
+    }
+
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Can_Add_Scopes(BackendType backendType)
     {
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
         var describes = TestData.CreateObjectList(2, "describes");
 
-        var record = await new RecordBuilder()
+        var record = await (await CreateRecordBuilder(backendType))
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithId(id)
@@ -43,15 +62,17 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
     }
 
-    [Fact]
-    public async Task Can__Add__Related()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Can__Add__Related(BackendType backendType)
     {
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
         var describes = TestData.CreateObjectList(2, "describes");
         var related = TestData.CreateObjectList(2, "related");
 
-        var record = await new RecordBuilder()
+        var record = await (await CreateRecordBuilder(backendType))
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithRelated(related)
@@ -70,8 +91,10 @@ public class RecordBuilderTests
         record.Id.Should().Be(id);
     }
 
-    [Fact]
-    public async Task WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task WithAdditionalMetadata__DoesNotCopyDataFromContentGraph__ToMetadataGraph(BackendType backendType)
     {
         // Arrange
         var scopes = Enumerable.Range(1, 3)
@@ -91,7 +114,7 @@ public class RecordBuilderTests
                 new UriNode(new Uri(Namespaces.Rdfs.Label)),
                 new LiteralNode(i.ToString())));
 
-        var record = await new RecordBuilder()
+        var record = await (await CreateRecordBuilder(backendType))
             .WithId(TestData.CreateRecordId(0))
             .WithDescribes(TestData.CreateRecordIri("describes", Guid.NewGuid().ToString()))
             .WithScopes(scopes)
@@ -113,8 +136,10 @@ public class RecordBuilderTests
         contentIsCopiedToMetadataGraph.Should().BeFalse();
     }
 
-    [Fact]
-    public async Task Can_Add_Provenance()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task Can_Add_Provenance(BackendType backendType)
     {
         var id = TestData.CreateRecordId("0");
         var scopes = TestData.CreateObjectList(2, "scope");
@@ -123,7 +148,7 @@ public class RecordBuilderTests
         var with = TestData.CreateObjectList(2, "with");
         var locations = TestData.CreateObjectList(2, "location");
 
-        var record = await new RecordBuilder()
+        var record = await (await CreateRecordBuilder(backendType))
             .WithScopes(scopes)
             .WithDescribes(describes)
             .WithAdditionalContentProvenance(
@@ -198,8 +223,10 @@ public class RecordBuilderTests
         (await record.Triples()).ToList().Should().Contain(triples);
     }
 
-    [Fact]
-    public async Task RecordBuilder_Fails_With_No_Scopes()
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task RecordBuilder_Fails_With_No_Scopes(BackendType backendType)
     {
         var id0 = TestData.CreateRecordId("0");
         var id1 = TestData.CreateRecordId("1");
@@ -215,7 +242,7 @@ public class RecordBuilderTests
             triples.Add(triple);
         }
 
-        var builder = new RecordBuilder()
+        var builder = (await CreateRecordBuilder(backendType))
             .WithId(id1)
             .WithDescribes(desc)
             .WithAdditionalContent(triples)
