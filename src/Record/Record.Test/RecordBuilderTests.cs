@@ -32,7 +32,7 @@ public class RecordBuilderTests(ITestOutputHelper outputHelper, FusekiContainerM
             return new RecordBuilder();
 
         var httpClient = new HttpClient() { BaseAddress = _connectionUri };
-        return new RecordBuilder(backendFactory: () => 
+        return new RecordBuilder(backendFactory: () =>
             FusekiRecordBackend.CreateForBuildAsync(httpClient).ContinueWith(t => (IRecordBuildableBackend)t.Result));
     }
 
