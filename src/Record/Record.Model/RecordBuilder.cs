@@ -208,9 +208,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataGraphs = _storage.MetadataGraphs.Concat(graphs).ToList(),
-                MetadataRdfStrings = _storage.MetadataRdfStrings.ToList(),
-                MetadataTriples = _storage.MetadataTriples.ToList()
+                AdditionalMetadataGraphs = _storage.AdditionalMetadataGraphs.Concat(graphs).ToList(),
+                AdditionalMetadataRdfStrings = _storage.AdditionalMetadataRdfStrings.ToList(),
+                AdditionalMetadataTriples = _storage.AdditionalMetadataTriples.ToList()
             }
         };
 
@@ -221,9 +221,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataTriples = _storage.MetadataTriples.Concat(triples).ToList(),
-                MetadataRdfStrings = _storage.MetadataRdfStrings.ToList(),
-                MetadataGraphs = _storage.MetadataGraphs.ToList()
+                AdditionalMetadataTriples = _storage.AdditionalMetadataTriples.Concat(triples).ToList(),
+                AdditionalMetadataRdfStrings = _storage.AdditionalMetadataRdfStrings.ToList(),
+                AdditionalMetadataGraphs = _storage.AdditionalMetadataGraphs.ToList()
             }
         };
 
@@ -234,9 +234,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataRdfStrings = _storage.MetadataRdfStrings.Concat(rdfStrings).ToList(),
-                MetadataTriples = _storage.MetadataTriples.ToList(),
-                MetadataGraphs = _storage.MetadataGraphs.ToList()
+                AdditionalMetadataRdfStrings = _storage.AdditionalMetadataRdfStrings.Concat(rdfStrings).ToList(),
+                AdditionalMetadataTriples = _storage.AdditionalMetadataTriples.ToList(),
+                AdditionalMetadataGraphs = _storage.AdditionalMetadataGraphs.ToList()
             }
         };
 
@@ -311,6 +311,7 @@ public record RecordBuilder
     #endregion
 
     #region With-Additional-Content
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params IGraph[] graphs) =>
     this with
     {
@@ -322,8 +323,10 @@ public record RecordBuilder
         }
     };
 
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<IGraph> graphs) => WithAdditionalContent(graphs.ToArray());
 
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params Triple[] triples) =>
         this with
         {
@@ -334,9 +337,10 @@ public record RecordBuilder
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
 
-
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params string[] rdfStrings) =>
         this with
         {
@@ -347,6 +351,7 @@ public record RecordBuilder
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<string> rdfStrings) => WithAdditionalContent(rdfStrings.ToArray());
     #endregion
     #endregion
@@ -366,20 +371,20 @@ public record RecordBuilder
 
         // In-memory metadata triples: validate then push
         var recordPredicates = GetRecordPredicates();
-        if (_storage.MetadataTriples.Any(q =>
+        if (_storage.AdditionalMetadataTriples.Any(q =>
                 !q.Subject.ToString().Equals(_storage.Id.ToString())
                 && recordPredicates.Contains($"<{q.Predicate}>")))
             throw new RecordException(
                 "For all triples where the predicate is in the record ontology, the subject must be the record itself.");
-        await backend.AddTriplesToGraphAsync(_storage.Id, _storage.MetadataTriples);
+        await backend.AddTriplesToGraphAsync(_storage.Id, _storage.AdditionalMetadataTriples);
 
         // IGraph metadata: validate then push triples into metadata named graph
         CheckMetadataGraph(recordPredicates);
-        foreach (var g in _storage.MetadataGraphs)
+        foreach (var g in _storage.AdditionalMetadataGraphs)
             await backend.AddTriplesToGraphAsync(_storage.Id, g.Triples);
 
         // RDF-string metadata: backend parses (validated post-finalize via SPARQL)
-        foreach (var s in _storage.MetadataRdfStrings)
+        foreach (var s in _storage.AdditionalMetadataRdfStrings)
             await backend.ParseRdfStringIntoGraphAsync(s, _storage.Id);
 
         // Provenance: pure computation, backend stores
@@ -465,7 +470,7 @@ public record RecordBuilder
         await backend.FinalizeAsync();
 
         // Post-finalize: validate any metadata RDF strings didn't inject bad predicates
-        if (_storage.MetadataRdfStrings.Count > 0)
+        if (_storage.AdditionalMetadataRdfStrings.Count > 0)
             await ValidateMetadataRdfStrings(backend);
 
         var record = await Record.CreateAsync(backend, _storage.DescribesConstraintMode);
@@ -528,7 +533,7 @@ public record RecordBuilder
     {
         ArgumentNullException.ThrowIfNull(_storage.Id);
 
-        foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
+        foreach (var graph in _storage.AdditionalMetadataGraphs.Select(g => g.Triples))
             if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
                 throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
     }
@@ -623,9 +628,9 @@ public record RecordBuilder
 
         internal List<Triple> ContentTriples = [];
         internal List<IGraph> ContentGraphs = [];
-        internal List<Triple> MetadataTriples = [];
-        internal List<string> MetadataRdfStrings = [];
-        internal List<IGraph> MetadataGraphs = [];
+        internal List<Triple> AdditionalMetadataTriples = [];
+        internal List<string> AdditionalMetadataRdfStrings = [];
+        internal List<IGraph> AdditionalMetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
         internal DescribesConstraintMode DescribesConstraintMode = DescribesConstraintMode.None;
