@@ -15,23 +15,34 @@ public record RecordBuilder
     private Storage _storage;
     private ProvenanceBuilder _metadataProvenance;
     private ProvenanceBuilder _contentProvenance;
-    private readonly IRecordBackend? _backendTemplate;
+    private readonly Func<Task<IRecordBuildableBackend>> _backendFactory;
     private ShaclValidationRequest? _shaclValidationRequest;
 
     public ShaclValidationOutcome? LastShaclValidationOutcome { get; private set; }
 
+    /// <summary>
+    /// Creates a new RecordBuilder.
+    /// </summary>
+    /// <param name="canon">Canonicalisation mode for content graph checksums.</param>
+    /// <param name="describesConstraintMode">Constraint mode for the describes predicate.</param>
+    /// <param name="backendFactory">
+    /// Async factory that produces a fresh empty <see cref="IRecordBuildableBackend"/> for
+    /// each <see cref="Build"/> call. Defaults to <see cref="DotNetRdfRecordBackend"/>.
+    /// For Fuseki use <c>() => FusekiRecordBackend.CreateForBuildAsync(httpClient)</c>.
+    /// </param>
     public RecordBuilder(
         RecordCanonicalisation canon = RecordCanonicalisation.None,
         DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None,
-        IRecordBackend? backendTemplate = null)
+        Func<Task<IRecordBuildableBackend>>? backendFactory = null)
     {
+        _backendFactory = backendFactory
+            ?? (() => Task.FromResult<IRecordBuildableBackend>(new DotNetRdfRecordBackend()));
+
         _storage = new Storage
         {
             DescribesConstraintMode = describesConstraintMode,
             Canon = canon,
         };
-
-        _backendTemplate = backendTemplate;
 
         _metadataProvenance =
             WithAdditionalTool(CreateRecordVersionUri())
@@ -44,6 +55,7 @@ public record RecordBuilder
                 "This is the process that generated the record content.")
         (new ProvenanceBuilder());
     }
+
     #region With-Methods
 
     #region Metadata-Methods
@@ -196,9 +208,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataGraphs = _storage.MetadataGraphs.Concat(graphs).ToList(),
-                MetadataRdfStrings = _storage.MetadataRdfStrings.ToList(),
-                MetadataTriples = _storage.MetadataTriples.ToList()
+                AdditionalMetadataGraphs = _storage.AdditionalMetadataGraphs.Concat(graphs).ToList(),
+                AdditionalMetadataRdfStrings = _storage.AdditionalMetadataRdfStrings.ToList(),
+                AdditionalMetadataTriples = _storage.AdditionalMetadataTriples.ToList()
             }
         };
 
@@ -209,9 +221,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataTriples = _storage.MetadataTriples.Concat(triples).ToList(),
-                MetadataRdfStrings = _storage.MetadataRdfStrings.ToList(),
-                MetadataGraphs = _storage.MetadataGraphs.ToList()
+                AdditionalMetadataTriples = _storage.AdditionalMetadataTriples.Concat(triples).ToList(),
+                AdditionalMetadataRdfStrings = _storage.AdditionalMetadataRdfStrings.ToList(),
+                AdditionalMetadataGraphs = _storage.AdditionalMetadataGraphs.ToList()
             }
         };
 
@@ -222,9 +234,9 @@ public record RecordBuilder
         {
             _storage = _storage with
             {
-                MetadataRdfStrings = _storage.MetadataRdfStrings.Concat(rdfStrings).ToList(),
-                MetadataTriples = _storage.MetadataTriples.ToList(),
-                MetadataGraphs = _storage.MetadataGraphs.ToList()
+                AdditionalMetadataRdfStrings = _storage.AdditionalMetadataRdfStrings.Concat(rdfStrings).ToList(),
+                AdditionalMetadataTriples = _storage.AdditionalMetadataTriples.ToList(),
+                AdditionalMetadataGraphs = _storage.AdditionalMetadataGraphs.ToList()
             }
         };
 
@@ -299,6 +311,7 @@ public record RecordBuilder
     #endregion
 
     #region With-Additional-Content
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params IGraph[] graphs) =>
     this with
     {
@@ -310,8 +323,10 @@ public record RecordBuilder
         }
     };
 
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<IGraph> graphs) => WithAdditionalContent(graphs.ToArray());
 
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params Triple[] triples) =>
         this with
         {
@@ -322,9 +337,10 @@ public record RecordBuilder
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<Triple> triples) => WithAdditionalContent(triples.ToArray());
 
-
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(params string[] rdfStrings) =>
         this with
         {
@@ -335,6 +351,7 @@ public record RecordBuilder
                 ContentGraphs = _storage.ContentGraphs.ToList()
             }
         };
+    [Obsolete]
     public RecordBuilder WithAdditionalContent(IEnumerable<string> rdfStrings) => WithAdditionalContent(rdfStrings.ToArray());
     #endregion
     #endregion
@@ -344,64 +361,164 @@ public record RecordBuilder
     {
         if (_storage.Id == null) throw new RecordException("Record needs ID.");
 
-        var metadataGraph = CreateMetadataGraph();
-        var ts = new TripleStore();
-        ts.Add(metadataGraph);
+        ValidateRecordScopeConstraint();
 
-        if (_storage.ContentGraphs.Count != 0 || _storage.ContentTriples.Count != 0 || _storage.RdfStrings.Count != 0)
-        {
-            var contentGraphId = new UriNode(new Uri($"{_storage.Id}#content"));
-            var contentGraph = CreateContentGraph(contentGraphId);
+        var backend = await _backendFactory();
 
-            var contentGraphs = _storage.ContentGraphs
-                .Select(g => g.Name != null ? g : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples))
-                .ToList();
+        await BuildMetadata(backend);
 
-            if (!contentGraph.IsEmpty)
-                contentGraphs.Add(contentGraph);
+        // ── Content ─────────────────────────────────────────────────────────────
+        await BuildContent(backend);
 
-            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId));
+        // ── Finalise ─────────────────────────────────────────────────────────────
+        await backend.FinalizeAsync();
 
-            if (_storage.Canon is RecordCanonicalisation.dotNetRdf)
-            {
-                var contentGraphChecksumTriples = CreateChecksumTriples(contentGraphs);
-                metadataGraph.Assert(contentGraphChecksumTriples);
-            }
+        // Post-finalize: validate any metadata RDF strings didn't inject bad predicates
+        if (_storage.AdditionalMetadataRdfStrings.Count > 0)
+            await ValidateMetadataRdfStrings(backend);
 
-            foreach (var graph in _storage.ContentGraphs)
-            {
-                ts.Add(graph);
-                metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, graph.Name));
-            }
-
-            ts.Add(contentGraph);
-        }
-
-        var backend = await CreateBackend(ts);
         var record = await Record.CreateAsync(backend, _storage.DescribesConstraintMode);
 
         if (_shaclValidationRequest is not null)
         {
-            var outcome = await backend.ValidateContentWithShacl(_shaclValidationRequest.ShaclShapePaths, _shaclValidationRequest.DescribesIri);
+            var outcome = await backend.ValidateContentWithShacl(
+                _shaclValidationRequest.ShaclShapePaths, _shaclValidationRequest.DescribesIri);
             LastShaclValidationOutcome = outcome;
 
             if (!outcome.Conforms && _shaclValidationRequest.FailOnViolation)
-            {
                 throw new RecordException(string.Join('\n', outcome.Messages));
-            }
         }
 
         return record;
     }
 
-    private async Task<IRecordBackend> CreateBackend(ITripleStore tripleStore) =>
-        _backendTemplate is null
-            ? new DotNetRdfRecordBackend(tripleStore)
-            : await _backendTemplate.CreateFromTripleStore(tripleStore);
+    private async Task BuildContent(IRecordBuildableBackend backend)
+    {
+        bool hasContent = _storage.ContentGraphs.Count != 0
+                          || _storage.ContentTriples.Count != 0
+                          || _storage.RdfStrings.Count != 0;
+
+        if (hasContent)
+        {
+            var contentGraphUri = new Uri($"{_storage.Id}#content");
+            var contentGraphId = new UriNode(contentGraphUri);
+
+            await backend.AddTriplesToGraphAsync(_storage.Id, [
+                new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, contentGraphId)
+            ]);
+
+            // Validate in-memory content triples
+            if (_storage.ContentTriples.Any(t => t.Subject.ToString().Equals(_storage.Id.ToString())))
+                throw new RecordException("Content may not make metadata statements.");
+
+            bool hasInlineContent = _storage.ContentTriples.Count != 0 || _storage.RdfStrings.Count != 0;
+            if (hasInlineContent)
+            {
+                if (_storage.Canon == RecordCanonicalisation.dotNetRdf)
+                {
+                    // Canon mode: assemble the #content graph locally so we can hash it,
+                    // then push the finished graph to the backend.
+                    var localContent = new Graph(contentGraphUri);
+                    localContent.Assert(_storage.ContentTriples);
+                    foreach (var s in _storage.RdfStrings)
+                    {
+                        var tempStore = new TripleStore();
+                        try { tempStore.LoadFromString(s); }
+                        catch
+                        {
+                            RecordBackendBase.ValidateJsonLd(s);
+                            tempStore.LoadFromString(s, new JsonLdParser());
+                        }
+                        if (tempStore.Graphs.Count != 1)
+                            throw new RecordException("Input can only contain one graph.");
+                        localContent.Assert(tempStore.Graphs.First().Triples);
+                    }
+                    await backend.AddGraphAsync(localContent);
+                    await backend.AddTriplesToGraphAsync(_storage.Id, CreateChecksumTriples([localContent]));
+                }
+                else
+                {
+                    // No-canon path: delegate all string parsing to the backend (fast path).
+                    await backend.AddTriplesToGraphAsync(contentGraphUri, _storage.ContentTriples);
+                    foreach (var s in _storage.RdfStrings)
+                        await backend.ParseRdfStringIntoGraphAsync(s, contentGraphUri);
+                }
+            }
+
+            // Named content graphs
+            CheckContentGraph();
+            var userContentGraphs = _storage.ContentGraphs
+                .Select(g => g.Name != null
+                    ? g
+                    : new Graph(new Uri($"{_storage.Id}#content{Guid.NewGuid()}"), g.Triples))
+                .ToList();
+
+            if (_storage.Canon == RecordCanonicalisation.dotNetRdf && userContentGraphs.Count != 0)
+                await backend.AddTriplesToGraphAsync(_storage.Id, CreateChecksumTriples(userContentGraphs));
+
+            foreach (var g in userContentGraphs)
+            {
+                await backend.AddGraphAsync(g);
+                await backend.AddTriplesToGraphAsync(_storage.Id, [
+                    new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, g.Name)
+                ]);
+            }
+        }
+    }
+
+    private async Task BuildMetadata(IRecordBuildableBackend backend)
+    {
+        // ── Metadata graph ──────────────────────────────────────────────────────
+        var metadataTriples = CreateMetadataTriples();
+        await backend.AddTriplesToGraphAsync(_storage.Id, metadataTriples);
+
+        // In-memory metadata triples: validate then push
+        var recordPredicates = GetRecordPredicates().ToList();
+        CheckMetadataTriples(recordPredicates);
+        await backend.AddTriplesToGraphAsync(_storage.Id, _storage.AdditionalMetadataTriples);
+
+        // IGraph metadata: validate then push triples into metadata named graph
+        CheckMetadataGraph(recordPredicates);
+        foreach (var g in _storage.AdditionalMetadataGraphs)
+            await backend.AddTriplesToGraphAsync(_storage.Id, g.Triples);
+
+        // RDF-string metadata: backend parses (validated post-finalize via SPARQL)
+        foreach (var s in _storage.AdditionalMetadataRdfStrings)
+            await backend.ParseRdfStringIntoGraphAsync(s, _storage.Id);
+
+        // Provenance: pure computation, backend stores
+        var provenanceFactory = new Graph(_storage.Id);
+        await backend.AddTriplesToGraphAsync(
+            _storage.Id, _metadataProvenance.Build(provenanceFactory, provenanceFactory.Name!));
+        await backend.AddTriplesToGraphAsync(
+            _storage.Id, _contentProvenance.Build(provenanceFactory, provenanceFactory.Name!));
+    }
+
+    /// <summary>
+    /// After FinalizeAsync, verify that none of the triples loaded from metadata RDF strings
+    /// use a record-ontology predicate with a subject other than the record ID.
+    /// </summary>
+    private async Task ValidateMetadataRdfStrings(IRecordBuildableBackend backend)
+    {
+        var predicatesFilter = string.Join(", ", GetRecordPredicates()); // already "<uri>" format
+        var id = _storage.Id!.AbsoluteUri;
+
+        var selectQuery =
+            $"SELECT ?s WHERE {{ GRAPH <{id}> {{ " +
+            $"?s ?p ?o . " +
+            $"FILTER(?s != <{id}>) " +
+            $"FILTER(?p IN ({predicatesFilter})) }} }} LIMIT 1";
+
+        var results = (await backend.Sparql(selectQuery)).ToList();
+        if (results.Count > 0)
+            throw new RecordException(
+                "For all triples where the predicate is in the record ontology, the subject must be the record itself.");
+    }
 
     internal static IEnumerable<Triple> CreateChecksumTriples(IEnumerable<IGraph> contentGraphs)
     {
-        IEnumerable<(IRefNode graphId, string value)> checkSums = contentGraphs.Select(g => (graphId: g.Name, value: CanonicalisationExtensions.HashGraph(g)));
+        IEnumerable<(IRefNode graphId, string value)> checkSums =
+            contentGraphs.Select(g => (graphId: g.Name, value: CanonicalisationExtensions.HashGraph(g)));
 
         return checkSums.Select(cs =>
             {
@@ -417,91 +534,29 @@ public record RecordBuilder
     }
 
     #region Private-Builder-Helper-Methods
-    private Graph CreateMetadataGraph()
+
+    private void CheckMetadataTriples(IEnumerable<string> recordPredicates)
     {
-        var metadataGraph = new Graph(_storage.Id);
-        metadataGraph.BaseUri = _storage.Id;
+        ArgumentNullException.ThrowIfNull(_storage.Id);
 
-        var recordPredicates = GetRecordPredicates();
-
-        var metadataTripleList = GetMetadataTripleList(recordPredicates);
-        metadataGraph.Assert(metadataTripleList);
-
-        CheckMetadataGraph(recordPredicates);
-
-        _storage.MetadataGraphs.ForEach(metadataGraph.Merge);
-        metadataGraph.Assert(_metadataProvenance.Build(metadataGraph, metadataGraph.Name));
-        metadataGraph.Assert(_contentProvenance.Build(metadataGraph, metadataGraph.Name));
-
-        return metadataGraph;
-    }
-
-    private Graph CreateContentGraph(IRefNode contentGraphId)
-    {
-        var contentGraph = new Graph(contentGraphId);
-
-        var tripleList = CreateContentTripleString();
-        contentGraph.Assert(tripleList);
-
-        CheckContentGraph();
-
-        return contentGraph;
-    }
-
-    private TripleStore CreateTripleStore(Graph metadataGraph, Graph contentGraph)
-    {
-        var ts = new TripleStore();
-
-        foreach (var graph in _storage.ContentGraphs)
-        {
-            ts.Add(graph);
-            metadataGraph.Assert(new Triple(new UriNode(_storage.Id), Namespaces.Record.UriNodes.HasContent, graph.Name));
-        }
-
-        ts.Add(metadataGraph);
-        ts.Add(contentGraph);
-
-        return ts;
+        if (_storage.AdditionalMetadataTriples.Any(q =>
+                !q.Subject.ToString().Equals(_storage.Id.ToString())
+                && recordPredicates.Contains($"<{q.Predicate}>")))
+            throw new RecordException(
+                "For all triples where the predicate is in the record ontology, the subject must be the record itself.");
     }
 
     private void CheckMetadataGraph(IEnumerable<string> recordPredicates)
     {
         ArgumentNullException.ThrowIfNull(_storage.Id);
 
-        foreach (var graph in _storage.MetadataGraphs.Select(g => g.Triples))
+        foreach (var graph in _storage.AdditionalMetadataGraphs.Select(g => g.Triples))
             if (graph.Any(t => !t.Subject.ToString().Equals(_storage.Id.ToString()) && recordPredicates.Contains(t.Predicate.ToString())))
                 throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
     }
 
-    private List<Triple> GetMetadataTripleList(IEnumerable<string> recordPredicates)
-    {
-        var metadataTriples = CreateMetadataTriples();
-        var additionalMetadataTriples = CreateAdditionalMetadataTriples(recordPredicates);
-        metadataTriples.AddRange(additionalMetadataTriples);
-        return metadataTriples;
-        ;
-    }
-
-    private List<Triple> CreateAdditionalMetadataTriples(IEnumerable<string> recordPredicates)
-    {
-        ArgumentNullException.ThrowIfNull(_storage.Id);
-
-        var additionalMetadataTriples = new List<Triple>();
-        additionalMetadataTriples.AddRange(_storage.MetadataTriples);
-        additionalMetadataTriples.AddRange(_storage.MetadataRdfStrings.SelectMany(TripleListFromRdfString));
-
-        if (additionalMetadataTriples.Any(q =>
-                !q.Subject.ToString().Equals(_storage.Id.ToString())
-                && recordPredicates.Contains($"<{q.Predicate.ToString()}>")))
-            throw new RecordException("For all triples where the predicate is in the record ontology, the subject must be the record itself.");
-
-        return additionalMetadataTriples;
-    }
-
     private List<Triple> CreateMetadataTriples()
     {
-        ValidateRecordScopeConstraint();
-
         var metadataTriples = new List<Triple>();
         var typeQuad = new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Rdf.Type)), new UriNode(new Uri(Namespaces.Record.RecordType)));
         metadataTriples.Add(typeQuad);
@@ -540,33 +595,9 @@ public record RecordBuilder
                 throw new RecordException("Content may not make metadata statements.");
     }
 
-    private IEnumerable<Triple> CreateContentTripleString()
-    {
-
-        var triples = _storage.ContentTriples.Concat(_storage.RdfStrings.SelectMany(TripleListFromRdfString)).ToList();
-        if (triples.Any(q => q.Subject.ToString().Equals(_storage.Id?.ToString())))
-            throw new RecordException("Content may not make metadata statements.");
-        return triples;
-    }
-
     #endregion
 
     #region Private-Helper-Methods
-    private IEnumerable<Triple> TripleListFromRdfString(string rdfString)
-    {
-        ArgumentNullException.ThrowIfNull(_storage.Id);
-
-        var tempStore = new TripleStore();
-        try { tempStore.LoadFromString(rdfString); }
-        catch { tempStore.LoadFromString(rdfString, new JsonLdParser()); }
-
-        if (tempStore.Graphs.Count != 1) throw new RecordException("Input can only contain one graph.");
-
-        var tempStoreGraph = tempStore.Graphs.FirstOrDefault();
-        if (tempStoreGraph == null) throw new UnloadedRecordException();
-
-        return tempStore.Graphs.First().Triples;
-    }
 
     private string CreateRecordVersionUri()
     {
@@ -614,9 +645,9 @@ public record RecordBuilder
 
         internal List<Triple> ContentTriples = [];
         internal List<IGraph> ContentGraphs = [];
-        internal List<Triple> MetadataTriples = [];
-        internal List<string> MetadataRdfStrings = [];
-        internal List<IGraph> MetadataGraphs = [];
+        internal List<Triple> AdditionalMetadataTriples = [];
+        internal List<string> AdditionalMetadataRdfStrings = [];
+        internal List<IGraph> AdditionalMetadataGraphs = [];
 
         internal RecordCanonicalisation Canon = RecordCanonicalisation.None;
         internal DescribesConstraintMode DescribesConstraintMode = DescribesConstraintMode.None;

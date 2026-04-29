@@ -10,7 +10,7 @@ using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 namespace Records.Backend;
 
-public class DotNetRdfRecordBackend : RecordBackendBase
+public class DotNetRdfRecordBackend : RecordBackendBase, IRecordBuildableBackend
 {
 
     private readonly TripleStore _store = new TripleStore();
@@ -20,6 +20,13 @@ public class DotNetRdfRecordBackend : RecordBackendBase
 
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    /// <summary>
+    /// Build-mode constructor. No data is loaded and no metadata is initialised.
+    /// Call the <see cref="IRecordBuildableBackend"/> mutator methods followed by
+    /// <see cref="FinalizeAsync"/> before using this instance as a read backend.
+    /// </summary>
+    internal DotNetRdfRecordBackend() { }
+
     public DotNetRdfRecordBackend(ITripleStore store)
     {
         LoadFromTripleStore(store);
@@ -357,6 +364,67 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return Equals((DotNetRdfRecordBackend)obj);
     }
 
+
+    #region IRecordBuildableBackend
+
+    /// <inheritdoc/>
+    public Task AddGraphAsync(IGraph graph)
+    {
+        var g = new Graph(graph.Name);
+        g.Merge(graph);
+        _store.Add(g);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task AddTriplesToGraphAsync(Uri graphName, IEnumerable<Triple> triples)
+    {
+        var nameNode = new UriNode(graphName);
+        if (!_store.HasGraph(nameNode))
+            _store.Add(new Graph(nameNode));
+        _store.Graphs[nameNode].Assert(triples);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task ParseRdfStringIntoGraphAsync(string rdfString, Uri graphName)
+    {
+        var tempStore = new TripleStore();
+        try { tempStore.LoadFromString(rdfString); }
+        catch
+        {
+            ValidateJsonLd(rdfString);
+            tempStore.LoadFromString(rdfString, new JsonLdParser());
+        }
+
+        if (tempStore.Graphs.Count != 1)
+            throw new RecordException("Input can only contain one graph.");
+
+        var sourceGraph = tempStore.Graphs.First() ?? throw new UnloadedRecordException();
+
+        var nameNode = new UriNode(graphName);
+        if (!_store.HasGraph(nameNode))
+            _store.Add(new Graph(nameNode));
+        _store.Graphs[nameNode].Assert(sourceGraph.Triples);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public async Task FinalizeAsync()
+    {
+        if (_store.Graphs.Count < 1)
+            throw new RecordException("A record must contain at least one named graph.");
+
+        _dataset = new InMemoryDataset(_store, false);
+        _queryProcessor = new LeviathanQueryProcessor(_dataset);
+
+        var rdfString = await ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
+        _nQuadsString = string.Join("\n", rdfString.Split('\n').OrderBy(s => s));
+
+        await InitializeMetadata();
+    }
+
+    #endregion
 
     #region Private
     private IEnumerable<string> Construct(SparqlQuery query)
