@@ -1,6 +1,7 @@
 using Grpc.Core;
 using Records.Exceptions;
 using Records.Immutable;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Shacl;
@@ -296,6 +297,11 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
 
         return new DotNetRdfRecordBackend(tripleStore);
+    }
+
+    public override RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl)
+    {
+        throw new NotImplementedException();
     }
 
     public override Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore) =>

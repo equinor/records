@@ -82,7 +82,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         return client;
     }
 
-    public RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl)
+    public override RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl)
     {
         if (ttl <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be greater than zero.");

@@ -3,6 +3,7 @@ using Records.Sender;
 using System.Diagnostics;
 using IriTools;
 using Records.Backend;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -257,7 +258,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     public Task<bool> ContainsTriple(Triple triple) => _backend.ContainsTriple(triple);
 
-
+    public RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl) => _backend.ExportRecordHandleV1(ttl);
     public override string? ToString() => _backend.ToString();
     public ValueTask DisposeAsync() => DeleteDatasetAsync();
 
