@@ -1,4 +1,5 @@
 using System.Text;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -25,6 +26,31 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         _httpClient = httpClient;
         _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
     }
+    private FusekiRecordBackend(HttpClient httpClient, string datasetName)
+    {
+        _datasetName = datasetName;
+        _httpClient = httpClient;
+        _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
+    }
+
+    public static async Task<FusekiRecordBackend> CreateFromExisting(HttpClient httpClient, RecordHandleV1 handle)
+    {
+        if (!handle.Verify())
+            throw new UnauthorizedAccessException("Record handle is invalid or expired.");
+
+        var datasetName = handle.Dataset;
+        var client = new FusekiRecordBackend(httpClient, datasetName);
+        await client.EnsureDatasetExistsAsync((httpResponseMessage, s) =>
+            throw new Exception(
+                $"Failed initializing record from dataset '{datasetName}': {httpResponseMessage.StatusCode} - {s}"));
+        await client.InitializeMetadata();
+
+        if (!string.Equals(client.GetRecordId().AbsoluteUri, handle.RecordId, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException("Record handle does not match dataset record id.");
+
+        return client;
+    }
+
     public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.Trig, httpClient);
 
@@ -54,6 +80,18 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         var client = new FusekiRecordBackend(httpClient);
         await client.CreateDatasetAsync();
         return client;
+    }
+
+    public RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl)
+    {
+        if (ttl <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be greater than zero.");
+
+        var expiresAt = DateTimeOffset.UtcNow.Add(ttl);
+        return RecordHandleV1.CreateFusekiDatasetRef(
+            dataset: _datasetName,
+            recordId: GetRecordId().AbsoluteUri,
+            expiresAt: expiresAt);
     }
 
     #region IRecordBuildableBackend
@@ -137,7 +175,9 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         using var response = await _httpClient.PostAsync(CreateDatasetEndpointPath(), content);
         if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            await EnsureDatasetExistsAsync();
+            await EnsureDatasetExistsAsync(
+                (httpResponseMessage, s) =>
+                throw new Exception($"Dataset conflict encountered, but existing dataset '{_datasetName}' could not be verified at '{DatasetEndpointPath()}': {httpResponseMessage.StatusCode} - {s}"));
             return;
         }
 
@@ -166,13 +206,13 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             "<#dataset> rdf:type ja:MemoryDataset ."
         ]);
 
-    private async Task EnsureDatasetExistsAsync()
+    private async Task EnsureDatasetExistsAsync(Action<HttpResponseMessage, string> lackingDatasetHandler)
     {
         var response = await _httpClient.GetAsync(DatasetEndpointPath());
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Dataset conflict encountered, but existing dataset '{_datasetName}' could not be verified at '{DatasetEndpointPath()}': {response.StatusCode} - {errorMessage}");
+            lackingDatasetHandler(response, errorMessage);
         }
     }
 
