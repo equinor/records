@@ -90,7 +90,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     public async Task SubjectsOfTypes()
     {
         var recordString = await TestData.ValidRecordString<TriGWriter>();
-        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var backend = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
         var subjectWithType = await backend.SubjectWithType(new UriNode(new Uri("https://rdf.equinor.com/ontology/record/Record")));
         Assert.Single(subjectWithType);
@@ -99,7 +99,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     public async Task TriplesWithSubject()
     {
         var recordString = await TestData.ValidRecordString<TriGWriter>();
-        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var backend = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
 
         var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
@@ -110,7 +110,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     public async Task CreateDatasetAsync_IsIdempotent_WhenCalledTwice()
     {
         var recordString = await TestData.ValidRecordString<TriGWriter>();
-        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var backend = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
 
         var act = async () => await backend.CreateDatasetAsync();
         await act.Should().NotThrowAsync("a retry of dataset creation should be treated as idempotent");
@@ -123,7 +123,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         INode testNode = new LiteralNode(maliciousInput);
 
         var recordString = await TestData.ValidRecordString<TriGWriter>();
-        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var backend = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
 
         var subjectWithType = await backend.TriplesWithObject(testNode);
@@ -134,7 +134,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     public async Task ValidateContentWithShacl_UsesFusekiShaclEndpoint()
     {
         var recordString = await TestData.ValidRecordString<TriGWriter>();
-        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var backend = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         Assert.NotNull(backend);
 
         var shapeFile = "Data/fuseki-shacl-missing-predicate.ttl";
@@ -144,6 +144,47 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
             var outcome = await backend.ValidateContentWithShacl([shapeFile], TestData.CreateRecordSubject("1"));
             outcome.Conforms.Should().BeFalse();
             outcome.Messages.Should().Contain(message => message.Contains("Missing predicate"));
+        }
+        finally
+        {
+            await backend.DeleteDatasetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task Can_Export_And_Rehydrate_From_RecordHandleV1()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var original = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+
+        try
+        {
+            var handle = original.ExportRecordHandleV1(TimeSpan.FromMinutes(5));
+            var fromHandle = await Backend.FusekiRecordBackend.CreateFromExisting(_httpClient, handle);
+
+            fromHandle.GetRecordId().AbsoluteUri.Should().Be(original.GetRecordId().AbsoluteUri);
+            (await fromHandle.Triples()).Count().Should().Be((await original.Triples()).Count());
+        }
+        finally
+        {
+            await original.DeleteDatasetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task CreateFromExisting_Rejects_Expired_RecordHandleV1()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var handle = backend.ExportRecordHandleV1(TimeSpan.FromMinutes(5));
+
+        // Create an expired handle
+        var expiredHandle = handle with { ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(-1) };
+
+        try
+        {
+            var act = async () => await Records.Backend.FusekiRecordBackend.CreateFromExisting(_httpClient, expiredHandle);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
         }
         finally
         {
