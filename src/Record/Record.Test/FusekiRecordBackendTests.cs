@@ -177,7 +177,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var recordString = await TestData.ValidRecordString<TriGWriter>();
         var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
         var handle = backend.ExportRecordHandleV1(TimeSpan.FromMinutes(5));
-        
+
         // Create an expired handle
         var expiredHandle = handle with { ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(-1) };
 
