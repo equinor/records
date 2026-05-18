@@ -83,6 +83,6 @@ public interface IRecordBackend
     Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri);
     Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths);
     internal Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
-    
+
     public RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl);
 }
