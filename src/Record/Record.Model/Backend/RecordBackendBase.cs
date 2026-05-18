@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Records.Exceptions;
 using Records.Immutable;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -81,4 +82,5 @@ public abstract class RecordBackendBase : IRecordBackend
     public abstract Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri);
     public abstract Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths);
     public abstract Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata);
+    public abstract RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl);
 }
