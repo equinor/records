@@ -29,7 +29,8 @@ public class FileRecordBuilderTests
 
         fileRecord.Should().NotBeNull();
         (await fileRecord.TriplesWithPredicate(Namespaces.Record.IsSubRecordOf)).Select(q => q.Object.ToString()).Single().Should().Be(superRecordId);
-        (await fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime)).Count().Should().Be(1);
+        // Two prov:generatedAtTime triples: one on the file (content graph) and one on the record itself (metadata graph).
+        (await fileRecord.TriplesWithPredicate(Namespaces.FileContent.generatedAtTime)).Count().Should().Be(2);
         (await fileRecord.TriplesWithPredicate(Namespaces.Rdf.Type)).Count().Should().Be(3);
     }
 
