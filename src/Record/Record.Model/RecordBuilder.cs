@@ -138,6 +138,20 @@ public record RecordBuilder
 
     public RecordBuilder WithId(string id) => WithId(new Uri(id));
 
+    /// <summary>
+    /// Sets the <c>prov:generatedAtTime</c> recorded on the record itself. If not set, the record
+    /// is stamped with the current date at <see cref="Build"/> time. Use this overload to supply a
+    /// deterministic value (for example in tests or when replaying historical data).
+    /// </summary>
+    public RecordBuilder WithGeneratedAtTime(DateTime generatedAtTime) =>
+        this with
+        {
+            _storage = _storage with
+            {
+                GeneratedAtTime = generatedAtTime
+            }
+        };
+
     #endregion
 
     #region ProvenanceBuilderWrappers
@@ -561,6 +575,8 @@ public record RecordBuilder
         var typeQuad = new Triple(new UriNode(_storage.Id), new UriNode(new Uri(Namespaces.Rdf.Type)), new UriNode(new Uri(Namespaces.Record.RecordType)));
         metadataTriples.Add(typeQuad);
 
+        metadataTriples.Add(CreateGeneratedAtTimeTriple());
+
         if (_storage.IsSubRecordOf != null)
             metadataTriples.Add(CreateIsSubRecordOfTriple(_storage.IsSubRecordOf));
 
@@ -613,6 +629,16 @@ public record RecordBuilder
         return new Triple(new UriNode(_storage.Id), new UriNode(new Uri(predicate)), new UriNode(new Uri(@object)));
     }
 
+    private Triple CreateGeneratedAtTimeTriple()
+    {
+        if (_storage.Id == null) throw new RecordException("Record ID must be added first.");
+        var generatedAtTime = _storage.GeneratedAtTime ?? DateTime.Now;
+        return new Triple(
+            new UriNode(_storage.Id),
+            Namespaces.Prov.UriNodes.GeneratedAtTime,
+            new LiteralNode($"{generatedAtTime.Date:yyyy-MM-dd}", new Uri(Namespaces.DataType.Date)));
+    }
+
     private Triple CreateIsSubRecordOfTriple(string subRecordOf) =>
         CreateTripleWithPredicateAndObject(Namespaces.Record.IsSubRecordOf, subRecordOf);
 
@@ -637,6 +663,7 @@ public record RecordBuilder
     {
         internal Uri? Id;
         internal string? IsSubRecordOf;
+        internal DateTime? GeneratedAtTime;
         internal List<string> Replaces = [];
         internal List<string> Scopes = [];
         internal List<string> Related = [];

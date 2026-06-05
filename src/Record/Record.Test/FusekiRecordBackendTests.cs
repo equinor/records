@@ -22,7 +22,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         Assert.NotNull(backend);
         var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata?.Count;
-        result.Should().Be(21);
+        result.Should().Be(22);
 
     }
 
@@ -35,7 +35,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata!.Count();
 
-        result.Should().Be(21);
+        result.Should().Be(22);
     }
 
 
@@ -103,7 +103,7 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
         Assert.NotNull(backend);
 
         var subjectWithType = await backend.TriplesWithSubject(_recordIduriNode);
-        Assert.Equal(14, subjectWithType.Count());
+        Assert.Equal(15, subjectWithType.Count());
     }
 
     [Fact]

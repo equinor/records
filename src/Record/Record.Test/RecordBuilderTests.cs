@@ -169,6 +169,46 @@ public class RecordBuilderTests(ITestOutputHelper outputHelper, FusekiContainerM
         record.Id.Should().Be(id);
     }
 
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task RecordBuilder_Adds_GeneratedAtTime_To_Record(BackendType backendType)
+    {
+        var id = TestData.CreateRecordIdUri("0");
+
+        var record = await (await CreateRecordBuilder(backendType))
+            .WithId(id)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .Build();
+
+        var generatedAtTimeTriples = (await record.TriplesWithPredicate(Namespaces.Prov.Uris.GeneratedAtTime)).ToList();
+
+        generatedAtTimeTriples.Should().ContainSingle();
+        generatedAtTimeTriples.Single().Subject.Should().Be(new UriNode(id));
+    }
+
+    [Theory]
+    [InlineData(BackendType.DotNetRdf)]
+    [InlineData(BackendType.Fuseki)]
+    public async Task RecordBuilder_Uses_Provided_GeneratedAtTime(BackendType backendType)
+    {
+        var id = TestData.CreateRecordIdUri("0");
+        var generatedAtTime = new DateTime(2024, 3, 13);
+
+        var record = await (await CreateRecordBuilder(backendType))
+            .WithId(id)
+            .WithScopes(TestData.CreateRecordIri("scope", "0"))
+            .WithGeneratedAtTime(generatedAtTime)
+            .Build();
+
+        var generatedAtTimeTriples = (await record.TriplesWithPredicate(Namespaces.Prov.Uris.GeneratedAtTime)).ToList();
+
+        generatedAtTimeTriples.Should().ContainSingle();
+        var literal = generatedAtTimeTriples.Single().Object.Should().BeAssignableTo<ILiteralNode>().Subject;
+        literal.Value.Should().Be("2024-03-13");
+        literal.DataType.Should().Be(Namespaces.DataType.Uris.Date);
+    }
+
     [Fact]
     public async Task RecordBuilder_With()
     {
