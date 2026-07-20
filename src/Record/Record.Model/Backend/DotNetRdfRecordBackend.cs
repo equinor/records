@@ -1,15 +1,17 @@
 using Grpc.Core;
 using Records.Exceptions;
 using Records.Immutable;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
+using VDS.RDF.Shacl;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing;
 using StringWriter = System.IO.StringWriter;
 namespace Records.Backend;
 
-public class DotNetRdfRecordBackend : RecordBackendBase
+public class DotNetRdfRecordBackend : RecordBackendBase, IRecordBuildableBackend
 {
 
     private readonly TripleStore _store = new TripleStore();
@@ -19,6 +21,13 @@ public class DotNetRdfRecordBackend : RecordBackendBase
 
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    /// <summary>
+    /// Build-mode constructor. No data is loaded and no metadata is initialised.
+    /// Call the <see cref="IRecordBuildableBackend"/> mutator methods followed by
+    /// <see cref="FinalizeAsync"/> before using this instance as a read backend.
+    /// </summary>
+    internal DotNetRdfRecordBackend() { }
+
     public DotNetRdfRecordBackend(ITripleStore store)
     {
         LoadFromTripleStore(store);
@@ -203,21 +212,21 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         };
 
 
-    public override Task<IEnumerable<INode>> SubjectWithType(UriNode type)
+    public override Task<IEnumerable<INode>> SubjectWithType(IUriNode type)
         => Task.FromResult(_store
         .GetTriplesWithPredicateObject(Namespaces.Rdf.UriNodes.Type, type)
         .Select(t => t.Subject));
 
-    public override Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
+    public override Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject)
         => Task.FromResult(_store
         .GetTriplesWithSubjectPredicate(subject, Namespaces.Rdfs.UriNodes.Label)
         .Where(t => t.Object is LiteralNode literal)
         .Select(t => ((LiteralNode)t.Object).Value));
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
+    public override Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject)
         => Task.FromResult(_store
             .GetTriplesWithSubject(subject));
-    public override Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
+    public override Task<IEnumerable<Triple>> TriplesWithPredicate(IUriNode predicate)
         => Task.FromResult(_store
             .GetTriplesWithPredicate(predicate));
 
@@ -225,16 +234,16 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         => Task.FromResult(_store
             .GetTriplesWithObject(@object));
 
-    public override Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
+    public override Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(IUriNode predicate, INode @object)
         => Task.FromResult(_store
             .GetTriplesWithPredicateObject(predicate, @object));
 
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
+    public override Task<IEnumerable<Triple>> TriplesWithSubjectObject(IUriNode subject, INode @object)
         => Task.FromResult(_store
             .GetTriplesWithSubjectObject(subject, @object));
 
-    public override Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
+    public override Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(IUriNode subject, IUriNode predicate)
         => Task.FromResult(_store
             .GetTriplesWithSubjectPredicate(subject, predicate));
 
@@ -290,6 +299,60 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return new DotNetRdfRecordBackend(tripleStore);
     }
 
+    public override RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore) =>
+        Task.FromResult<IRecordBackend>(new DotNetRdfRecordBackend(tripleStore));
+
+    public override async Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri)
+    {
+        var contentGraph = await GetMergedGraphs();
+
+        var shapes = new Graph();
+        foreach (var shapePath in shaclShapePaths)
+            shapes.LoadFromFile(shapePath);
+
+        var report = new ShapesGraph(shapes).Validate(contentGraph);
+        var messages = report.Results
+            .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
+            .ToList();
+
+        var describesNode = contentGraph.CreateUriNode(new Uri(describesIri));
+        var hasDescribesSubject = (await TriplesWithSubject(describesNode)).Any();
+        if (!hasDescribesSubject)
+            messages.Add($"Describes IRI <{describesIri}> does not exist as a subject in the content graph.");
+
+        return new ShaclValidationOutcome(report.Conforms && hasDescribesSubject, messages);
+    }
+
+    public override Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+        => Task.FromResult(ValidateShaclStatic(content, contentType, shaclShapePaths));
+
+    public static ShaclValidationOutcome ValidateShaclStatic(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+    {
+        var contentStore = new TripleStore();
+        contentStore.LoadFromString(content, contentType.GetStoreReader());
+
+        var contentGraph = new Graph();
+        foreach (var g in contentStore.Graphs)
+            contentGraph.Merge(g);
+
+        var shapes = new Graph();
+        foreach (var shapePath in shaclShapePaths)
+            shapes.LoadFromFile(shapePath);
+
+        var report = new ShapesGraph(shapes).Validate(contentGraph);
+        var messages = report.Conforms
+            ? new List<string>()
+            : report.Results
+                .Select(res => $"{res.FocusNode}: {res.Message} detail: {res}")
+                .ToList();
+
+        return new ShaclValidationOutcome(report.Conforms, messages);
+    }
 
     public bool Equals(DotNetRdfRecordBackend? other)
     {
@@ -307,6 +370,67 @@ public class DotNetRdfRecordBackend : RecordBackendBase
         return Equals((DotNetRdfRecordBackend)obj);
     }
 
+
+    #region IRecordBuildableBackend
+
+    /// <inheritdoc/>
+    public Task AddGraphAsync(IGraph graph)
+    {
+        var g = new Graph(graph.Name);
+        g.Merge(graph);
+        _store.Add(g);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task AddTriplesToGraphAsync(Uri graphName, IEnumerable<Triple> triples)
+    {
+        var nameNode = new UriNode(graphName);
+        if (!_store.HasGraph(nameNode))
+            _store.Add(new Graph(nameNode));
+        _store.Graphs[nameNode].Assert(triples);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task ParseRdfStringIntoGraphAsync(string rdfString, Uri graphName)
+    {
+        var tempStore = new TripleStore();
+        try { tempStore.LoadFromString(rdfString); }
+        catch
+        {
+            ValidateJsonLd(rdfString);
+            tempStore.LoadFromString(rdfString, new JsonLdParser());
+        }
+
+        if (tempStore.Graphs.Count != 1)
+            throw new RecordException("Input can only contain one graph.");
+
+        var sourceGraph = tempStore.Graphs.First() ?? throw new UnloadedRecordException();
+
+        var nameNode = new UriNode(graphName);
+        if (!_store.HasGraph(nameNode))
+            _store.Add(new Graph(nameNode));
+        _store.Graphs[nameNode].Assert(sourceGraph.Triples);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public async Task FinalizeAsync()
+    {
+        if (_store.Graphs.Count < 1)
+            throw new RecordException("A record must contain at least one named graph.");
+
+        _dataset = new InMemoryDataset(_store, false);
+        _queryProcessor = new LeviathanQueryProcessor(_dataset);
+
+        var rdfString = await ToString(new NQuadsWriter(NQuadsSyntax.Rdf11));
+        _nQuadsString = string.Join("\n", rdfString.Split('\n').OrderBy(s => s));
+
+        await InitializeMetadata();
+    }
+
+    #endregion
 
     #region Private
     private IEnumerable<string> Construct(SparqlQuery query)

@@ -39,6 +39,27 @@ public static class RdfMediaTypesExtensions
         RdfMediaType.Any => AnyMediaType,
         _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
     };
+    public static MediaTypeWithQualityHeaderValue GetMediaTypeWithQualityHeaderValue(this RdfMediaType mediaType) => mediaType switch
+    {
+        RdfMediaType.Trig => new MediaTypeWithQualityHeaderValue("application/trig"),
+        RdfMediaType.Quads => new MediaTypeWithQualityHeaderValue("application/n-quads"),
+        RdfMediaType.JsonLd => new MediaTypeWithQualityHeaderValue("application/ld+json"),
+        _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
+    };
+    public static IStoreReader GetStoreReader(this RdfMediaType mediaType) => mediaType switch
+    {
+        RdfMediaType.Trig => new VDS.RDF.Parsing.TriGParser(),
+        RdfMediaType.Quads => new VDS.RDF.Parsing.NQuadsParser(),
+        RdfMediaType.JsonLd => new VDS.RDF.Parsing.JsonLdParser(),
+        _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
+    };
+    public static IStoreWriter GetStoreWriter(this RdfMediaType mediaType) => mediaType switch
+    {
+        RdfMediaType.Trig => new VDS.RDF.Writing.TriGWriter(),
+        RdfMediaType.Quads => new VDS.RDF.Writing.NQuadsWriter(),
+        RdfMediaType.JsonLd => new VDS.RDF.Writing.JsonLdWriter(),
+        _ => throw new NotSupportedException($"The media type {mediaType} is not supported.")
+    };
     public static MediaTypeHeaderValue GetMediaTypeHeaderValue(this RdfMediaType mediaType) => 
         new MediaTypeHeaderValue(ToMediaTypeString(mediaType));
     public static MediaTypeWithQualityHeaderValue GetMediaTypeWithQualityHeaderValue(this RdfMediaType mediaType) => 

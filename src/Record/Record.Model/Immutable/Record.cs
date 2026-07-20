@@ -3,6 +3,7 @@ using Records.Sender;
 using System.Diagnostics;
 using IriTools;
 using Records.Backend;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
@@ -33,21 +34,33 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     public static async Task<Record> CreateAsync(IRecordBackend backend, DescribesConstraintMode describesConstraintMode = DescribesConstraintMode.None)
     {
-        var id = new UriNode(backend.GetRecordId());
-        List<Triple> metadata = [.. (await backend.GetMetadataGraph()).Triples];
+        var scopeNode = new UriNode(new Uri(Namespaces.Record.IsInScope));
+        var describesNode = new UriNode(new Uri(Namespaces.Record.Describes));
+        var replacesNode = new UriNode(new Uri(Namespaces.Record.Replaces));
+        var relatedNode = new UriNode(new Uri(Namespaces.Record.Related));
+        var subRecordOfNode = new UriNode(new Uri(Namespaces.Record.IsSubRecordOf));
 
-        List<string> scopes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsInScope))))
-            .Select(q => q.Object.ToString()).OrderBy(s => s)];
-        List<string> describes = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Describes))))
-            .Select(q => q.Object.ToString()).OrderBy(d => d)];
+        var metadataTask = backend.GetMetadataGraph();
+        var predicatesTask = backend.TriplesWithPredicates(
+            [scopeNode, describesNode, replacesNode, relatedNode, subRecordOfNode]);
 
-        List<string> replaces = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Replaces))))
-            .Select(q => q.Object.ToString())];
-        HashSet<string> related = [.. (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.Related))))
-            .Select(q => q.Object.ToString()).OrderBy(r => r)];
+        await Task.WhenAll(metadataTask, predicatesTask);
 
-        var subRecordOf = (await backend.TriplesWithPredicate(new UriNode(new Uri(Namespaces.Record.IsSubRecordOf))))
-            .Select(q => q.Object.ToString()).ToArray();
+        List<Triple> metadata = [.. metadataTask.Result.Triples];
+
+        var byPredicate = predicatesTask.Result
+            .GroupBy(t => ((UriNode)t.Predicate).Uri.AbsoluteUri)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        IEnumerable<Triple> Get(UriNode node) =>
+            byPredicate.TryGetValue(node.Uri.AbsoluteUri, out var triples) ? triples : [];
+
+        List<string> scopes = [.. Get(scopeNode).Select(q => q.Object.ToString()).OrderBy(s => s)];
+        List<string> describes = [.. Get(describesNode).Select(q => q.Object.ToString()).OrderBy(d => d)];
+        List<string> replaces = [.. Get(replacesNode).Select(q => q.Object.ToString())];
+        HashSet<string> related = [.. Get(relatedNode).Select(q => q.Object.ToString()).OrderBy(r => r)];
+
+        var subRecordOf = Get(subRecordOfNode).Select(q => q.Object.ToString()).ToArray();
         if (subRecordOf.Length > 1)
             throw new RecordException("A record can at most be the subrecord of one other record.");
 
@@ -245,7 +258,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     public Task<bool> ContainsTriple(Triple triple) => _backend.ContainsTriple(triple);
 
-
+    public RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl) => _backend.ExportRecordHandleV1(ttl);
     public override string? ToString() => _backend.ToString();
     public ValueTask DisposeAsync() => DeleteDatasetAsync();
 

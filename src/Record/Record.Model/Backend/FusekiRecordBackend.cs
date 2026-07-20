@@ -1,20 +1,21 @@
-using Records.Immutable;
+using System.Text;
+using Records.RecordHandle;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 using StringWriter = System.IO.StringWriter;
-
 namespace Records.Backend;
 
-public class FusekiRecordBackend : RecordBackendBase
+public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 {
     private readonly HttpClient _httpClient;
     private readonly Uri _baseUri;
     private Uri SparqlEndpointUri() => new($"{_baseUri}{_datasetName}/sparql");
     private string UpdateEndpointPath() => new($"{_datasetName}/update");
     private string DataEndpointPath() => new($"{_datasetName}/data");
+    private string ShaclEndpointPath() => new($"{_datasetName}/shacl");
     private string CreateDatasetEndpointPath() => new($"$/datasets");
     private string DatasetEndpointPath() => new($"$/datasets/{_datasetName}");
     private readonly string _datasetName;
@@ -25,6 +26,31 @@ public class FusekiRecordBackend : RecordBackendBase
         _httpClient = httpClient;
         _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
     }
+    private FusekiRecordBackend(HttpClient httpClient, string datasetName)
+    {
+        _datasetName = datasetName;
+        _httpClient = httpClient;
+        _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
+    }
+
+    public static async Task<FusekiRecordBackend> CreateFromExisting(HttpClient httpClient, RecordHandleV1 handle)
+    {
+        if (!handle.Verify())
+            throw new UnauthorizedAccessException("Record handle is invalid or expired.");
+
+        var datasetName = handle.Dataset;
+        var client = new FusekiRecordBackend(httpClient, datasetName);
+        await client.EnsureDatasetExistsAsync((httpResponseMessage, s) =>
+            throw new Exception(
+                $"Failed initializing record from dataset '{datasetName}': {httpResponseMessage.StatusCode} - {s}"));
+        await client.InitializeMetadata();
+
+        if (!string.Equals(client.GetRecordId().AbsoluteUri, handle.RecordId, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException("Record handle does not match dataset record id.");
+
+        return client;
+    }
+
     public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.Trig, httpClient);
 
@@ -44,17 +70,149 @@ public class FusekiRecordBackend : RecordBackendBase
         return client;
     }
 
-
-    private async Task CreateDatasetAsync()
+    /// <summary>
+    /// Creates an empty Fuseki dataset ready to receive build-time data via
+    /// <see cref="IRecordBuildableBackend"/> methods. Call <see cref="FinalizeAsync"/>
+    /// when all data has been pushed.
+    /// </summary>
+    public static async Task<FusekiRecordBackend> CreateForBuildAsync(HttpClient httpClient)
     {
-        var query = $"dbName={_datasetName}&dbType=mem";
-        var fullUri = $"{CreateDatasetEndpointPath()}?{query}";
-        var content = new StringContent("");
-        var response = await _httpClient.PostAsync(fullUri, content);
+        var client = new FusekiRecordBackend(httpClient);
+        await client.CreateDatasetAsync();
+        return client;
+    }
+
+    public override RecordHandleV1 ExportRecordHandleV1(TimeSpan ttl)
+    {
+        if (ttl <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be greater than zero.");
+
+        var expiresAt = DateTimeOffset.UtcNow.Add(ttl);
+        return RecordHandleV1.CreateFusekiDatasetRef(
+            dataset: _datasetName,
+            recordId: GetRecordId().AbsoluteUri,
+            expiresAt: expiresAt);
+    }
+
+    #region IRecordBuildableBackend
+
+    private string GraphEndpointPath(Uri graphUri) =>
+        $"{DataEndpointPath()}?graph={Uri.EscapeDataString(graphUri.AbsoluteUri)}";
+
+    /// <inheritdoc/>
+    public async Task AddGraphAsync(IGraph graph)
+    {
+        if (graph.Name is not IUriNode nameNode)
+            throw new ArgumentException("Graph must have a URI name.");
+
+        var sw = new StringWriter();
+        new NTriplesWriter().Save(graph, sw);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, GraphEndpointPath(nameNode.Uri));
+        request.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/n-triples");
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to add graph to Fuseki: {response.StatusCode} - {err}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task AddTriplesToGraphAsync(Uri graphName, IEnumerable<Triple> triples)
+    {
+        var tripleList = triples.ToList();
+        if (tripleList.Count == 0) return;
+
+        var tempGraph = new Graph();
+        tempGraph.Assert(tripleList);
+
+        var sw = new StringWriter();
+        new NTriplesWriter().Save(tempGraph, sw);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, GraphEndpointPath(graphName));
+        request.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/n-triples");
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to add triples to Fuseki graph: {response.StatusCode} - {err}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task ParseRdfStringIntoGraphAsync(string rdfString, Uri graphName)
+    {
+        var path = GraphEndpointPath(graphName);
+
+        // Try Turtle first (most common content format)
+        var request = new HttpRequestMessage(HttpMethod.Post, path);
+        request.Content = new StringContent(rdfString, Encoding.UTF8, "text/turtle");
+        var response = await _httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode) return;
+
+        // Fall back to JSON-LD
+        ValidateJsonLd(rdfString);
+        var request2 = new HttpRequestMessage(HttpMethod.Post, path);
+        request2.Content = new StringContent(rdfString, Encoding.UTF8, "application/ld+json");
+        var response2 = await _httpClient.SendAsync(request2);
+        if (!response2.IsSuccessStatusCode)
+        {
+            var err = await response2.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to parse and upload RDF string to Fuseki: {response2.StatusCode} - {err}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task FinalizeAsync() => InitializeMetadata();
+
+    #endregion
+
+
+    internal async Task CreateDatasetAsync()
+    {
+        using var content = new StringContent(BuildDatasetAssembler(), Encoding.UTF8, "text/turtle");
+        using var response = await _httpClient.PostAsync(CreateDatasetEndpointPath(), content);
+        if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            await EnsureDatasetExistsAsync(
+                (httpResponseMessage, s) =>
+                throw new Exception($"Dataset conflict encountered, but existing dataset '{_datasetName}' could not be verified at '{DatasetEndpointPath()}': {httpResponseMessage.StatusCode} - {s}"));
+            return;
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
+        }
+    }
+
+    private string BuildDatasetAssembler() => string.Join(Environment.NewLine,
+        [
+            "@prefix fuseki: <http://jena.apache.org/fuseki#> .",
+            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
+            "@prefix ja: <http://jena.hpl.hp.com/2005/11/Assembler#> .",
+            "",
+            "<#service> rdf:type fuseki:Service ;",
+            $"    fuseki:name \"{_datasetName}\" ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:query ; fuseki:name \"sparql\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:update ; fuseki:name \"update\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:upload ; fuseki:name \"upload\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:gsp-rw ; fuseki:name \"data\" ] ;",
+            "    fuseki:endpoint [ fuseki:operation fuseki:shacl ; fuseki:name \"shacl\" ] ;",
+            "    fuseki:dataset <#dataset> .",
+            "",
+            "<#dataset> rdf:type ja:MemoryDataset ."
+        ]);
+
+    private async Task EnsureDatasetExistsAsync(Action<HttpResponseMessage, string> lackingDatasetHandler)
+    {
+        var response = await _httpClient.GetAsync(DatasetEndpointPath());
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            lackingDatasetHandler(response, errorMessage);
         }
     }
 
@@ -137,7 +295,7 @@ public class FusekiRecordBackend : RecordBackendBase
         return fusekiDatasetReponse;
     }
 
-    public override async Task<IEnumerable<INode>> SubjectWithType(UriNode type)
+    public override async Task<IEnumerable<INode>> SubjectWithType(IUriNode type)
     {
         var queryString = $"SELECT ?x WHERE {{ GRAPH ?g {{ ?x a {type.ToString(new TurtleFormatter())} . }} }}";
         var queryClient = GetSparqlQueryClient();
@@ -145,7 +303,7 @@ public class FusekiRecordBackend : RecordBackendBase
         return sparqlResultSet.Select(result => result.Value("x"));
     }
 
-    public override async Task<IEnumerable<string>> LabelsOfSubject(UriNode subject)
+    public override async Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject)
     {
         string queryString = $"SELECT ?label WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} <http://www.w3.org/2000/01/rdf-schema#label> ?label . }} }}";
         var queryClient = GetSparqlQueryClient();
@@ -157,7 +315,7 @@ public class FusekiRecordBackend : RecordBackendBase
 
 
 
-    public override async Task<IEnumerable<Triple>> TriplesWithSubject(UriNode subject)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject)
     {
         string queryString = $"SELECT ?p ?o WHERE {{ GRAPH ?g {{ {subject.ToString(new TurtleFormatter())} ?p ?o . }} }}";
         var queryClient = GetSparqlQueryClient();
@@ -169,16 +327,30 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithPredicate(UriNode predicate)
+    public override Task<IEnumerable<Triple>> TriplesWithPredicate(IUriNode predicate) =>
+        TriplesWithPredicates([predicate]);
+
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicates(IEnumerable<IUriNode> predicates)
     {
-        string queryString = $"SELECT ?s ?o WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(new TurtleFormatter())} ?o . }} }}";
+        var predicateList = predicates.ToList();
+        if (predicateList.Count == 0) throw new ArgumentNullException(nameof(predicates));
+
+        var turtleFormatter = new TurtleFormatter();
+        var inList = string.Join(", ", predicateList.Select(p => p.ToString(turtleFormatter)));
+        var queryString = $"SELECT ?s ?p ?o WHERE {{ GRAPH ?g {{ ?s ?p ?o . FILTER(?p IN ({inList})) }} }}";
+
+        var predicateDict = predicateList.ToDictionary(p => p.Uri.AbsoluteUri);
+
         var queryClient = GetSparqlQueryClient();
         var sparqlResultSet = await queryClient.QueryWithResultSetAsync(queryString);
         return sparqlResultSet.Select(result =>
-            new Triple(result.Value("s"),
-                predicate,
-                result.Value("o")
-            ));
+        {
+            var pAbsUri = ((IUriNode)result.Value("p")).Uri.AbsoluteUri;
+            var predicateNode = predicateDict.TryGetValue(pAbsUri, out var orig)
+                ? orig
+                : throw new Exception($"Expected p in result to be one of {string.Join(", ", predicateDict.Keys)}, but got: {pAbsUri}.");
+            return new Triple(result.Value("s"), predicateNode, result.Value("o"));
+        });
     }
 
     public override async Task<IEnumerable<Triple>> TriplesWithObject(INode @object)
@@ -193,7 +365,7 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(UriNode predicate, INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithPredicateAndObject(IUriNode predicate, INode @object)
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?s WHERE {{ GRAPH ?g {{ ?s {predicate.ToString(turtleFormatter)} {@object.ToString(turtleFormatter)} . }} }}";
@@ -206,7 +378,7 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithSubjectObject(UriNode subject, INode @object)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubjectObject(IUriNode subject, INode @object)
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?p WHERE {{ GRAPH ?g{{ {subject.ToString(turtleFormatter)} ?p {@object.ToString(turtleFormatter)} . }} }}";
@@ -219,7 +391,7 @@ public class FusekiRecordBackend : RecordBackendBase
             ));
     }
 
-    public override async Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(UriNode subject, UriNode predicate)
+    public override async Task<IEnumerable<Triple>> TriplesWithSubjectPredicate(IUriNode subject, IUriNode predicate)
     {
         var turtleFormatter = new TurtleFormatter();
         string queryString = $"SELECT ?o WHERE {{ GRAPH ?g {{ {subject.ToString(turtleFormatter)} {predicate.ToString(turtleFormatter)} ?o . }} }}";
@@ -304,5 +476,135 @@ public class FusekiRecordBackend : RecordBackendBase
         writer.Save(canonStore, stringWriter);
         var result = stringWriter.ToString();
         return result;
+    }
+
+    public override async Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore)
+    {
+        var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
+        var stringWriter = new StringWriter();
+        writer.Save(tripleStore, stringWriter);
+        return await CreateAsync(stringWriter.ToString(), RdfMediaType.Quads, _httpClient);
+    }
+
+    public override async Task<ShaclValidationOutcome> ValidateContentWithShacl(IEnumerable<string> shaclShapePaths, string describesIri)
+    {
+        var shapePaths = shaclShapePaths.ToList();
+        var messages = new List<string>();
+        var conforms = true;
+
+        if (shapePaths.Count != 0)
+        {
+            var report = await ReadShaclReportAsync(shapePaths);
+            conforms = ParseConformsFromReport(report);
+            if (!conforms)
+                messages.AddRange(ParseMessagesFromReport(report));
+        }
+
+        var hasDescribesSubject = await ContainsSubjectInContentAsync(describesIri);
+        if (!hasDescribesSubject)
+            messages.Add($"Describes IRI <{describesIri}> does not exist as a subject in the content graph.");
+
+        return new ShaclValidationOutcome(conforms && hasDescribesSubject, messages);
+    }
+
+    public override Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
+        => ValidateShaclAsync(content, contentType, shaclShapePaths, _httpClient);
+
+    /// <summary>
+    /// Validate arbitrary RDF content against SHACL shapes by spinning up a dedicated
+    /// Fuseki dataset, uploading the content and shapes, and reading the SHACL report.
+    /// The dataset is deleted after validation. Reuses the standard dataset creation,
+    /// upload and SHACL endpoint code paths.
+    /// </summary>
+    public static async Task<ShaclValidationOutcome> ValidateShaclAsync(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths, HttpClient httpClient)
+    {
+        var shapePaths = shaclShapePaths.ToList();
+        if (shapePaths.Count == 0)
+            throw new ArgumentNullException(nameof(shaclShapePaths), "Expected non-empty shacl shape");
+
+        var temp = new FusekiRecordBackend(httpClient);
+        try
+        {
+            await temp.CreateDatasetAsync();
+            await temp.UploadRdfData(content, contentType);
+
+            var report = await temp.ReadShaclReportAsync(shapePaths);
+            var conforms = ParseConformsFromReport(report);
+            var messages = conforms ? new List<string>() : ParseMessagesFromReport(report);
+            return new ShaclValidationOutcome(conforms, messages);
+        }
+        finally
+        {
+            await temp.DeleteDatasetAsync();
+        }
+    }
+
+    private async Task<string> ReadShaclReportAsync(IEnumerable<string> shaclShapePaths)
+    {
+        var shapesPayload = string.Join(Environment.NewLine, shaclShapePaths.Select(System.IO.File.ReadAllText));
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{ShaclEndpointPath()}?graph=union");
+        request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/turtle"));
+        request.Content = new StringContent(shapesPayload, Encoding.UTF8, "text/turtle");
+
+        using var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to validate RDF with Fuseki SHACL endpoint: {response.StatusCode} - {errorMessage}");
+        }
+
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    private static IGraph LoadReportGraph(string report)
+    {
+        var graph = new Graph();
+        try
+        {
+            new TurtleParser().Load(graph, new System.IO.StringReader(report));
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}", ex);
+        }
+        return graph;
+    }
+
+    private static bool ParseConformsFromReport(string report)
+    {
+        var graph = LoadReportGraph(report);
+        var results = graph.ExecuteQuery(
+            "PREFIX sh: <http://www.w3.org/ns/shacl#> SELECT ?conforms WHERE { ?s sh:conforms ?conforms . } LIMIT 1")
+            as SparqlResultSet;
+
+        if (results == null || results.Count == 0 || results[0]["conforms"] is not ILiteralNode literal)
+            throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}");
+
+        return bool.Parse(literal.Value);
+    }
+
+    private static List<string> ParseMessagesFromReport(string report)
+    {
+        var graph = LoadReportGraph(report);
+        var results = graph.ExecuteQuery(
+            "PREFIX sh: <http://www.w3.org/ns/shacl#> SELECT ?message WHERE { ?s sh:resultMessage ?message . }")
+            as SparqlResultSet;
+
+        if (results == null || results.Count == 0)
+            return [report.Trim()];
+
+        return results
+            .Select(r => r["message"])
+            .OfType<ILiteralNode>()
+            .Select(l => l.Value)
+            .ToList();
+    }
+
+    private async Task<bool> ContainsSubjectInContentAsync(string iri)
+    {
+        var queryClient = GetSparqlQueryClient();
+        var results = await queryClient.QueryWithResultSetAsync($"SELECT ?p WHERE {{ GRAPH ?g {{ <{iri}> ?p ?o . }} }} LIMIT 1");
+        return results.Any();
     }
 }

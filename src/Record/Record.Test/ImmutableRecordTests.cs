@@ -40,7 +40,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
         var result = record.Metadata!.Count();
 
-        result.Should().Be(21);
+        result.Should().Be(22);
     }
 
 
@@ -64,9 +64,9 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         record.Replaces!.Count().Should().Be(0);
         var oldRecordMetadataCountAfterAdditional = record.Metadata!.Count();
         var newRecordMetadataCount = newRecord.Metadata!.Count();
-        oldRecordMetadataCount.Should().Be(21);
-        oldRecordMetadataCountAfterAdditional.Should().Be(21);
-        newRecordMetadataCount.Should().Be(22);
+        oldRecordMetadataCount.Should().Be(22);
+        oldRecordMetadataCountAfterAdditional.Should().Be(22);
+        newRecordMetadataCount.Should().Be(23);
     }
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
@@ -142,7 +142,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var result = recordString.Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(32);
+        result.Should().Be(33);
     }
 
     [Theory]
@@ -155,7 +155,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var result = (await record.ToString(new NQuadsWriter())).Split("\n").Length;
 
         // This is how many quads are generated
-        result.Should().Be(32);
+        result.Should().Be(33);
     }
 
 
@@ -169,7 +169,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
         var result = (await record.Triples()).Count();
 
         // This is how many quads should be extraced from the JSON-LD
-        result.Should().Be(31);
+        result.Should().Be(32);
     }
 
     [Theory]
