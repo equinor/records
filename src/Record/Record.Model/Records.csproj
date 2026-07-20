@@ -17,6 +17,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AngleSharp" Version="1.5.2" IntroducedBy="dotNetRdf@3.5.2"/>
 		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
 		<PackageReference Include="dotNetRdf" Version="3.5.2" />
 		<PackageReference Include="IriTools" Version="2.4.0" />
