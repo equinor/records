@@ -1,13 +1,14 @@
 namespace Records.RecordHandle;
 
 /// <summary>
-/// Fuseki-specific record handle used to reuse an existing dataset without reparsing RDF.
-/// Assumes the receiver has access to the same Fuseki triplestore as the sender, and has read and write access to the dataset
+/// Triplestore-agnostic record handle used to reuse an existing dataset without reparsing RDF.
+/// Assumes the receiver has access to the same triplestore as the sender, and has read and write access to the dataset.
 /// </summary>
 public sealed record RecordHandleV1
 {
     public const string VersionV1 = "v1";
     public const string KindFusekiDatasetRef = "fuseki-dataset-ref";
+    public const string KindDagalogDatasetRef = "dagalog-dataset-ref";
 
     public string Dataset { get; init; }
     public string RecordId { get; init; }
@@ -34,13 +35,22 @@ public sealed record RecordHandleV1
         string recordId,
         DateTimeOffset expiresAt)
     {
-        return new RecordHandleV1(dataset, recordId, expiresAt);
+        return new RecordHandleV1(dataset, recordId, expiresAt, KindFusekiDatasetRef);
+    }
+
+    public static RecordHandleV1 CreateDagalogDatasetRef(
+        string dataset,
+        string recordId,
+        DateTimeOffset expiresAt)
+    {
+        return new RecordHandleV1(dataset, recordId, expiresAt, KindDagalogDatasetRef);
     }
 
     public bool Verify(DateTimeOffset? now = null)
     {
         if (!string.Equals(Version, VersionV1, StringComparison.Ordinal)) return false;
-        if (!string.Equals(Kind, KindFusekiDatasetRef, StringComparison.Ordinal)) return false;
+        if (!string.Equals(Kind, KindFusekiDatasetRef, StringComparison.Ordinal) &&
+            !string.Equals(Kind, KindDagalogDatasetRef, StringComparison.Ordinal)) return false;
         if (string.IsNullOrWhiteSpace(Dataset) || string.IsNullOrWhiteSpace(RecordId)) return false;
 
         var referenceNow = now ?? DateTimeOffset.UtcNow;
