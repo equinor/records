@@ -11,6 +11,7 @@ public interface IRecordBackend
     public Uri GetRecordId();
     public Task<IGraph> GetMetadataGraph();
     public Task<string> ToString(RdfMediaType mediaType);
+    public Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default);
     public Task<IEnumerable<INode>> SubjectWithType(IUriNode type);
 
     public Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject);
