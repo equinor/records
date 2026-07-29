@@ -260,15 +260,15 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
     }
 
-    internal SparqlQueryClient GetSparqlQueryClient() =>
-        new SparqlQueryClient(_httpClient, SparqlEndpointUri());
+    private SparqlQueryClient GetSparqlQueryClient() =>
+        new(_httpClient, SparqlEndpointUri());
 
 
     public override async Task<ITripleStore> TripleStore()
     {
         var content = await GetRdfDataAsString(RdfMediaType.Quads);
         var ts = new TripleStore();
-        var parser = new VDS.RDF.Parsing.NQuadsParser();
+        var parser = new NQuadsParser();
         parser.Load(ts, content);
         return ts;
     }
@@ -278,7 +278,23 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         return GetRdfDataAsString(mediaType);
     }
 
-    internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
+    public override async Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
+        request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
+
+        var response = await _httpClient.SendAsync(
+            request, HttpCompletionOption.ResponseHeadersRead, ct);
+
+        if (response.IsSuccessStatusCode)
+            return await response.Content.ReadAsStreamAsync(ct);
+
+        var errorMessage = await response.Content.ReadAsStringAsync(ct);
+        throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
+
+    }
+
+    private async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
 
         var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
