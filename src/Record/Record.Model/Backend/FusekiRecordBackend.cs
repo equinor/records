@@ -230,16 +230,13 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
-        var ts = new TripleStore();
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
-        ts.Add(metadataGraph);
 
-        var stringWriter = new StringWriter();
-        (new NQuadsWriter()).Save(ts, stringWriter);
-        var nquadsData = stringWriter.ToString();
+        await AddGraphAsync(metadataGraph);
 
-        await UploadMetadataAsNQuads(nquadsData);
+        // Refresh the cached metadata after adding the graph
+        await InitializeMetadata();
 
         return this;
     }
@@ -256,20 +253,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to upload RDF data: {response.StatusCode} - {errorMessage}");
-        }
-    }
-
-    internal async Task UploadMetadataAsNQuads(string nquadsData)
-    {
-        // POST NQuads directly to the data endpoint without SPARQL wrapping
-        var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointPath());
-        request.Content = new StringContent(nquadsData, Encoding.UTF8, "application/n-quads");
-
-        var response = await _httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to upload metadata as N-Quads: {response.StatusCode} - {errorMessage}");
         }
     }
 
