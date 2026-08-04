@@ -230,14 +230,16 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
+        var ts = new TripleStore();
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
+        ts.Add(metadataGraph);
 
         var stringWriter = new StringWriter();
-        (new NTriplesWriter()).Save(metadataGraph, stringWriter);
-        var triplesData = stringWriter.ToString();
+        (new NQuadsWriter()).Save(ts, stringWriter);
+        var nquadsData = stringWriter.ToString();
 
-        await InsertTriplesViaUpdate(triplesData, RecordId);
+        await UploadMetadataAsNQuads(nquadsData);
 
         return this;
     }
@@ -257,22 +259,17 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
     }
 
-    internal async Task InsertTriplesViaUpdate(string triplesData, Uri? graph)
+    internal async Task UploadMetadataAsNQuads(string nquadsData)
     {
-        // SPARQL Update's INSERT DATA grammar does not accept N-Quads' trailing
-        // graph-name-per-line syntax; named graphs must use GRAPH <iri> { ... } blocks.
-        var sparqlUpdate = graph is null
-            ? $"INSERT DATA {{ {triplesData} }}"
-            : $"INSERT DATA {{ GRAPH <{graph.AbsoluteUri}> {{ {triplesData} }} }}";
-
-        var request = new HttpRequestMessage(HttpMethod.Post, UpdateEndpointPath());
-        request.Content = new StringContent(sparqlUpdate, Encoding.UTF8, "application/sparql-update");
+        // POST NQuads directly to the data endpoint without SPARQL wrapping
+        var request = new HttpRequestMessage(HttpMethod.Post, DataEndpointPath());
+        request.Content = new StringContent(nquadsData, Encoding.UTF8, "application/n-quads");
 
         var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to insert metadata via SPARQL UPDATE: {response.StatusCode} - {errorMessage}");
+            throw new Exception($"Failed to upload metadata as N-Quads: {response.StatusCode} - {errorMessage}");
         }
     }
 
