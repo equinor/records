@@ -230,8 +230,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
-        var originalRecordString = await GetRdfDataAsString(RdfMediaType.Quads);
-
         var ts = new TripleStore();
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
@@ -239,10 +237,11 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
         var stringWriter = new StringWriter();
         (new NQuadsWriter()).Save(ts, stringWriter);
-        var newRecordString = stringWriter.ToString();
+        var nquadsData = stringWriter.ToString();
 
-        var combinedRecordString = $"{originalRecordString}\n{newRecordString}";
-        return await CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
+        await InsertNQuadsViaUpdate(nquadsData);
+
+        return this;
     }
 
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
@@ -260,8 +259,24 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
     }
 
-    private SparqlQueryClient GetSparqlQueryClient() =>
-        new(_httpClient, SparqlEndpointUri());
+    internal async Task InsertNQuadsViaUpdate(string nquadsData)
+    {
+        // Use SPARQL INSERT DATA to add the NQuads directly without buffering
+        var sparqlUpdate = $"INSERT DATA {{ {nquadsData} }}";
+        
+        var request = new HttpRequestMessage(HttpMethod.Post, UpdateEndpointPath());
+        request.Content = new StringContent(sparqlUpdate, Encoding.UTF8, "application/sparql-update");
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to insert metadata via SPARQL UPDATE: {response.StatusCode} - {errorMessage}");
+        }
+    }
+
+    internal SparqlQueryClient GetSparqlQueryClient() =>
+        new SparqlQueryClient(_httpClient, SparqlEndpointUri());
 
 
     public override async Task<ITripleStore> TripleStore()
