@@ -17,7 +17,6 @@ public class DagalogContainerManager : IAsyncLifetime
         _dagalogContainer = new ContainerBuilder()
             .WithImage(_imageName)
             .WithPortBinding(_dagalogPort, true)
-            .WithCommand("--serve", "--read-write")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(_dagalogPort))
             .WithCleanUp(true)
             .Build();
