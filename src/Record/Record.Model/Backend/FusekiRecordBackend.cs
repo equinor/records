@@ -230,16 +230,14 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
-        var ts = new TripleStore();
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
-        ts.Add(metadataGraph);
 
         var stringWriter = new StringWriter();
-        (new NQuadsWriter()).Save(ts, stringWriter);
-        var nquadsData = stringWriter.ToString();
+        (new NTriplesWriter()).Save(metadataGraph, stringWriter);
+        var triplesData = stringWriter.ToString();
 
-        await InsertNQuadsViaUpdate(nquadsData);
+        await InsertTriplesViaUpdate(triplesData, RecordId);
 
         return this;
     }
@@ -259,11 +257,14 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
     }
 
-    internal async Task InsertNQuadsViaUpdate(string nquadsData)
+    internal async Task InsertTriplesViaUpdate(string triplesData, Uri? graph)
     {
-        // Use SPARQL INSERT DATA to add the NQuads directly without buffering
-        var sparqlUpdate = $"INSERT DATA {{ {nquadsData} }}";
-        
+        // SPARQL Update's INSERT DATA grammar does not accept N-Quads' trailing
+        // graph-name-per-line syntax; named graphs must use GRAPH <iri> { ... } blocks.
+        var sparqlUpdate = graph is null
+            ? $"INSERT DATA {{ {triplesData} }}"
+            : $"INSERT DATA {{ GRAPH <{graph.AbsoluteUri}> {{ {triplesData} }} }}";
+
         var request = new HttpRequestMessage(HttpMethod.Post, UpdateEndpointPath());
         request.Content = new StringContent(sparqlUpdate, Encoding.UTF8, "application/sparql-update");
 
