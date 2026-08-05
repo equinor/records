@@ -235,11 +235,11 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     /// the triples to the metadata graph. The metadata in records is additive/mutable,
     /// while record content remains immutable.
     /// 
-    /// After calling this method, do NOT use the original Record instance for queries,
-    /// as it will observe the mutated metadata. Only use the returned Record instance.
-    /// 
-    /// To avoid OOM with large records, this implementation streams the record content
-    /// directly to Fuseki without buffering, then adds the metadata graph in-place.
+    /// After calling this method, existing `Immutable.Record` instances may have stale cached
+    /// metadata-derived fields (e.g. `Metadata`, `Replaces`). Prefer using the returned
+    /// Record instance for queries that should reflect the additional metadata.
+    ///
+    /// This implementation updates only the metadata graph and refreshes the backend cache via `InitializeMetadata()`.
     /// </summary>
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
