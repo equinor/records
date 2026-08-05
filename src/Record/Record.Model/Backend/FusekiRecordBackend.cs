@@ -228,6 +228,19 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
     }
 
+    /// <summary>
+    /// Adds additional metadata triples to this record's metadata graph.
+    /// 
+    /// IMPORTANT: This method mutates the underlying Fuseki dataset in-place by adding
+    /// the triples to the metadata graph. The metadata in records is additive/mutable,
+    /// while record content remains immutable.
+    /// 
+    /// After calling this method, existing `Immutable.Record` instances may have stale cached
+    /// metadata-derived fields (e.g. `Metadata`, `Replaces`). Prefer using the returned
+    /// Record instance for queries that should reflect the additional metadata.
+    ///
+    /// This implementation updates only the metadata graph and refreshes the backend cache via `InitializeMetadata()`.
+    /// </summary>
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
         var metadataGraph = new Graph(RecordId);
