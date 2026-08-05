@@ -274,6 +274,21 @@ public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
     public override Task<string> ToString(RdfMediaType mediaType) =>
         GetRdfDataAsString(mediaType);
 
+    public override async Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
+        request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
+
+        var response = await _httpClient.SendAsync(
+            request, HttpCompletionOption.ResponseHeadersRead, ct);
+
+        if (response.IsSuccessStatusCode)
+            return await response.Content.ReadAsStreamAsync(ct);
+
+        var errorMessage = await response.Content.ReadAsStringAsync(ct);
+        throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
+    }
+
     internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
