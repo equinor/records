@@ -264,8 +264,7 @@ public class Record : IEquatable<Record>, IAsyncDisposable
 
     public Task<string> ToString<T>() where T : IStoreWriter, new() => ToString(new T());
     public Task<string> ToString(IStoreWriter writer) => _backend.ToString(writer.GetRdfMediaType());
-
-
+    public Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default) => _backend.ToStream(mediaType, ct);
     public Task<string> ToCanonString() => _backend.ToCanonString();
 
     public bool Equals(Record? other)

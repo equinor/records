@@ -124,6 +124,20 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IRecordBuildableBackend
         return ToString(mediaType.GetStoreWriter());
     }
 
+    public override Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default)
+    {
+        var writer = mediaType.GetStoreWriter();
+        var stream = new MemoryStream();
+
+        using (var streamWriter = new StreamWriter(stream, new System.Text.UTF8Encoding(false), 1024, leaveOpen: true))
+        {
+            writer.Save(_store, streamWriter, true);
+        }
+
+        stream.Position = 0;
+        return Task.FromResult<Stream>(stream);
+    }
+
     public override Task<IGraph> GetMergedGraphs() => Task.FromResult(_store.Collapse(GetRecordId()));
 
     public override Task<IEnumerable<IGraph>> GetContentGraphs()
@@ -256,8 +270,7 @@ public class DotNetRdfRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
 
     public override string ToString() => _nQuadsString;
-    public Task<string> ToString<T>() where T : IStoreWriter, new() => ToString(new T());
-    public Task<string> ToString(IStoreWriter writer)
+    private Task<string> ToString(IStoreWriter writer)
     {
         var stringWriter = new StringWriter();
         writer.Save(_store, stringWriter);

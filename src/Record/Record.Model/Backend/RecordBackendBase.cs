@@ -54,6 +54,7 @@ public abstract class RecordBackendBase : IRecordBackend
 
     public abstract Task<ITripleStore> TripleStore();
     public abstract Task<string> ToString(RdfMediaType mediaType);
+    public abstract Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default);
     public abstract Task<IEnumerable<INode>> SubjectWithType(IUriNode type);
     public abstract Task<IEnumerable<string>> LabelsOfSubject(IUriNode subject);
     public abstract Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject);
