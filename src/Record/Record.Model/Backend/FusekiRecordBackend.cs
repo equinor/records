@@ -230,19 +230,15 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
-        var originalRecordString = await GetRdfDataAsString(RdfMediaType.Quads);
-
-        var ts = new TripleStore();
         var metadataGraph = new Graph(RecordId);
         metadataGraph.Assert(additionalMetadata.Triples);
-        ts.Add(metadataGraph);
 
-        var stringWriter = new StringWriter();
-        (new NQuadsWriter()).Save(ts, stringWriter);
-        var newRecordString = stringWriter.ToString();
+        await AddGraphAsync(metadataGraph);
 
-        var combinedRecordString = $"{originalRecordString}\n{newRecordString}";
-        return await CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
+        // Refresh the cached metadata after adding the graph
+        await InitializeMetadata();
+
+        return this;
     }
 
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
@@ -260,8 +256,8 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
     }
 
-    private SparqlQueryClient GetSparqlQueryClient() =>
-        new(_httpClient, SparqlEndpointUri());
+    internal SparqlQueryClient GetSparqlQueryClient() =>
+        new SparqlQueryClient(_httpClient, SparqlEndpointUri());
 
 
     public override async Task<ITripleStore> TripleStore()
