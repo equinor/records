@@ -126,8 +126,8 @@ dotnet test --verbosity minimal
 # Run specific test
 dotnet test --filter "Record_Can_Add_Metadata"
 
-# Run without Docker/Fuseki (tests that need containers will skip)
-dotnet test --filter "BackendType=DotNetRdf"
+# NOTE: The Record.Test suite uses a Fuseki testcontainer via "Integration Testing Collection" (Docker required).
+# There is currently no Docker-less test mode / filter that avoids starting the container.
 ```
 
 ## Dependencies & Versions
