@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Record.Test.TestInfrastructure;
+using Records.Backend;
 using VDS.RDF;
 using VDS.RDF.Writing;
 
@@ -34,6 +35,62 @@ public class DagalogRecordBackendTests(DagalogContainerManager dagalogContainerM
         var record = await Records.Immutable.Record.CreateAsync(backend, DescribesConstraintMode.None);
         var result = record.Metadata!.Count();
         result.Should().Be(22);
+    }
+
+    [Fact]
+    public async Task CanBuildRecordWithDagalogBackend()
+    {
+        Records.Immutable.Record? record = null;
+
+        try
+        {
+            record = await new RecordBuilder(backendFactory: async () =>
+                    (IRecordBuildableBackend)await Backend.DagalogRecordBackend.CreateForBuildAsync(_httpClient))
+                .WithId(TestData.CreateRecordId(0))
+                .WithScopes(TestData.CreateRecordIri("scope", "0"))
+                .WithDescribes(TestData.CreateRecordIri("describes", "0"))
+                .WithContent(TestData.CreateRecordTriple("0"))
+                .Build();
+
+            record.Id.Should().Be(TestData.CreateRecordId(0));
+            record.Scopes.Should().Contain(TestData.CreateRecordIri("scope", "0"));
+            record.Describes.Should().Contain(TestData.CreateRecordIri("describes", "0"));
+        }
+        finally
+        {
+            if (record is not null)
+                await record.DeleteDatasetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task WithAdditionalMetadata_AddsMetadataToExistingDagalogDataset()
+    {
+        var recordString = await TestData.ValidJsonLdRecordString();
+        var backend = await Backend.DagalogRecordBackend.CreateFromJsonLdAsync(recordString, _httpClient);
+        var handleBefore = backend.ExportRecordHandleV1(TimeSpan.FromMinutes(5));
+
+        var additionalMetadata = new Graph();
+        additionalMetadata.Assert(new Triple(
+            new UriNode(new Uri(handleBefore.RecordId)),
+            new UriNode(new Uri("https://rdf.equinor.com/ontology/record/replaces")),
+            new UriNode(new Uri(TestData.CreateRecordId("2")))));
+
+        try
+        {
+            var updatedBackend = await backend.WithAdditionalMetadata(additionalMetadata);
+            var handleAfter = backend.ExportRecordHandleV1(TimeSpan.FromMinutes(5));
+            var updatedRecord = await Records.Immutable.Record.CreateAsync(updatedBackend, DescribesConstraintMode.None);
+
+            updatedBackend.Should().BeSameAs(backend);
+            handleAfter.Dataset.Should().Be(handleBefore.Dataset);
+            updatedRecord.Replaces.Should().Contain(TestData.CreateRecordId("2"));
+            updatedRecord.Metadata.Should().HaveCount(23);
+        }
+        finally
+        {
+            await backend.DeleteDatasetAsync();
+        }
     }
 
     [Fact]
@@ -140,7 +197,7 @@ public class DagalogRecordBackendTests(DagalogContainerManager dagalogContainerM
         {
             var outcome = await backend.ValidateContentWithShacl([shapeFile], TestData.CreateRecordSubject("1"));
             outcome.Conforms.Should().BeFalse();
-            outcome.Messages.Should().Contain(message => message.Contains("Missing predicate"));
+            outcome.Messages.Should().Contain(message => message.Contains("https://ssi.example.com/predicate/missing"));
         }
         finally
         {

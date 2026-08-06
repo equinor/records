@@ -230,16 +230,8 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
-        var ts = new TripleStore();
-        var metadataGraph = new Graph(RecordId);
-        metadataGraph.Assert(additionalMetadata.Triples);
-        ts.Add(metadataGraph);
-
-        var stringWriter = new StringWriter();
-        (new NQuadsWriter()).Save(ts, stringWriter);
-        var nquadsData = stringWriter.ToString();
-
-        await InsertNQuadsViaUpdate(nquadsData);
+        await AddTriplesToGraphAsync(GetRecordId(), additionalMetadata.Triples);
+        await InitializeMetadata();
 
         return this;
     }

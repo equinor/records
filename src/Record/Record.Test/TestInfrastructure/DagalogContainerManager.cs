@@ -5,7 +5,7 @@ namespace Record.Test.TestInfrastructure;
 
 public class DagalogContainerManager : IAsyncLifetime
 {
-    private const string _imageName = "ghcr.io/daghovland/dagalog:0.4.0";
+    private const string _imageName = "ghcr.io/daghovland/dagalog:0.4.1";
     private const int _dagalogPort = 3030;
     private IContainer? _dagalogContainer;
 

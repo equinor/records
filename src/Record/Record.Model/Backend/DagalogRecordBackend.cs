@@ -229,19 +229,10 @@ public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
-        var originalRecordString = await GetRdfDataAsString(RdfMediaType.Quads);
+        await AddTriplesToGraphAsync(GetRecordId(), additionalMetadata.Triples);
+        await InitializeMetadata();
 
-        var ts = new TripleStore();
-        var metadataGraph = new Graph(RecordId);
-        metadataGraph.Assert(additionalMetadata.Triples);
-        ts.Add(metadataGraph);
-
-        var stringWriter = new StringWriter();
-        (new NQuadsWriter()).Save(ts, stringWriter);
-        var newRecordString = stringWriter.ToString();
-
-        var combinedRecordString = $"{originalRecordString}\n{newRecordString}";
-        return await CreateAsync(combinedRecordString, RdfMediaType.Quads, _httpClient);
+        return this;
     }
 
     internal async Task UploadRdfData(string rdfData, RdfMediaType contentType)
