@@ -13,11 +13,10 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     private readonly HttpClient _httpClient;
     private readonly Uri _baseUri;
     private Uri SparqlEndpointUri() => new($"{_baseUri}{_datasetName}/sparql");
-    private string UpdateEndpointPath() => new($"{_datasetName}/update");
-    private string DataEndpointPath() => new($"{_datasetName}/data");
-    private string ShaclEndpointPath() => new($"{_datasetName}/shacl");
-    private string CreateDatasetEndpointPath() => new($"$/datasets");
-    private string DatasetEndpointPath() => new($"$/datasets/{_datasetName}");
+    private string DataEndpointPath() => $"{_datasetName}/data";
+    private string ShaclEndpointPath() => $"{_datasetName}/shacl";
+    private string CreateDatasetEndpointPath() => "$/datasets";
+    private string DatasetEndpointPath() => $"$/datasets/{_datasetName}";
     private readonly string _datasetName;
 
     private FusekiRecordBackend(HttpClient httpClient)
@@ -35,7 +34,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public static async Task<FusekiRecordBackend> CreateFromExisting(HttpClient httpClient, RecordHandleV1 handle)
     {
-        if (!handle.Verify())
+        if (!handle.VerifyForKind(RecordHandleV1.KindFusekiDatasetRef))
             throw new UnauthorizedAccessException("Record handle is invalid or expired.");
 
         var datasetName = handle.Dataset;
@@ -218,8 +217,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async ValueTask DeleteDatasetAsync()
     {
-        var jsonContent = $"{{\"name\": \"{_datasetName}\", \"type\": \"memory\"}}";
-        var reqContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
         var response = await _httpClient.DeleteAsync(DatasetEndpointPath());
         if (!response.IsSuccessStatusCode)
         {
@@ -261,22 +258,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to upload RDF data: {response.StatusCode} - {errorMessage}");
-        }
-    }
-
-    internal async Task InsertNQuadsViaUpdate(string nquadsData)
-    {
-        // Use SPARQL INSERT DATA to add the NQuads directly without buffering
-        var sparqlUpdate = $"INSERT DATA {{ {nquadsData} }}";
-        
-        var request = new HttpRequestMessage(HttpMethod.Post, UpdateEndpointPath());
-        request.Content = new StringContent(sparqlUpdate, Encoding.UTF8, "application/sparql-update");
-
-        var response = await _httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to insert metadata via SPARQL UPDATE: {response.StatusCode} - {errorMessage}");
         }
     }
 

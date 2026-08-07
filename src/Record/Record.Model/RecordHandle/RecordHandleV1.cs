@@ -49,13 +49,28 @@ public sealed record RecordHandleV1
     public bool Verify(DateTimeOffset? now = null)
     {
         if (!string.Equals(Version, VersionV1, StringComparison.Ordinal)) return false;
-        if (!string.Equals(Kind, KindFusekiDatasetRef, StringComparison.Ordinal) &&
-            !string.Equals(Kind, KindDagalogDatasetRef, StringComparison.Ordinal)) return false;
-        if (string.IsNullOrWhiteSpace(Dataset) || string.IsNullOrWhiteSpace(RecordId)) return false;
+        if (!IsKnownKind(Kind)) return false;
+        if (!IsSafeDatasetName(Dataset) || string.IsNullOrWhiteSpace(RecordId)) return false;
 
         var referenceNow = now ?? DateTimeOffset.UtcNow;
         if (referenceNow >= ExpiresAt) return false;
 
         return true;
+    }
+
+    public bool VerifyForKind(string expectedKind, DateTimeOffset? now = null)
+    {
+        return string.Equals(Kind, expectedKind, StringComparison.Ordinal) && Verify(now);
+    }
+
+    private static bool IsKnownKind(string kind) =>
+        string.Equals(kind, KindFusekiDatasetRef, StringComparison.Ordinal) ||
+        string.Equals(kind, KindDagalogDatasetRef, StringComparison.Ordinal);
+
+    private static bool IsSafeDatasetName(string dataset)
+    {
+        if (string.IsNullOrWhiteSpace(dataset)) return false;
+
+        return dataset.All(c => char.IsAsciiLetterOrDigit(c) || c is '_' or '-');
     }
 }

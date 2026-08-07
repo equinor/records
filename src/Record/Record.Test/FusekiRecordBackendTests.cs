@@ -191,4 +191,23 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
             await backend.DeleteDatasetAsync();
         }
     }
+
+    [Fact]
+    public async Task CreateFromExisting_Rejects_DagalogHandle()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Records.Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+        var fusekiHandle = backend.ExportRecordHandleV1(TimeSpan.FromMinutes(5));
+        var dagalogHandle = fusekiHandle with { Kind = RecordHandle.RecordHandleV1.KindDagalogDatasetRef };
+
+        try
+        {
+            var act = async () => await Records.Backend.FusekiRecordBackend.CreateFromExisting(_httpClient, dagalogHandle);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+        finally
+        {
+            await backend.DeleteDatasetAsync();
+        }
+    }
 }

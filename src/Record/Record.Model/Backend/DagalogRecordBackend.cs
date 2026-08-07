@@ -14,11 +14,10 @@ public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
     private readonly HttpClient _httpClient;
     private readonly Uri _baseUri;
     private Uri SparqlEndpointUri() => new($"{_baseUri}{_datasetName}/sparql");
-    private string UpdateEndpointPath() => new($"{_datasetName}/update");
-    private string DataEndpointPath() => new($"{_datasetName}/data");
-    private string ShaclEndpointPath() => new($"{_datasetName}/shacl");
-    private string CreateDatasetEndpointPath() => new($"$/datasets");
-    private string DatasetEndpointPath() => new($"$/datasets/{_datasetName}");
+    private string DataEndpointPath() => $"{_datasetName}/data";
+    private string ShaclEndpointPath() => $"{_datasetName}/shacl";
+    private string CreateDatasetEndpointPath() => "$/datasets";
+    private string DatasetEndpointPath() => $"$/datasets/{_datasetName}";
     private readonly string _datasetName;
 
     private DagalogRecordBackend(HttpClient httpClient)
@@ -37,11 +36,8 @@ public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public static async Task<DagalogRecordBackend> CreateFromExisting(HttpClient httpClient, RecordHandleV1 handle)
     {
-        if (!handle.Verify())
+        if (!handle.VerifyForKind(RecordHandleV1.KindDagalogDatasetRef))
             throw new UnauthorizedAccessException("Record handle is invalid or expired.");
-
-        if (!string.Equals(handle.Kind, RecordHandleV1.KindDagalogDatasetRef, StringComparison.Ordinal))
-            throw new UnauthorizedAccessException($"Record handle kind '{handle.Kind}' is not supported by DagalogRecordBackend.");
 
         var datasetName = handle.Dataset;
         var client = new DagalogRecordBackend(httpClient, datasetName);
@@ -255,10 +251,20 @@ public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<ITripleStore> TripleStore()
     {
-        var content = await GetRdfDataAsString(RdfMediaType.Quads);
+        using var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
+        request.Headers.Accept.Add(RdfMediaType.Quads.GetMediaTypeWithQualityHeaderValue());
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
+        }
+
+        await using var content = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(content);
         var ts = new TripleStore();
         var parser = new NQuadsParser();
-        parser.Load(ts, content);
+        parser.Load(ts, reader);
         return ts;
     }
 
@@ -417,9 +423,12 @@ public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IEnumerable<string>> Sparql(string queryString)
     {
+        if (string.IsNullOrWhiteSpace(queryString))
+            throw new ArgumentException("SPARQL query must not be empty.", nameof(queryString));
+
         var queryClient = GetSparqlQueryClient();
         var command = queryString.Split().First();
-        return command.ToLower() switch
+        return command.ToLowerInvariant() switch
         {
             "construct" => (await queryClient.QueryWithResultGraphAsync(queryString))
                 .Triples
