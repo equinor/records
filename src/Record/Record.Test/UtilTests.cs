@@ -25,7 +25,10 @@ public class UtilTests
 
         var triples = TimeUtils.CreateHasTimeTriples(parent, datetime);
 
-        var month = triples.Where(t => t.Predicate == Namespaces.Time.UriNodes.Month).Select(t => t.Object).Single();
+        var month = triples
+            .Where(t => t?.Predicate.Equals(Namespaces.Time.UriNodes.Month) == true)
+            .Select(t => t?.Object)
+            .Single();
 
         month.Should().Be(Namespaces.Greg.UriNodes.July);
     }
