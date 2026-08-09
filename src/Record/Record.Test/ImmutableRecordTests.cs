@@ -10,21 +10,22 @@ using VDS.RDF.Parsing;
 namespace Records.Tests;
 
 [Collection("Integration Testing Collection")]
-public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
+public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager, DagalogContainerManager dagalogContainerManager)
 {
     readonly Uri _connectionUri = fusekiContainerManager.address;
+    readonly Uri _dagalogConnectionUri = dagalogContainerManager.address;
     public enum BackendType
     {
         DotNetRdf,
-        Fuseki
+        Fuseki,
+        Dagalog
     }
     private async Task<IRecordBackend> CreateBackend(BackendType backendType, RdfMediaType mediaType, string rdfstring)
     {
-        HttpClient httpClient = new HttpClient() { BaseAddress = _connectionUri };
         IRecordBackend backend = backendType switch
         {
-
-            BackendType.Fuseki => await FusekiRecordBackend.CreateAsync(rdfstring, mediaType, httpClient),
+            BackendType.Fuseki => await FusekiRecordBackend.CreateAsync(rdfstring, mediaType, new HttpClient() { BaseAddress = _connectionUri }),
+            BackendType.Dagalog => await DagalogRecordBackend.CreateAsync(rdfstring, mediaType, new HttpClient() { BaseAddress = _dagalogConnectionUri }),
             BackendType.DotNetRdf => new DotNetRdfRecordBackend(rdfstring),
             _ => throw new ArgumentException("Invalid backend type")
         };
@@ -35,6 +36,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Has_Metadata(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -47,6 +49,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Add_Metadata(BackendType backendType)
     {
         // Arrange
@@ -71,6 +74,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Finds_Id(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -94,6 +98,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Do_Queries(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -110,6 +115,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Does_Not_Have_Metadata(BackendType backendType)
     {
         var (s, p, o, g) = TestData.CreateRecordQuadStringTuple("1");
@@ -124,6 +130,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Creating_Record_From_Invalid_JsonLD_Throws(BackendType backendType)
     {
         var invalidJsonLdString = await TestData.ValidJsonLdRecordString() + TestData.ValidJsonLdRecordString();
@@ -134,6 +141,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Be_Serialised_Nquad(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -148,6 +156,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Be_Serialised_Nquad_With_Direct_Writer(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -163,6 +172,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Produce_Quads(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -175,6 +185,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Has_Scopes_And_Describes(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType, RdfMediaType.JsonLd, await TestData.ValidJsonLdRecordString()));
@@ -192,6 +203,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_With_Same_Scopes_And_Describes_Are_Equal(BackendType backendType)
     {
         var rdfString1 = await TestData.ValidNQuadRecordString(TestData.CreateRecordId("1"));
@@ -206,6 +218,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_With_Different_Scopes_And_Describes_Are_Not_Equal(BackendType backendType)
     {
         var id1 = TestData.CreateRecordId("1");
@@ -229,6 +242,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Write_To_JsonLd(BackendType backendType)
     {
         var record = await Immutable.Record.CreateAsync(await CreateBackend(backendType,
@@ -274,6 +288,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Does_Not_Need_SubRecordOf(BackendType backendType)
     {
         var record = default(Immutable.Record);
@@ -287,6 +302,7 @@ public class ImmutableRecordTests(FusekiContainerManager fusekiContainerManager)
     [Theory]
     [InlineData(BackendType.DotNetRdf)]
     [InlineData(BackendType.Fuseki)]
+    [InlineData(BackendType.Dagalog)]
     public async Task Record_Can_Have_At_Most_One_SuperRecord(BackendType backendType)
     {
         var record = default(Immutable.Record);

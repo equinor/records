@@ -6,9 +6,10 @@ using VDS.RDF.Query;
 using VDS.RDF.Writing;
 using VDS.RDF.Writing.Formatting;
 using StringWriter = System.IO.StringWriter;
+
 namespace Records.Backend;
 
-public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
+public class DagalogRecordBackend : RecordBackendBase, IRecordBuildableBackend
 {
     private readonly HttpClient _httpClient;
     private readonly Uri _baseUri;
@@ -19,26 +20,27 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     private string DatasetEndpointPath() => $"$/datasets/{_datasetName}";
     private readonly string _datasetName;
 
-    private FusekiRecordBackend(HttpClient httpClient)
+    private DagalogRecordBackend(HttpClient httpClient)
     {
         _datasetName = $"record_{Guid.NewGuid()}";
         _httpClient = httpClient;
         _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
     }
-    private FusekiRecordBackend(HttpClient httpClient, string datasetName)
+
+    private DagalogRecordBackend(HttpClient httpClient, string datasetName)
     {
         _datasetName = datasetName;
         _httpClient = httpClient;
         _baseUri = httpClient.BaseAddress ?? throw new InvalidOperationException("The HttpClient parameter must have a BaseAddress set.");
     }
 
-    public static async Task<FusekiRecordBackend> CreateFromExisting(HttpClient httpClient, RecordHandleV1 handle)
+    public static async Task<DagalogRecordBackend> CreateFromExisting(HttpClient httpClient, RecordHandleV1 handle)
     {
-        if (!handle.VerifyForKind(RecordHandleV1.KindFusekiDatasetRef))
+        if (!handle.VerifyForKind(RecordHandleV1.KindDagalogDatasetRef))
             throw new UnauthorizedAccessException("Record handle is invalid or expired.");
 
         var datasetName = handle.Dataset;
-        var client = new FusekiRecordBackend(httpClient, datasetName);
+        var client = new DagalogRecordBackend(httpClient, datasetName);
         await client.EnsureDatasetExistsAsync((httpResponseMessage, s) =>
             throw new Exception(
                 $"Failed initializing record from dataset '{datasetName}': {httpResponseMessage.StatusCode} - {s}"));
@@ -50,19 +52,18 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         return client;
     }
 
-    public static Task<FusekiRecordBackend> CreateFromTrigAsync(string rdfString, HttpClient httpClient) =>
+    public static Task<DagalogRecordBackend> CreateFromTrigAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.Trig, httpClient);
 
-    public static Task<FusekiRecordBackend> CreateFromJsonLdAsync(string rdfString, HttpClient httpClient) =>
+    public static Task<DagalogRecordBackend> CreateFromJsonLdAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.JsonLd, httpClient);
 
-    public static Task<FusekiRecordBackend> CreateFromNQuadsAsync(string rdfString, HttpClient httpClient) =>
+    public static Task<DagalogRecordBackend> CreateFromNQuadsAsync(string rdfString, HttpClient httpClient) =>
         CreateAsync(rdfString, RdfMediaType.Quads, httpClient);
 
-
-    public static async Task<FusekiRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, HttpClient httpClient)
+    public static async Task<DagalogRecordBackend> CreateAsync(string rdfString, RdfMediaType contentType, HttpClient httpClient)
     {
-        var client = new FusekiRecordBackend(httpClient);
+        var client = new DagalogRecordBackend(httpClient);
         await client.CreateDatasetAsync();
         await client.UploadRdfData(rdfString, contentType);
         await client.InitializeMetadata();
@@ -70,13 +71,13 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     }
 
     /// <summary>
-    /// Creates an empty Fuseki dataset ready to receive build-time data via
+    /// Creates an empty dagalog dataset ready to receive build-time data via
     /// <see cref="IRecordBuildableBackend"/> methods. Call <see cref="FinalizeAsync"/>
     /// when all data has been pushed.
     /// </summary>
-    public static async Task<FusekiRecordBackend> CreateForBuildAsync(HttpClient httpClient)
+    public static async Task<DagalogRecordBackend> CreateForBuildAsync(HttpClient httpClient)
     {
-        var client = new FusekiRecordBackend(httpClient);
+        var client = new DagalogRecordBackend(httpClient);
         await client.CreateDatasetAsync();
         return client;
     }
@@ -87,7 +88,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be greater than zero.");
 
         var expiresAt = DateTimeOffset.UtcNow.Add(ttl);
-        return RecordHandleV1.CreateFusekiDatasetRef(
+        return RecordHandleV1.CreateDagalogDatasetRef(
             dataset: _datasetName,
             recordId: GetRecordId().AbsoluteUri,
             expiresAt: expiresAt);
@@ -113,7 +114,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         if (!response.IsSuccessStatusCode)
         {
             var err = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to add graph to Fuseki: {response.StatusCode} - {err}");
+            throw new Exception($"Failed to add graph to dagalog: {response.StatusCode} - {err}");
         }
     }
 
@@ -135,7 +136,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         if (!response.IsSuccessStatusCode)
         {
             var err = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to add triples to Fuseki graph: {response.StatusCode} - {err}");
+            throw new Exception($"Failed to add triples to dagalog graph: {response.StatusCode} - {err}");
         }
     }
 
@@ -144,13 +145,11 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     {
         var path = GraphEndpointPath(graphName);
 
-        // Try Turtle first (most common content format)
         var request = new HttpRequestMessage(HttpMethod.Post, path);
         request.Content = new StringContent(rdfString, Encoding.UTF8, "text/turtle");
         var response = await _httpClient.SendAsync(request);
         if (response.IsSuccessStatusCode) return;
 
-        // Fall back to JSON-LD
         ValidateJsonLd(rdfString);
         var request2 = new HttpRequestMessage(HttpMethod.Post, path);
         request2.Content = new StringContent(rdfString, Encoding.UTF8, "application/ld+json");
@@ -158,7 +157,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         if (!response2.IsSuccessStatusCode)
         {
             var err = await response2.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to parse and upload RDF string to Fuseki: {response2.StatusCode} - {err}");
+            throw new Exception($"Failed to parse and upload RDF string to dagalog: {response2.StatusCode} - {err}");
         }
     }
 
@@ -166,7 +165,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     public Task FinalizeAsync() => InitializeMetadata();
 
     #endregion
-
 
     internal async Task CreateDatasetAsync()
     {
@@ -221,23 +219,10 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
+            throw new Exception($"Failed to delete dataset: {response.StatusCode} - {errorMessage}");
         }
     }
 
-    /// <summary>
-    /// Adds additional metadata triples to this record's metadata graph.
-    /// 
-    /// IMPORTANT: This method mutates the underlying Fuseki dataset in-place by adding
-    /// the triples to the metadata graph. The metadata in records is additive/mutable,
-    /// while record content remains immutable.
-    /// 
-    /// After calling this method, existing `Immutable.Record` instances may have stale cached
-    /// metadata-derived fields (e.g. `Metadata`, `Replaces`). Prefer using the returned
-    /// Record instance for queries that should reflect the additional metadata.
-    ///
-    /// This implementation updates only the metadata graph and refreshes the backend cache via `InitializeMetadata()`.
-    /// </summary>
     public override async Task<IRecordBackend> WithAdditionalMetadata(IGraph additionalMetadata)
     {
         await AddTriplesToGraphAsync(GetRecordId(), additionalMetadata.Triples);
@@ -264,20 +249,27 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     internal SparqlQueryClient GetSparqlQueryClient() =>
         new SparqlQueryClient(_httpClient, SparqlEndpointUri());
 
-
     public override async Task<ITripleStore> TripleStore()
     {
-        var content = await GetRdfDataAsString(RdfMediaType.Quads);
+        using var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
+        request.Headers.Accept.Add(RdfMediaType.Quads.GetMediaTypeWithQualityHeaderValue());
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
+        }
+
+        await using var content = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(content);
         var ts = new TripleStore();
         var parser = new NQuadsParser();
-        parser.Load(ts, content);
+        parser.Load(ts, reader);
         return ts;
     }
 
-    public override Task<string> ToString(RdfMediaType mediaType)
-    {
-        return GetRdfDataAsString(mediaType);
-    }
+    public override Task<string> ToString(RdfMediaType mediaType) =>
+        GetRdfDataAsString(mediaType);
 
     public override async Task<Stream> ToStream(RdfMediaType mediaType, CancellationToken ct = default)
     {
@@ -292,12 +284,10 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
         var errorMessage = await response.Content.ReadAsStringAsync(ct);
         throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
-
     }
 
-    private async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
+    internal async Task<string> GetRdfDataAsString(RdfMediaType mediaType)
     {
-
         var request = new HttpRequestMessage(HttpMethod.Get, DataEndpointPath());
         request.Headers.Accept.Add(mediaType.GetMediaTypeWithQualityHeaderValue());
         var response = await _httpClient.SendAsync(request);
@@ -306,10 +296,10 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             var errorMessage = await response.Content.ReadAsStringAsync();
             throw new Exception($"Failed to retrieve RDF data: {response.StatusCode} - {errorMessage}");
         }
-        var fusekiDatasetReponse = await response.Content.ReadAsStringAsync();
+        var responseBody = await response.Content.ReadAsStringAsync();
         if (mediaType == RdfMediaType.JsonLd)
-            ValidateJsonLd(fusekiDatasetReponse);
-        return fusekiDatasetReponse;
+            ValidateJsonLd(responseBody);
+        return responseBody;
     }
 
     public override async Task<IEnumerable<INode>> SubjectWithType(IUriNode type)
@@ -329,8 +319,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             result.Value("label").ToString(new TurtleFormatter())
         );
     }
-
-
 
     public override async Task<IEnumerable<Triple>> TriplesWithSubject(IUriNode subject)
     {
@@ -435,9 +423,12 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     public override async Task<IEnumerable<string>> Sparql(string queryString)
     {
+        if (string.IsNullOrWhiteSpace(queryString))
+            throw new ArgumentException("SPARQL query must not be empty.", nameof(queryString));
+
         var queryClient = GetSparqlQueryClient();
         var command = queryString.Split().First();
-        return command.ToLower() switch
+        return command.ToLowerInvariant() switch
         {
             "construct" => (await queryClient.QueryWithResultGraphAsync(queryString))
                 .Triples
@@ -447,8 +438,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             _ => throw new ArgumentException("Unsupported command in SPARQL query.")
         };
     }
-
-
 
     public override async Task<IGraph> GetMergedGraphs()
     {
@@ -491,8 +480,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         var stringWriter = new System.IO.StringWriter();
         var writer = new NQuadsWriter(NQuadsSyntax.Rdf11);
         writer.Save(canonStore, stringWriter);
-        var result = stringWriter.ToString();
-        return result;
+        return stringWriter.ToString();
     }
 
     public override async Task<IRecordBackend> CreateFromTripleStore(ITripleStore tripleStore)
@@ -527,19 +515,13 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
     public override Task<ShaclValidationOutcome> ValidateShacl(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths)
         => ValidateShaclAsync(content, contentType, shaclShapePaths, _httpClient);
 
-    /// <summary>
-    /// Validate arbitrary RDF content against SHACL shapes by spinning up a dedicated
-    /// Fuseki dataset, uploading the content and shapes, and reading the SHACL report.
-    /// The dataset is deleted after validation. Reuses the standard dataset creation,
-    /// upload and SHACL endpoint code paths.
-    /// </summary>
     public static async Task<ShaclValidationOutcome> ValidateShaclAsync(string content, RdfMediaType contentType, IEnumerable<string> shaclShapePaths, HttpClient httpClient)
     {
         var shapePaths = shaclShapePaths.ToList();
         if (shapePaths.Count == 0)
             throw new ArgumentNullException(nameof(shaclShapePaths), "Expected non-empty shacl shape");
 
-        var temp = new FusekiRecordBackend(httpClient);
+        var temp = new DagalogRecordBackend(httpClient);
         try
         {
             await temp.CreateDatasetAsync();
@@ -568,7 +550,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to validate RDF with Fuseki SHACL endpoint: {response.StatusCode} - {errorMessage}");
+            throw new Exception($"Failed to validate RDF with dagalog SHACL endpoint: {response.StatusCode} - {errorMessage}");
         }
 
         return await response.Content.ReadAsStringAsync();
@@ -583,7 +565,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}", ex);
+            throw new InvalidOperationException($"Could not parse SHACL report response from dagalog: {report}", ex);
         }
         return graph;
     }
@@ -596,7 +578,7 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             as SparqlResultSet;
 
         if (results == null || results.Count == 0 || results[0]["conforms"] is not ILiteralNode literal)
-            throw new InvalidOperationException($"Could not parse SHACL report response from Fuseki: {report}");
+            throw new InvalidOperationException($"Could not parse SHACL report response from dagalog: {report}");
 
         return bool.Parse(literal.Value);
     }

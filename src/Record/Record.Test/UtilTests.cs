@@ -25,7 +25,10 @@ public class UtilTests
 
         var triples = TimeUtils.CreateHasTimeTriples(parent, datetime);
 
-        var month = triples.Where(t => t.Predicate == Namespaces.Time.UriNodes.Month).Select(t => t.Object).Single();
+        var month = triples
+            .Where(t => t?.Predicate.Equals(Namespaces.Time.UriNodes.Month) == true)
+            .Select(t => t?.Object)
+            .Single();
 
         month.Should().Be(Namespaces.Greg.UriNodes.July);
     }
@@ -38,14 +41,17 @@ public class UtilTests
 
         var triples = TimeUtils.CreateHasTimeTriples(parent, datetime);
 
-        var year = triples.Where(t => t.Predicate == Namespaces.Time.UriNodes.Year).Select(t => t.Object).Single();
+        var year = triples
+            .Where(t => t?.Predicate.Equals(Namespaces.Time.UriNodes.Year) == true)
+            .Select(t => t?.Object)
+            .Single();
 
         year.Should().BeOfType<LiteralNode>();
 
         var yearNode = year as LiteralNode;
 
-        yearNode.Value.Should().Be(datetime.Year.ToString());
-        yearNode.DataType.Should().Be(Namespaces.DataType.GYear);
+        yearNode?.Value.Should().Be(datetime.Year.ToString());
+        yearNode?.DataType.Should().Be(Namespaces.DataType.GYear);
     }
 
     [Fact]
@@ -56,7 +62,10 @@ public class UtilTests
 
         var triples = TimeUtils.CreateHasTimeTriples(parent, datetime);
 
-        var day = triples.Where(t => t.Predicate == Namespaces.Time.UriNodes.Day).Select(t => t.Object).Single();
+        var day = triples
+            .Where(t => t?.Predicate.Equals(Namespaces.Time.UriNodes.Day) == true)
+            .Select(t => t?.Object)
+            .Single();
 
         day.Should().BeOfType<LiteralNode>();
 
