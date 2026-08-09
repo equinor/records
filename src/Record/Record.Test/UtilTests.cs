@@ -50,8 +50,8 @@ public class UtilTests
 
         var yearNode = year as LiteralNode;
 
-        yearNode.Value.Should().Be(datetime.Year.ToString());
-        yearNode.DataType.Should().Be(Namespaces.DataType.GYear);
+        yearNode?.Value.Should().Be(datetime.Year.ToString());
+        yearNode?.DataType.Should().Be(Namespaces.DataType.GYear);
     }
 
     [Fact]
@@ -62,7 +62,10 @@ public class UtilTests
 
         var triples = TimeUtils.CreateHasTimeTriples(parent, datetime);
 
-        var day = triples.Where(t => t.Predicate == Namespaces.Time.UriNodes.Day).Select(t => t.Object).Single();
+        var day = triples
+            .Where(t => t?.Predicate.Equals(Namespaces.Time.UriNodes.Day) == true)
+            .Select(t => t?.Object)
+            .Single();
 
         day.Should().BeOfType<LiteralNode>();
 
