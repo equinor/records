@@ -41,7 +41,10 @@ public class UtilTests
 
         var triples = TimeUtils.CreateHasTimeTriples(parent, datetime);
 
-        var year = triples.Where(t => t.Predicate == Namespaces.Time.UriNodes.Year).Select(t => t.Object).Single();
+        var year = triples
+            .Where(t => t?.Predicate.Equals(Namespaces.Time.UriNodes.Year) == true)
+            .Select(t => t?.Object)
+            .Single();
 
         year.Should().BeOfType<LiteralNode>();
 
