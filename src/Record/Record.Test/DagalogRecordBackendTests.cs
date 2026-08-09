@@ -6,7 +6,7 @@ using VDS.RDF.Writing;
 
 namespace Records.Tests;
 
-[Collection("Dagalog Integration Testing Collection")]
+[Collection("Integration Testing Collection")]
 public class DagalogRecordBackendTests(DagalogContainerManager dagalogContainerManager)
 {
     private readonly HttpClient _httpClient = new() { BaseAddress = dagalogContainerManager.address };
