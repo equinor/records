@@ -1,5 +1,5 @@
 # Record 
-This is a C# library for handling and creating Records as [described in the official documentation](https://github.com/equinor/records/blob/main/doc/format.md).
+This is a C# library for handling and creating Records as [described in the official documentation](https://github.com/equinor/records/blob/main/docs/format.md).
 
 The main parts of this library are:
 ## Immutable.Record
