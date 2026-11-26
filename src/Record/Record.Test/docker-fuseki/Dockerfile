@@ -7,9 +7,10 @@ RUN mkdir -p /opt/jena && \
 
 COPY config/in_memory.ttl /opt/jena/config.ttl
 COPY config/shiro.ini /opt/jena/jena-fuseki2/run/shiro.ini
+COPY config/config-mem /opt/jena/jena-fuseki2/run/templates/config-mem
 
 WORKDIR /opt/jena/jena-fuseki2
-ENV JVM_ARGS="-Xmx4G -Dfuseki:allowAddByConfigFile=true"
+ENV JVM_ARGS="-Xmx4G"
 EXPOSE 3030
 
 ENTRYPOINT ["./fuseki-server", "--config", "/opt/jena/config.ttl"]

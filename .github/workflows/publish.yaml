@@ -31,6 +31,13 @@ jobs:
 
       - name: Create nuget artifact
         run: dotnet pack ./src/Record/Record.Model --no-restore --no-build --configuration Release --output ${{ github.workspace }}/out /p:'description="A library for using records.";PackageVersion="${{ github.event.release.name }}"'
-
+      
+      # Get a short-lived NuGet API key, created by "Trusted Publishing"
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      
       - name: Publish
-        run: dotnet nuget push ${{ github.workspace }}/out/Record*.nupkg --api-key ${{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ${{ github.workspace }}/out/Record*.nupkg --api-key ${{ steps.login.outputs.api-key }}  --source https://api.nuget.org/v3/index.json

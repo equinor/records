@@ -37,6 +37,9 @@
         <None Update="docker-fuseki\config\in_memory.ttl">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="docker-fuseki\config\config-mem">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Remove="Data\record-with-two-contents.trig"/>
         <Content Include="Data\record-with-two-contents.trig">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
