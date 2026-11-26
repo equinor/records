@@ -171,7 +171,11 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
 
     internal async Task CreateDatasetAsync()
     {
-        using var content = new StringContent(BuildDatasetAssembler(), Encoding.UTF8, "text/turtle");
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["dbName"] = _datasetName,
+            ["dbType"] = "mem"
+        });
         using var response = await _httpClient.PostAsync(CreateDatasetEndpointPath(), content);
         if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
@@ -187,24 +191,6 @@ public class FusekiRecordBackend : RecordBackendBase, IRecordBuildableBackend
             throw new Exception($"Failed to create dataset: {response.StatusCode} - {errorMessage}");
         }
     }
-
-    private string BuildDatasetAssembler() => string.Join(Environment.NewLine,
-        [
-            "@prefix fuseki: <http://jena.apache.org/fuseki#> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix ja: <http://jena.hpl.hp.com/2005/11/Assembler#> .",
-            "",
-            "<#service> rdf:type fuseki:Service ;",
-            $"    fuseki:name \"{_datasetName}\" ;",
-            "    fuseki:endpoint [ fuseki:operation fuseki:query ; fuseki:name \"sparql\" ] ;",
-            "    fuseki:endpoint [ fuseki:operation fuseki:update ; fuseki:name \"update\" ] ;",
-            "    fuseki:endpoint [ fuseki:operation fuseki:upload ; fuseki:name \"upload\" ] ;",
-            "    fuseki:endpoint [ fuseki:operation fuseki:gsp-rw ; fuseki:name \"data\" ] ;",
-            "    fuseki:endpoint [ fuseki:operation fuseki:shacl ; fuseki:name \"shacl\" ] ;",
-            "    fuseki:dataset <#dataset> .",
-            "",
-            "<#dataset> rdf:type ja:MemoryDataset ."
-        ]);
 
     private async Task EnsureDatasetExistsAsync(Action<HttpResponseMessage, string> lackingDatasetHandler)
     {

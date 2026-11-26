@@ -107,6 +107,32 @@ public class FusekiRecordBackendTests(FusekiContainerManager fusekiContainerMana
     }
 
     [Fact]
+    public async Task CreatedDataset_ExposesRequiredEndpoints()
+    {
+        var recordString = await TestData.ValidRecordString<TriGWriter>();
+        var backend = await Backend.FusekiRecordBackend.CreateFromTrigAsync(recordString, _httpClient);
+
+        try
+        {
+            var datasetName = backend.ExportRecordHandleV1(TimeSpan.FromMinutes(5)).Dataset;
+            using var response = await _httpClient.GetAsync($"$/datasets/{datasetName}");
+            response.EnsureSuccessStatusCode();
+            using var description = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var services = description.RootElement.GetProperty("ds.services").EnumerateArray();
+            var endpoints = services
+                .SelectMany(service => service.GetProperty("srv.endpoints").EnumerateArray())
+                .Select(endpoint => endpoint.GetString())
+                .ToList();
+
+            endpoints.Should().Contain(["sparql", "update", "upload", "data", "shacl"]);
+        }
+        finally
+        {
+            await backend.DeleteDatasetAsync();
+        }
+    }
+
+    [Fact]
     public async Task CreateDatasetAsync_IsIdempotent_WhenCalledTwice()
     {
         var recordString = await TestData.ValidRecordString<TriGWriter>();
