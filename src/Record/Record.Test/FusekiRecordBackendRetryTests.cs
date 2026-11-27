@@ -8,6 +8,31 @@ namespace Records.Tests;
 public class FusekiRecordBackendRetryTests
 {
     [Fact]
+    public async Task CreateDatasetAsync_CreatesMemoryDatasetUsingFormParameters()
+    {
+        var handler = new ScriptedHttpMessageHandler(async request =>
+        {
+            request.Method.Should().Be(HttpMethod.Post);
+            request.RequestUri!.AbsolutePath.Should().Be("/$/datasets");
+            request.Content!.Headers.ContentType!.MediaType.Should().Be("application/x-www-form-urlencoded");
+
+            var body = await request.Content.ReadAsStringAsync();
+            var parameters = body.Split('&')
+                .Select(parameter => parameter.Split('=', 2))
+                .ToDictionary(parameter => parameter[0], parameter => Uri.UnescapeDataString(parameter[1]));
+            parameters["dbName"].Should().StartWith("record_");
+            Guid.TryParse(parameters["dbName"]["record_".Length..], out _).Should().BeTrue();
+            parameters["dbType"].Should().Be("mem");
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
+        var backend = CreateBackendForDatasetTests(httpClient);
+
+        await backend.CreateDatasetAsync();
+    }
+
+    [Fact]
     public async Task CreateDatasetAsync_ShouldSucceed_WhenFirstAttemptTimesOutAndRetryConflicts()
     {
         var callCount = 0;
@@ -92,10 +117,19 @@ public class FusekiRecordBackendRetryTests
         return (FusekiRecordBackend)constructor.Invoke([httpClient]);
     }
 
-    private sealed class ScriptedHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
-        : HttpMessageHandler
+    private sealed class ScriptedHttpMessageHandler : HttpMessageHandler
     {
+        private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _responseFactory;
+
+        public ScriptedHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
+            : this(request => Task.FromResult(responseFactory(request))) { }
+
+        public ScriptedHttpMessageHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> responseFactory)
+        {
+            _responseFactory = responseFactory;
+        }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(responseFactory(request));
+            => _responseFactory(request);
     }
 }
